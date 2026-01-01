@@ -1,0 +1,13 @@
+.vscode/**
+.vscode-test/**
+out/test/**
+src/**
+.gitignore
+.vscodeignore
+tsconfig.json
+vsc-extension-quickstart.md
+**/README.md
+**/CHANGELOG.md
+**/*.map
+node_modules/**
+!node_modules/@vscode/codicons/**
