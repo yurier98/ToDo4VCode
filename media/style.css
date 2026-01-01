@@ -1,0 +1,1763 @@
+* {
+    box-sizing: border-box;
+}
+
+:root {
+    --bg-blur: blur(20px);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --accent-color: #007AFF;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--vscode-foreground);
+    background-color: transparent;
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+    height: 100vh;
+}
+
+[hidden],
+.hidden {
+    display: none !important;
+}
+
+.app-container {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* --- Top Bar --- */
+.top-bar {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: var(--vscode-sideBar-background);
+    border-bottom: 1px solid var(--vscode-panel-border);
+    gap: 8px;
+    z-index: 50;
+    /* Lower than popovers to avoid clipping */
+}
+
+.app-title {
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    opacity: 0.5;
+    letter-spacing: 1px;
+    margin-right: 4px;
+}
+
+.view-toggle-group {
+    display: flex;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+    padding: 2px;
+}
+
+.view-btn {
+    background: transparent;
+    border: none;
+    color: var(--vscode-foreground);
+    width: 28px;
+    height: 24px;
+    cursor: pointer;
+    border-radius: 4px;
+    opacity: 0.6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.view-btn.active {
+    background: var(--vscode-button-secondaryBackground);
+    opacity: 1;
+}
+
+.view-group-divider {
+    width: 1px;
+    background: var(--vscode-panel-border);
+    margin: 4px 4px;
+    opacity: 0.5;
+}
+
+.format-btn-inline {
+    width: auto !important;
+    padding: 0 8px !important;
+    gap: 6px;
+    font-size: 0.75rem;
+}
+
+.format-btn-inline span {
+    font-weight: 500;
+}
+
+.flex-spacer {
+    flex: 1;
+}
+
+.format-btn {
+    background: transparent;
+    border: 1px solid var(--vscode-panel-border);
+    color: var(--vscode-foreground);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    opacity: 0.8;
+}
+
+.format-btn:hover {
+    background: var(--vscode-toolbar-hoverBackground);
+    opacity: 1;
+}
+
+/* --- Scroll Area --- */
+#scroll-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* --- Premium Input Card --- */
+.premium-input-card {
+    background: var(--vscode-editor-background);
+    border: 0.5px solid var(--vscode-panel-border);
+    border-radius: 12px;
+    padding: 8px;
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.premium-input-card:focus-within {
+    border-color: var(--vscode-focusBorder);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+}
+
+.input-header-row {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.selected-date-tag {
+    background: var(--vscode-button-background);
+    color: var(--vscode-editor-background, #1e1e1e);
+    padding: 2px 6px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.title-field {
+    background: transparent;
+    border: none;
+    color: var(--vscode-foreground);
+    font-size: 1.05rem;
+    font-weight: 700;
+    flex: 1;
+    min-width: 120px;
+    outline: none;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.title-field::placeholder {
+    color: var(--vscode-input-placeholderForeground);
+    opacity: 0.7;
+}
+
+.desc-field {
+    background: transparent;
+    border: none;
+    color: var(--vscode-foreground);
+    font-size: 0.9rem;
+    line-height: 1.4;
+    width: 100%;
+    outline: none;
+    resize: none;
+    opacity: 0.6;
+    max-height: 6.3rem; /* ~5 lines (5 * 1.4 * 0.9) */
+    overflow-y: auto;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.desc-field::placeholder {
+    color: var(--vscode-input-placeholderForeground);
+    opacity: 0.5;
+}
+
+.input-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-top: 12px;
+    gap: 10px;
+}
+
+.action-buttons-row {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+    flex: 1;
+    min-width: 0;
+}
+
+.action-btn {
+    background: var(--vscode-welcomePage-tileBackground);
+    color: var(--vscode-foreground);
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.1s ease;
+    font-weight: 500;
+}
+
+.action-btn i {
+    font-size: 0.85rem;
+}
+
+.action-btn:hover,
+.action-btn.has-value:hover,
+.action-btn.date-color-today:hover,
+.action-btn.date-color-tomorrow:hover,
+.action-btn.date-color-soon:hover,
+.action-btn.date-color-weekend:hover,
+.action-btn.date-color-custom:hover {
+    background: var(--vscode-welcomePage-tileHoverBackground) !important;
+    transform: none;
+}
+
+.action-btn:active {
+    opacity: 0.8;
+}
+
+/* Responsive adjustments for very narrow sidebars */
+@media (max-width: 280px) {
+    .action-btn span {
+        display: none;
+    }
+    .action-btn {
+        padding: 6px;
+        gap: 0;
+    }
+    .premium-input-card {
+        padding: 10px;
+    }
+}
+
+.action-btn.has-value {
+    background: var(--vscode-welcomePage-tileBackground) !important;
+}
+
+.action-btn.has-value i,
+.action-btn.has-value span {
+    color: inherit !important;
+}
+
+.clear-date-btn {
+    font-weight: 600 !important;
+    -webkit-text-stroke: 0.5px;
+    font-size: 0.7rem !important;
+    padding: 2px;
+}
+
+.clear-date-btn:hover {
+    transform: scale(1.1);
+}
+
+.circle-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    padding: 0;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.circle-btn i {
+    font-size: 14px !important;
+    font-weight: 600;
+    -webkit-text-stroke: 0.5px;
+}
+
+/* Date Colors - Icon and Text focus for contrast */
+.date-color-today i, .date-color-today span {
+    color: #FF3B30 !important;
+}
+
+.date-color-tomorrow i, .date-color-tomorrow span {
+    color: #FF9500 !important;
+}
+
+.date-color-soon i, .date-color-soon span {
+    color: #4CD964 !important;
+}
+
+.date-color-weekend i, .date-color-weekend span {
+    color: var(--vscode-descriptionForeground) !important;
+}
+
+.date-color-custom i, .date-color-custom span {
+    color: var(--vscode-descriptionForeground) !important;
+}
+
+/* Dynamic Backgrounds for active chips */
+.action-btn.has-value.date-color-today {
+    background: var(--vscode-welcomePage-tileBackground) !important;
+    color: #FF3B30 !important;
+}
+
+.action-btn.has-value.date-color-tomorrow {
+    background: var(--vscode-welcomePage-tileBackground) !important;
+    color: #FF9500 !important;
+}
+
+.action-btn.has-value.date-color-soon {
+    background: var(--vscode-welcomePage-tileBackground) !important;
+    color: #4CD964 !important;
+}
+
+.action-btn.has-value.date-color-weekend {
+    background: var(--vscode-welcomePage-tileBackground) !important;
+    color: var(--vscode-foreground) !important;
+}
+
+.action-btn.has-value.date-color-custom {
+    background: var(--vscode-welcomePage-tileBackground) !important;
+    color: var(--vscode-foreground) !important;
+}
+
+/* Custom Input Colors */
+.custom-date-input.date-color-today {
+    color: #FF3B30 !important;
+}
+
+.custom-date-input.date-color-tomorrow {
+    color: #FF9500 !important;
+}
+
+.custom-date-input.date-color-soon {
+    color: #4CD964 !important;
+}
+
+.popover-item {
+    background: transparent !important;
+    color: var(--vscode-foreground);
+    transition: background 0.1s;
+    border-radius: 4px;
+    margin: 2px 4px;
+}
+
+.popover-item:hover {
+    background: var(--vscode-list-hoverBackground) !important;
+    color: var(--vscode-list-hoverForeground, var(--vscode-foreground)) !important;
+}
+
+/* Override date colors inside popover items to keep text readable on hover */
+.popover-item.date-color-today i, .popover-item.date-color-today { color: #FF3B30 !important; }
+.popover-item.date-color-tomorrow i, .popover-item.date-color-tomorrow { color: #FF9500 !important; }
+.popover-item.date-color-weekend i, .popover-item.date-color-weekend { color: var(--vscode-foreground) !important; }
+
+/* Premium Custom Date Input */
+.popover-custom-date {
+    padding: 4px 12px 12px;
+    display: flex;
+    justify-content: center;
+}
+
+.custom-date-wrapper {
+    display: flex;
+    align-items: center;
+    background: transparent;
+    border-radius: 4px;
+    padding: 0 6px;
+    gap: 4px;
+    transition: border-color 0.2s;
+    width: auto;
+    min-width: 110px;
+}
+
+.custom-date-wrapper:hover {
+    border-color: var(--vscode-inputOption-activeBorder, var(--vscode-focusBorder));
+}
+
+.custom-date-input {
+    background: transparent;
+    border: none;
+    color: var(--vscode-input-foreground);
+    font-size: 0.8rem;
+    width: 100%;
+    min-width: 0;
+    outline: none;
+    cursor: pointer;
+    padding: 4px 0;
+    font-family: var(--vscode-font-family);
+}
+
+.custom-date-wrapper:focus-within {
+    border-color: var(--vscode-focusBorder);
+}
+
+.custom-date-wrapper .circle-btn {
+    background: rgba(200, 200, 200, 0.2) !important;
+    color: var(--vscode-foreground) !important;
+    border: none !important;
+    width: 24px !important;
+    height: 24px !important;
+    border-radius: 6px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    padding: 0 !important;
+    margin-left: 4px !important;
+}
+
+.custom-date-wrapper .circle-btn i {
+    font-size: 14px !important;
+}
+
+.custom-date-wrapper .circle-btn:hover {
+    background: var(--vscode-button-background) !important;
+    color: var(--vscode-button-foreground) !important;
+    transform: scale(1.05);
+}
+
+.btn-submit {
+    background: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+    border: none;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+}
+
+.btn-submit:hover {
+    background: var(--vscode-button-hoverBackground);
+    transform: scale(1.1);
+}
+
+.btn-submit:active {
+    transform: scale(0.95);
+}
+
+/* Flatpickr VS Code Theme Overrides */
+.flatpickr-calendar {
+    background: color-mix(in srgb, var(--vscode-menu-background), transparent 65%) !important;
+    backdrop-filter: blur(20px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+    border: 1px solid var(--vscode-menu-border) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
+    color: var(--vscode-menu-foreground) !important;
+    z-index: 9999 !important;
+    width: 280px !important;
+    font-size: 13px !important;
+    border-radius: 12px !important;
+    font-family: var(--vscode-font-family, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif) !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+}
+
+.flatpickr-months {
+    background: transparent !important;
+    border-bottom: 1px solid var(--vscode-menu-border) !important;
+    width: 100% !important;
+    padding: 4px 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: 36px !important;
+}
+
+.flatpickr-months .flatpickr-month {
+    background: transparent !important;
+    color: var(--vscode-menu-foreground) !important;
+    fill: var(--vscode-menu-foreground) !important;
+    height: 40px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.flatpickr-months .flatpickr-prev-month, 
+.flatpickr-months .flatpickr-next-month {
+    color: var(--vscode-menu-foreground) !important;
+    fill: var(--vscode-menu-foreground) !important;
+    border-radius: 6px !important;
+    padding: 8px !important;
+    top: 0 !important;
+    transition: all 0.2s ease !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: transparent !important;
+    border: none !important;
+}
+
+.flatpickr-months .flatpickr-prev-month { margin-left: 4px !important; margin-top: 4px !important; }
+.flatpickr-months .flatpickr-next-month { margin-right: 4px !important; margin-top: 4px !important; }
+
+.flatpickr-months .flatpickr-prev-month svg, 
+.flatpickr-months .flatpickr-next-month svg {
+    width: 10px !important;
+    height: 10px !important;
+}
+
+.flatpickr-months .flatpickr-prev-month:hover, 
+.flatpickr-months .flatpickr-next-month:hover {
+    background: var(--vscode-toolbar-hoverBackground, var(--vscode-list-hoverBackground)) !important;
+    opacity: 1 !important;
+}
+
+.flatpickr-months .flatpickr-prev-month:active, 
+.flatpickr-months .flatpickr-next-month:active {
+    transform: scale(0.9);
+}
+
+.flatpickr-months .flatpickr-prev-month:hover svg, 
+.flatpickr-months .flatpickr-next-month:hover svg {
+    fill: var(--vscode-foreground) !important;
+}
+
+.flatpickr-weekdays {
+    background: transparent !important;
+    height: 24px !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+    margin: 2px 0 !important;
+    width: 252px !important;
+    display: flex !important;
+    justify-content: center !important;
+}
+
+span.flatpickr-weekday {
+    background: transparent !important;
+    color: var(--vscode-descriptionForeground) !important;
+    font-weight: 700 !important;
+    font-size: 10px !important;
+    text-transform: uppercase !important;
+}
+
+.flatpickr-day {
+    color: var(--vscode-menu-foreground) !important;
+    max-width: 32px !important;
+    height: 32px !important;
+    line-height: 32px !important;
+    border-radius: 8px !important;
+    margin: 1px !important;
+    transition: all 0.2s ease !important;
+    border: 1px solid transparent !important;
+}
+
+.flatpickr-day:hover {
+    background: var(--vscode-list-hoverBackground) !important;
+    border-color: transparent !important;
+    transform: translateY(-1px);
+}
+
+.flatpickr-day.selected {
+    background: var(--vscode-button-background) !important;
+    border-color: var(--vscode-button-background) !important;
+    color: var(--vscode-button-foreground) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+    font-weight: 700 !important;
+}
+
+.flatpickr-day.today {
+    border-color: var(--vscode-button-background) !important;
+    color: var(--vscode-button-background) !important;
+    font-weight: 700 !important;
+}
+
+.flatpickr-day.today.selected {
+    color: #ffffff !important;
+}
+
+.flatpickr-day.today:hover {
+    background: var(--vscode-button-background) !important;
+    color: var(--vscode-button-foreground) !important;
+}
+
+.flatpickr-day.flatpickr-disabled {
+    color: var(--vscode-disabledForeground) !important;
+    opacity: 0.2;
+}
+
+.flatpickr-day.prevMonthDay, .flatpickr-day.nextMonthDay {
+    color: var(--vscode-descriptionForeground) !important;
+    opacity: 0.4;
+}
+
+.flatpickr-current-month {
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px !important;
+    position: static !important;
+    width: auto !important;
+}
+
+.flatpickr-current-month .flatpickr-monthDropdown-months {
+    color: var(--vscode-menu-foreground) !important;
+    fill: var(--vscode-menu-foreground) !important;
+    font-weight: 700 !important;
+    font-size: 14px !important;
+    background: transparent !important;
+    border: none !important;
+    margin: 0 !important;
+    padding: 4px 2px 4px 8px !important; /* Minimal right padding to bring native arrow closer */
+    cursor: pointer !important;
+    border-radius: 6px !important;
+    transition: all 0.2s ease !important;
+    outline: none !important;
+}
+
+.flatpickr-current-month input.cur-year {
+    color: var(--vscode-menu-foreground) !important;
+    fill: var(--vscode-menu-foreground) !important;
+    font-weight: 700 !important;
+    font-size: 14px !important;
+    background: transparent !important;
+    border: none !important;
+    margin: 0 !important;
+    padding: 4px 8px !important;
+    cursor: pointer !important;
+    border-radius: 6px !important;
+    transition: all 0.2s ease !important;
+    outline: none !important;
+}
+
+/* Style the year input container and arrows (flechitas) */
+.flatpickr-current-month .numInputWrapper {
+    border: none !important;
+    border-radius: 6px !important;
+    overflow: hidden !important;
+    background: transparent !important;
+    transition: background 0.2s ease !important;
+}
+
+.flatpickr-current-month .numInputWrapper:hover {
+    background: var(--vscode-toolbar-hoverBackground) !important;
+}
+
+.flatpickr-current-month .numInputWrapper span {
+    display: block !important;
+    border: none !important;
+    background: transparent !important;
+    opacity: 0.5;
+    transition: all 0.2s ease !important;
+}
+
+.flatpickr-current-month .numInputWrapper span:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+    opacity: 1;
+}
+
+.flatpickr-current-month .numInputWrapper span.arrowUp {
+    transform: translateY(1px) !important;
+}
+
+.flatpickr-current-month .numInputWrapper span.arrowDown {
+    transform: translateY(-1px) !important;
+}
+
+.flatpickr-current-month .numInputWrapper span.arrowUp:after {
+    border-bottom-color: var(--vscode-menu-foreground) !important;
+}
+
+.flatpickr-current-month .numInputWrapper span.arrowDown:after {
+    border-top-color: var(--vscode-menu-foreground) !important;
+}
+
+.flatpickr-current-month input.cur-year {
+    /* Keep appearance as textfield to avoid double arrows in some browsers */
+    -moz-appearance: textfield !important;
+    appearance: textfield !important;
+}
+
+.flatpickr-current-month input.cur-year::-webkit-outer-spin-button,
+.flatpickr-current-month input.cur-year::-webkit-inner-spin-button {
+    -webkit-appearance: none !important;
+    margin: 0 !important;
+}
+
+.flatpickr-current-month .flatpickr-monthDropdown-months:hover,
+.flatpickr-current-month .numInputWrapper:hover {
+    background: var(--vscode-toolbar-hoverBackground, var(--vscode-list-hoverBackground)) !important;
+    opacity: 1 !important;
+}
+
+.flatpickr-current-month input.cur-year:hover {
+    background: transparent !important;
+}
+
+.flatpickr-calendar.arrowTop:after, .flatpickr-calendar.arrowTop:before {
+    border-bottom-color: var(--vscode-menu-border) !important;
+}
+
+.flatpickr-innerContainer {
+    padding: 0px !important;
+}
+
+.flatpickr-days {
+    width: 100% !important;
+    display: flex !important;
+    justify-content: center !important;
+}
+
+.dayContainer {
+    min-width: 252px !important;
+    max-width: 252px !important;
+}
+
+.flatpickr-time {
+    border-top: 1px solid var(--vscode-menu-border) !important;
+    padding: 8px 0 !important;
+    border-radius: 0 0 12px 12px !important;
+}
+
+.flatpickr-time input, .flatpickr-time .flatpickr-time-separator, .flatpickr-time .flatpickr-am-pm {
+    color: var(--vscode-menu-foreground) !important;
+    border-radius: 4px !important;
+}
+
+.flatpickr-time input:hover, .flatpickr-time .flatpickr-am-pm:hover {
+    background: var(--vscode-list-hoverBackground) !important;
+}
+
+.flatpickr-innerContainer, .flatpickr-rContainer {
+    background: transparent !important;
+    width: 252px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    padding: 0 0 4px 0 !important;
+}
+
+.flatpickr-days {
+    width: 252px !important;
+    background: transparent !important;
+    display: flex !important;
+    justify-content: center !important;
+}
+
+.dayContainer {
+    width: 252px !important;
+    min-width: 252px !important;
+    max-width: 252px !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: flex-start !important;
+    padding: 0 !important;
+}
+
+/* --- Popovers --- */
+.popover-wrapper {
+    position: relative;
+}
+
+.popover {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    background: color-mix(in srgb, var(--vscode-menu-background), transparent 65%) !important;
+    backdrop-filter: blur(20px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+    border: 1px solid var(--vscode-menu-border);
+    border-radius: 10px;
+    padding: 4px;
+    min-width: 220px;
+    display: none;
+    flex-direction: column;
+    z-index: 1000;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    animation: popInDown 0.15s ease-out;
+}
+
+/* View Mode Selector in Popover */
+.view-mode-selector {
+    display: flex;
+    gap: 6px;
+    padding: 4px;
+    background: var(--vscode-editor-background);
+    border-radius: 10px;
+    margin: 4px 8px 16px;
+}
+
+.view-mode-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 4px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    gap: 8px;
+    color: var(--vscode-foreground);
+    opacity: 0.5;
+    border: 1px solid transparent;
+}
+
+.view-mode-btn i {
+    font-size: 1.4rem;
+}
+
+.view-mode-btn span {
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.view-mode-btn:hover {
+    background: var(--vscode-welcomePage-tileHoverBackground);
+    opacity: 0.8;
+}
+
+.view-mode-btn.active {
+    background:  var(--vscode-welcomePage-tileBackground); /* Darker background for active state like in the image */
+    opacity: 1;
+    box-shadow: 0 2px 24px rgba(0, 0, 0, 0.1);
+    border: 0.5px solid var(--vscode-panel-border);
+}
+
+.view-mode-btn.disabled {
+    opacity: 0.25;
+    cursor: default;
+}
+
+.view-mode-btn.disabled:hover {
+    background: transparent;
+}
+
+/* Toggle Switch */
+.toggle-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    cursor: pointer;
+    border-radius: 6px;
+    margin: 0 4px;
+}
+
+.toggle-row:hover {
+    background: var(--vscode-list-hoverBackground);
+}
+
+.toggle-switch {
+    position: relative;
+    width: 34px;
+    height: 18px;
+    background: #444;
+    border-radius: 20px;
+    transition: background 0.2s;
+}
+
+.toggle-switch.active {
+    background: #007AFF; /* iOS style blue or vscode button color */
+}
+
+.toggle-slider {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 14px;
+    height: 14px;
+    background: white;
+    border-radius: 50%;
+    transition: transform 0.2s;
+}
+
+.toggle-switch.active .toggle-slider {
+    transform: translateX(16px);
+}
+
+.premium-popover {
+    position: absolute;
+    top: calc(100% + 8px);
+    /* Open downwards to avoid top bar clipping */
+    left: 0;
+    background: color-mix(in srgb, var(--vscode-menu-background), transparent 65%) !important;
+    backdrop-filter: blur(20px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+    border: 1px solid var(--vscode-menu-border);
+    border-radius: 8px;
+    padding: 2px;
+    min-width: 100px;
+    max-width: calc(100vw - 20px);
+    display: none;
+    flex-direction: column;
+    z-index: 4000;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    animation: popInDown 0.15s ease-out;
+}
+
+.popover.show,
+.premium-popover.show {
+    display: flex;
+}
+
+.popover-section-title {
+    font-size: 0.65rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    opacity: 0.5;
+    padding: 6px 12px 2px;
+    letter-spacing: 0.5px;
+}
+
+.popover-row,
+.popover-item {
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--vscode-menu-foreground);
+}
+
+.row-label {
+    flex: 1;
+}
+
+.check-mark {
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+.popover-row:hover,
+.popover-item:hover {
+    background: var(--vscode-list-hoverBackground);
+    color: var(--vscode-list-hoverForeground, var(--vscode-foreground));
+}
+
+.popover-divider {
+    height: 1px;
+    background: var(--vscode-panel-border);
+    margin: 4px 8px;
+    opacity: 0.5;
+}
+
+/* Ensure popovers can be fixed-positioned for context menu */
+.premium-popover[style*="position: fixed"] {
+    z-index: 3000;
+    margin: 0;
+}
+
+@keyframes popInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-8px) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* --- Views --- */
+.view-panel {
+    flex: 1;
+    display: flex;
+    min-height: 0;
+    width: 100%;
+}
+
+#listView {
+    flex-direction: column;
+}
+
+#kanbanView {
+    flex-direction: row;
+}
+
+.list-section {
+    margin-bottom: 12px;
+}
+
+.list-section-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 4px;
+    font-weight: 700;
+    opacity: 0.6;
+    cursor: pointer;
+    border-bottom: 1px solid var(--vscode-panel-border);
+    margin-bottom: 10px;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: opacity 0.2s;
+}
+
+.list-section-header:hover {
+    opacity: 1;
+}
+
+.section-caret {
+    transition: transform 0.2s;
+}
+
+.section-collapsed .list-section-content {
+    display: none;
+}
+
+.section-collapsed .section-caret {
+    transform: rotate(-90deg);
+}
+
+.list-task-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    margin-bottom: 2px;
+    transition: background 0.15s;
+}
+
+.list-task-row .priority-indicator,
+.list-task-row .card-more {
+    margin-top: 2px;
+}
+
+.list-task-row:hover {
+    background: var(--vscode-list-hoverBackground);
+}
+
+.card-title {
+    font-size: 0.95rem;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+.card-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.card-desc {
+    font-size: 0.8rem;
+    opacity: 0.6;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.task-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.task-badge {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.75rem;
+    opacity: 0.8;
+}
+
+.task-badge i {
+    font-size: 0.85rem;
+}
+
+.task-badge.date-color-today {
+    color: #FF3B30;
+    opacity: 1;
+}
+
+.task-badge.date-color-tomorrow {
+    color: #FF9500;
+    opacity: 1;
+}
+
+.task-badge.date-color-soon {
+    color: #4CD964;
+    opacity: 1;
+}
+
+.task-badge.date-color-custom {
+    color: var(--vscode-descriptionForeground);
+    opacity: 0.8;
+}
+
+.task-badge.reminder-badge {
+    color:  var(--vscode-button-background);
+    opacity: 0.8;
+}
+
+.card-more {
+    flex-shrink: 0;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+
+.card-more:hover {
+    opacity: 1;
+}
+
+.priority-indicator {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid currentColor;
+    flex-shrink: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    background: transparent;
+    position: relative;
+}
+
+.priority-indicator.is-in-progress {
+    border-style: dashed;
+    border-width: 2px;
+}
+
+.priority-indicator.is-ready {
+    border-width: 2px;
+}
+
+.priority-indicator.is-ready::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    right: 2px;
+    bottom: 2px;
+    border: 1.5px solid var(--vscode-descriptionForeground, #8e8e93) !important;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.priority-indicator.is-testing {
+    border-style: dotted;
+    border-width: 2.5px;
+}
+
+.priority-indicator:hover {
+    transform: scale(1.1);
+}
+
+.priority-indicator.is-done {
+    background: currentColor;
+}
+
+.priority-indicator.is-done i {
+    color: var(--vscode-editor-background, #1e1e1e);
+    font-size: 12px !important;
+    font-weight: 900;
+    -webkit-text-stroke: 1px var(--vscode-editor-background, #1e1e1e);
+}
+
+.task-is-done .card-title {
+    text-decoration: line-through;
+    opacity: 0.5;
+}
+
+.task-is-done {
+    opacity: 0.8;
+}
+
+.list-add-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    color: var(--vscode-descriptionForeground, #8e8e93);
+    font-size: 0.85rem;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.list-add-row i {
+    color: #FF3B30;
+    font-size: 1.1rem;
+    opacity: 0.8;
+}
+
+.list-add-row:hover {
+    background: transparent;
+    color: var(--vscode-foreground);
+}
+
+.list-add-row:hover i {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+/* --- Kanban View --- */
+.board-container {
+    display: flex;
+    flex-direction: row;
+    gap: 16px;
+    overflow-x: auto;
+    padding: 8px 4px 24px;
+    flex: 1;
+    width: 100%;
+    min-height: 500px;
+    align-items: flex-start;
+}
+
+.board-column {
+    flex: 0 0 280px;
+    background: var(--vscode-sideBar-background, rgba(0, 0, 0, 0.2));
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    max-height: 100%;
+    border: 1px solid var(--vscode-panel-border);
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.board-column.drag-over {
+    border-color: var(--vscode-focusBorder);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.col-header {
+    padding: 16px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    opacity: 0.9;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.col-title-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.status-icon-header {
+    font-size: 1.1rem;
+    opacity: 0.8;
+}
+
+/* --- Status Animations --- */
+@keyframes status-pulse {
+    0% { transform: scale(1); opacity: 0.8; }
+    50% { transform: scale(1.15); opacity: 1; }
+    100% { transform: scale(1); opacity: 0.8; }
+}
+
+@keyframes status-float {
+    0% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+    100% { transform: translateY(0); }
+}
+
+.anim-pulse {
+    animation: status-pulse 2s infinite ease-in-out;
+}
+
+.anim-float {
+    animation: status-float 3s infinite ease-in-out;
+}
+
+.anim-slow-float {
+    animation: status-float 5s infinite ease-in-out;
+}
+
+.anim-slow-pulse {
+    animation: status-pulse 4s infinite ease-in-out;
+}
+
+.col-count {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.75rem;
+}
+
+.tasks-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 12px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.task-card {
+    background: var(--vscode-editor-background);
+    border: 1px solid var(--vscode-panel-border);
+    border-radius: 10px;
+    padding: 12px;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    cursor: grab;
+    transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.task-card .priority-indicator,
+.task-card .card-more {
+    margin-top: 2px;
+}
+
+.task-card:active {
+    cursor: grabbing;
+}
+
+.task-card.dragging {
+    opacity: 0.5;
+    transform: scale(0.95);
+}
+
+.task-card:hover {
+    border-color: var(--vscode-focusBorder);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.col-add-task {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: transparent !important;
+    border: none !important;
+    color: var(--vscode-descriptionForeground, #8e8e93);
+    cursor: pointer;
+    font-size: 0.85rem;
+    width: 100%;
+    transition: all 0.2s;
+    margin-top: 4px;
+}
+
+.col-add-task i {
+    color: #FF3B30;
+    font-size: 1.1rem;
+    opacity: 0.8;
+}
+
+.col-add-task:hover {
+    background: transparent !important;
+    color: var(--vscode-foreground);
+}
+
+.col-add-task:hover i {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+/* --- Context Menu --- */
+.ctx-menu {
+    position: fixed;
+    background: color-mix(in srgb, var(--vscode-menu-background), transparent 65%) !important;
+    backdrop-filter: blur(20px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+    border: 1px solid var(--vscode-menu-border);
+    border-radius: 8px;
+    padding: 4px;
+    min-width: 160px;
+    z-index: 2000;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.ctx-item {
+    padding: 6px 10px;
+    cursor: pointer;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+}
+
+.ctx-item:hover {
+    background: var(--vscode-list-hoverBackground);
+    color: var(--vscode-list-hoverForeground, var(--vscode-foreground));
+}
+
+.ctx-item.delete-item {
+    color: #FF3B30 !important;
+}
+
+.ctx-item.delete-item:hover {
+    background: rgba(255, 59, 48, 0.1) !important;
+    color: #FF3B30 !important;
+}
+
+.ctx-label {
+    font-size: 0.65rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    opacity: 0.4;
+    padding: 8px 10px 4px;
+    letter-spacing: 0.5px;
+    color: var(--vscode-foreground);
+    display: block;
+}
+
+.ctx-priority-row {
+    display: flex;
+    gap: 8px;
+    padding: 4px 8px;
+}
+
+.ctx-status-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.ctx-status-list .ctx-item i {
+    font-size: 0.9rem;
+    opacity: 0.7;
+}
+
+.flag-opt {
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.flag-opt:hover {
+    background: var(--vscode-list-hoverBackground);
+}
+
+.edit-input {
+    width: 100%;
+    background: transparent;
+    color: var(--vscode-input-foreground);
+    border: none;
+    border-radius: 4px;
+    padding: 0;
+    font-size: 0.95rem;
+    outline: none;
+    resize: none;
+    font-family: inherit;
+    display: block;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+/* --- Modal --- */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(5px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3000;
+    padding: 20px;
+    animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.modal-container {
+    background: var(--vscode-editor-background) !important;
+    border: 1px solid var(--vscode-panel-border);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 400px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+}
+
+@keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-header {
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--vscode-panel-border);
+}
+
+.modal-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.modal-status-badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: rgba(200, 200, 200, 0.2) !important;
+    color: var(--vscode-foreground) !important;
+}
+
+.modal-close-btn {
+    background: transparent;
+    border: none;
+    color: var(--vscode-foreground);
+    cursor: pointer;
+    opacity: 0.6;
+    padding: 4px;
+    border-radius: 4px;
+    display: flex;
+}
+
+.modal-close-btn:hover {
+    background: var(--vscode-toolbar-hoverBackground);
+    opacity: 1;
+}
+
+.modal-body {
+    padding: 20px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.modal-title-input {
+    background: transparent;
+    border: none;
+    color: var(--vscode-foreground);
+    font-size: 1.4rem;
+    font-weight: 700;
+    width: 100%;
+    max-width: 100%;
+    outline: none;
+    resize: none;
+    padding: 0;
+    line-height: 1.2;
+    display: block;
+}
+
+.modal-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+}
+
+.modal-section-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    opacity: 0.7;
+}
+
+.modal-desc-input {
+    background: var(--vscode-input-background);
+    border: 1px solid var(--vscode-panel-border);
+    color: var(--vscode-foreground);
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    width: 100%;
+    max-width: 100%;
+    outline: none;
+    resize: none;
+    min-height: 100px;
+    display: block;
+}
+
+.modal-desc-input:focus {
+    border-color: var(--vscode-focusBorder);
+}
+
+.modal-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.modal-grid-item {
+    background: rgba(200, 200, 200, 0.2) !important;
+    border: 1px solid transparent;
+    padding: 10px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.modal-grid-item:hover {
+    background: rgba(200, 200, 200, 0.3) !important;
+    border-color: var(--vscode-focusBorder);
+}
+
+.grid-item-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    opacity: 0.6;
+    margin-bottom: 4px;
+    color: var(--vscode-foreground);
+}
+
+.grid-item-value {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: var(--vscode-foreground);
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.grid-item-value i {
+    font-size: 14px;
+}
+
+.modal-footer {
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-top: 1px solid var(--vscode-panel-border);
+}
+
+.modal-btn {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: none;
+}
+
+.primary-btn {
+    background: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+}
+
+.primary-btn:hover {
+    background: var(--vscode-button-hoverBackground);
+}
+
+.delete-btn {
+    background: transparent;
+    color: #FF3B30;
+    opacity: 0.8;
+}
+
+.delete-btn:hover {
+    background: rgba(255, 59, 48, 0.1);
+    opacity: 1;
+}
+
+@media (max-width: 400px) {
+    .modal-container {
+        max-width: 100%;
+        border-radius: 16px 16px 0 0;
+        position: absolute;
+        bottom: 0;
+    }
+    
+    .modal-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.card-desc.empty-desc {
+    opacity: 0.3;
+    font-style: italic;
+    font-size: 0.8rem;
+}
+
+.card-desc:hover {
+    opacity: 1;
+    cursor: pointer;
+}
+
+.modal-grid-item.has-value {
+    background: var(--vscode-welcomePage-tileBackground);
+}
+
+.modal-grid-item.has-value.date-color-today .grid-item-value {
+    color: #FF3B30 !important;
+}
+
+.modal-grid-item.has-value.date-color-tomorrow .grid-item-value {
+    color: #FF9500 !important;
+}
+
+.modal-grid-item.has-value.date-color-soon .grid-item-value {
+    color: #4CD964 !important;
+}
+
+.modal-grid-item.has-value.date-color-weekend .grid-item-value,
+.modal-grid-item.has-value.date-color-custom .grid-item-value {
+    color: var(--vscode-foreground) !important;
+}
