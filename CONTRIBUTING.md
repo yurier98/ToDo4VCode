@@ -66,6 +66,7 @@ To publish the extension to the VS Code Marketplace and Open VSX Registry, you n
 **Publishing requirements:**
 - You must have a publisher account on the VS Code Marketplace
 - Your publisher ID should match the `publisher` field in `package.json` (currently: `YurierHerrera`)
+- **Note**: Marketplace URLs may use different casing (e.g., `yurierherrera` vs `YurierHerrera`). Verify the correct URL format for your publisher on the [VS Code Marketplace manage page](https://marketplace.visualstudio.com/manage)
 - For more info, see the [official publishing guide](https://code.visualstudio.com/api/working-with-extensions/publishing-extension)
 
 #### 2. Open VSX Registry Token (`OVSX_PAT`)
@@ -85,6 +86,7 @@ To publish the extension to the VS Code Marketplace and Open VSX Registry, you n
 **Publishing requirements:**
 - You must have an account on Open VSX
 - Your namespace should match the publisher (currently: `YurierHerrera`)
+- **Note**: Open VSX Registry URLs may use different casing conventions. Verify the correct URL format on your [Open VSX profile page](https://open-vsx.org/user-settings/namespaces)
 - For more info, see the [Open VSX documentation](https://github.com/eclipse/openvsx/wiki/Publishing-Extensions)
 
 #### 3. Adding Secrets to GitHub Repository
