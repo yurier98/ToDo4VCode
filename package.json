@@ -2,7 +2,7 @@
     "name": "todo4vcode",
     "displayName": "ToDo4VCode",
     "description": "Professional task manager for developers. Organize your project tasks with clear priorities, due dates, and reminders directly in VS Code.",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "publisher": "YurierHerrera",
     "author": "Yurier Herrera",
     "license": "MIT",
