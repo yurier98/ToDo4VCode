@@ -50,7 +50,8 @@ jobs:
 
       - name: Publish to Marketplace
         if: startsWith(github.ref, 'refs/tags/')
-        run: npx vsce publish --packagePath $(ls *.vsix) --verbose
+        # Using explicit publisher to avoid ambiguity
+        run: npx vsce publish --packagePath $(ls *.vsix) --publisher YurierHerrera --verbose
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
 
