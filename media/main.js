@@ -8,6 +8,9 @@ let editingTaskId = null;
 let modalTaskId = null;
 let collapsedSections = new Set();
 let shouldAutoEditNewTask = false;
+let sortBy = 'priority';
+
+const SORT_PRIORITY = ['Must', 'Should', 'Could', "Wont"];
 
 // Modal States
 let modalStatus = 'Todo';
@@ -247,6 +250,14 @@ function toggleConfigPopover(e) {
         const popoverBtnKanban = document.getElementById('popoverBtnKanban');
         if (popoverBtnList) popoverBtnList.classList.toggle('active', viewMode === 'list');
         if (popoverBtnKanban) popoverBtnKanban.classList.toggle('active', viewMode === 'kanban');
+
+        // Update Sort Chks
+        const sortPriorityCheck = document.getElementById('sortPriorityCheck');
+        const sortDueDateCheck = document.getElementById('sortDueDateCheck');
+        const sortTitleCheck = document.getElementById('sortTitleCheck');
+        if (sortPriorityCheck) sortPriorityCheck.classList.toggle('hidden', sortBy !== 'priority');
+        if (sortDueDateCheck) sortDueDateCheck.classList.toggle('hidden', sortBy !== 'dueDate');
+        if (sortTitleCheck) sortTitleCheck.classList.toggle('hidden', sortBy !== 'title');
     }
 }
 
@@ -662,6 +673,32 @@ function setGroupBy(mode) {
     render();
 }
 
+function setSortBy(val) {
+    sortBy = val;
+    closeAllPopovers();
+    render();
+}
+
+function sortTasks(tasks) {
+    return [...tasks].sort((a, b) => {
+        if (sortBy === 'priority') {
+            const pA = a.priority === "Won't" ? 'Wont' : a.priority;
+            const pB = b.priority === "Won't" ? 'Wont' : b.priority;
+            const res = SORT_PRIORITY.indexOf(pA) - SORT_PRIORITY.indexOf(pB);
+            if (res !== 0) return res;
+            return b.createdAt - a.createdAt;
+        } else if (sortBy === 'dueDate') {
+            if (!a.dueDate && !b.dueDate) return b.createdAt - a.createdAt;
+            if (!a.dueDate) return 1;
+            if (!b.dueDate) return -1;
+            return a.dueDate - b.dueDate;
+        } else if (sortBy === 'title') {
+            return a.text.localeCompare(b.text);
+        }
+        return b.createdAt - a.createdAt;
+    });
+}
+
 function toggleCompletedVisibility() {
     hideCompleted = !hideCompleted;
     const toggle = document.getElementById('completedToggle');
@@ -832,11 +869,15 @@ function renderList(tasks) {
     const container = document.getElementById('listTasks');
     if (!container) return;
     container.innerHTML = '';
+
+    // Always sort internally first
+    const internalSorted = sortTasks(tasks);
+
     if (groupBy === 'none') {
         container.innerHTML = `
             <div class="list-section">
                 <div class="list-section-content">
-                    ${tasks.map(t => `
+                    ${internalSorted.map(t => `
                         <div class="list-task-row ${t.status === 'Done' ? 'task-is-done' : ''}" data-id="${t.id}">
                             ${getPriorityIndicatorHtml(t)}
                             <div class="card-content">
@@ -859,13 +900,9 @@ function renderList(tasks) {
         return;
     }
     const groups = groupBy === 'status' ? ['Todo', 'Ready', 'In Progress', 'Testing', 'Done'] : ['Must', 'Should', 'Could', 'Wont'];
-    const sortedTasks = [...tasks].sort((a, b) => {
-        const valA = groupBy === 'status' ? a.status : (a.priority === "Won't" ? 'Wont' : a.priority);
-        const valB = groupBy === 'status' ? b.status : (b.priority === "Won't" ? 'Wont' : b.priority);
-        return groups.indexOf(valA) - groups.indexOf(valB);
-    });
+
     groups.forEach(group => {
-        const sTasks = sortedTasks.filter(t => {
+        const sTasks = internalSorted.filter(t => {
             const val = groupBy === 'status' ? t.status : (t.priority === "Won't" ? 'Wont' : t.priority);
             return val === group;
         });
@@ -910,12 +947,15 @@ function renderKanban(tasks) {
     const board = document.getElementById('kanbanView');
     if (!board) return;
     board.innerHTML = '';
+
+    const internalSorted = sortTasks(tasks);
+
     const cols = groupBy === 'none' ? ['Tareas'] : (groupBy === 'status' ? ['Todo', 'Ready', 'In Progress', 'Testing', 'Done'] : ['Must', 'Should', 'Could', 'Wont']);
     cols.forEach(col => {
         const div = document.createElement('div');
         div.className = 'board-column';
         div.dataset.column = col;
-        const cTasks = tasks.filter(t => {
+        const cTasks = internalSorted.filter(t => {
             if (groupBy === 'none') return true;
             const val = groupBy === 'status' ? t.status : (t.priority === "Won't" ? 'Wont' : t.priority);
             return val === col;

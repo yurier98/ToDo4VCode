@@ -76,6 +76,25 @@ export class TaskWebview {
                                             <span class="row-label">${UI.NONE}</span>
                                             <i id="noneCheck" class="codicon codicon-check check-mark hidden"></i>
                                         </div>
+
+                                        <div class="popover-divider"></div>
+
+                                        <div class="popover-section-title">${UI.ORDER_BY}</div>
+                                        <div class="popover-row" onclick="setSortBy('priority')">
+                                            <i class="codicon codicon-flag"></i> 
+                                            <span class="row-label">${UI.PRIORITY}</span>
+                                            <i id="sortPriorityCheck" class="codicon codicon-check check-mark"></i>
+                                        </div>
+                                        <div class="popover-row" onclick="setSortBy('dueDate')">
+                                            <i class="codicon codicon-calendar"></i> 
+                                            <span class="row-label">${UI.DUE_DATE}</span>
+                                            <i id="sortDueDateCheck" class="codicon codicon-check check-mark hidden"></i>
+                                        </div>
+                                        <div class="popover-row" onclick="setSortBy('title')">
+                                            <i class="codicon codicon-whole-word"></i> 
+                                            <span class="row-label">${UI.TITLE}</span>
+                                            <i id="sortTitleCheck" class="codicon codicon-check check-mark hidden"></i>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
