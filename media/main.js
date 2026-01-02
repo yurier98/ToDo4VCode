@@ -535,8 +535,14 @@ function setPremiumReminder(m, labelText, isCustom = false) {
         labelText = 'Tomorrow, 09:00';
     } else if (typeof m === 'string' && (m.includes('T') || m.includes(' ') || m.includes('-'))) {
         // Handle formats like "2023-10-27 14:30" or ISO
-        ts = new Date(m.replace(' ', 'T')).getTime();
-        if (isNaN(ts)) ts = new Date(m).getTime();
+        const dateObj = new Date(m.replace(' ', 'T'));
+        dateObj.setSeconds(0, 0); // Normalize to hh:mm:00
+        ts = dateObj.getTime();
+        if (isNaN(ts)) {
+            const altDate = new Date(m);
+            altDate.setSeconds(0, 0);
+            ts = altDate.getTime();
+        }
 
         const d = new Date(ts);
         const now = new Date();
@@ -551,7 +557,10 @@ function setPremiumReminder(m, labelText, isCustom = false) {
             labelText = `${d.getDate()} ${months[d.getMonth()]}, ${hours}:${minutes}`;
         }
     } else {
-        ts = Date.now() + (m * 60 * 1000);
+        const d = new Date();
+        d.setMinutes(d.getMinutes() + m);
+        d.setSeconds(0, 0); // Normalize to hh:mm:00
+        ts = d.getTime();
     }
 
     const colorClass = getDateColorClass(new Date(ts));

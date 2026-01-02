@@ -18,6 +18,10 @@ export class TaskViewProvider implements vscode.WebviewViewProvider {
 
         this._taskService.onReminder(task => {
             const message = MESSAGES.TASK_REMINDER.replace('{0}', task.text);
+            
+            // Reproducir sonido de notificación
+            this._playNotificationSound();
+            
             vscode.window.showInformationMessage(message, MESSAGES.VIEW_TASK).then(selection => {
                 if (selection === MESSAGES.VIEW_TASK) {
                     vscode.commands.executeCommand('todo4vcode-view.focus');
@@ -58,6 +62,33 @@ export class TaskViewProvider implements vscode.WebviewViewProvider {
     private _updateWebview(tasks: any[]) {
         if (this._view) {
             this._view.webview.postMessage({ type: 'updateTasks', tasks });
+        }
+    }
+
+    private _playNotificationSound() {
+        try {
+            const soundPath = vscode.Uri.joinPath(this._extensionUri, 'media', 'ding-ding-alert.mp3');
+            const soundUri = soundPath.fsPath;
+            
+            // Usar comando del sistema para reproducir el sonido
+            const { execFile } = require('child_process');
+            
+            if (process.platform === 'darwin') {
+                // macOS
+                execFile('afplay', [soundUri], { timeout: 5000 });
+            } else if (process.platform === 'win32') {
+                // Windows - Usando Windows Media Player via PowerShell para soportar MP3
+                const command = `(New-Object Media.SoundPlayer '${soundUri}').Play();`;
+                // Nota: SoundPlayer solo soporta WAV. Para MP3 en Windows:
+                const mp3Command = `Add-Type -AssemblyName presentationCore; $player = New-Object system.windows.media.mediaplayer; $player.open('${soundUri}'); $player.Play(); Start-Sleep 5;`;
+                execFile('powershell', ['-c', mp3Command], { timeout: 5000 });
+            } else {
+                // Linux
+                execFile('ffplay', ['-nodisp', '-autoexit', soundUri], { timeout: 5000 });
+            }
+        } catch (error) {
+            // Si hay error al reproducir sonido, solo ignora silenciosamente
+            console.debug('Sound playback error:', error);
         }
     }
 }

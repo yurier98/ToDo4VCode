@@ -8,15 +8,15 @@ export class TaskService implements vscode.Disposable {
     private readonly _onReminder = new vscode.EventEmitter<TodoItem>();
     public readonly onReminder = this._onReminder.event;
 
-    private _reminderInterval: NodeJS.Timeout | undefined;
+    private _reminderTimeout: NodeJS.Timeout | undefined;
 
     constructor(private readonly _storageManager: StorageManager) {
-        this._startReminderCheck();
+        this._scheduleNextReminder();
     }
 
     public dispose() {
-        if (this._reminderInterval) {
-            clearInterval(this._reminderInterval);
+        if (this._reminderTimeout) {
+            clearTimeout(this._reminderTimeout);
         }
         this._onTasksChanged.dispose();
         this._onReminder.dispose();
@@ -108,28 +108,56 @@ export class TaskService implements vscode.Disposable {
     private async _saveAndNotify(tasks: TodoItem[]) {
         await this._storageManager.saveTasks(tasks);
         this._onTasksChanged.fire(tasks);
+        this._scheduleNextReminder();
     }
 
-    private _startReminderCheck() {
-        this._reminderInterval = setInterval(async () => {
-            const tasks = await this.getTasks();
-            const now = Date.now();
-            let changed = false;
+    private async _scheduleNextReminder() {
+        if (this._reminderTimeout) {
+            clearTimeout(this._reminderTimeout);
+        }
 
-            for (const task of tasks) {
-                if (task.reminders && task.reminders.length > 0) {
-                    const dueReminders = task.reminders.filter(r => r <= now);
-                    if (dueReminders.length > 0) {
-                        this._onReminder.fire(task);
-                        task.reminders = task.reminders.filter(r => r > now);
-                        changed = true;
+        const tasks = await this.getTasks();
+        const now = Date.now();
+        let nextReminderTime = Number.MAX_SAFE_INTEGER;
+        let hasReminders = false;
+
+        for (const task of tasks) {
+            if (task.reminders && task.reminders.length > 0) {
+                for (const r of task.reminders) {
+                    if (r < nextReminderTime && r > now - 500) {
+                        nextReminderTime = r;
+                        hasReminders = true;
                     }
                 }
             }
+        }
 
-            if (changed) {
-                await this._saveAndNotify(tasks);
+        if (hasReminders) {
+            const delay = Math.max(0, nextReminderTime - now);
+            this._reminderTimeout = setTimeout(() => this._processDueReminders(), delay);
+        }
+    }
+
+    private async _processDueReminders() {
+        const tasks = await this.getTasks();
+        const now = Date.now();
+        let changed = false;
+
+        for (const task of tasks) {
+            if (task.reminders && task.reminders.length > 0) {
+                const dueReminders = task.reminders.filter(r => r <= now + 1000);
+                if (dueReminders.length > 0) {
+                    this._onReminder.fire(task);
+                    task.reminders = task.reminders.filter(r => r > now + 1000);
+                    changed = true;
+                }
             }
-        }, 15000);
+        }
+
+        if (changed) {
+            await this._saveAndNotify(tasks);
+        } else {
+            this._scheduleNextReminder();
+        }
     }
 }
