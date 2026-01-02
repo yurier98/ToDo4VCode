@@ -77,5 +77,27 @@ You can customize the extension behavior in your VS Code settings:
 2. Package: `vsce package`.
 3. Install the generated `.vsix` file via the Extensions view.
 
+## 🚀 Publishing
+
+This extension is published to both the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=yurierherrera.todo4vcode) and [Open VSX Registry](https://open-vsx.org/extension/YurierHerrera/todo4vcode).
+
+### For Maintainers
+
+Publishing requires Personal Access Tokens (PATs) configured as GitHub repository secrets:
+- `VSCE_PAT` - Token from Azure DevOps for VS Code Marketplace
+- `OVSX_PAT` - Token from Open VSX Registry
+
+For detailed setup instructions, see [CONTRIBUTING.md](./CONTRIBUTING.md#setting-up-marketplace-tokens).
+
+The GitHub Actions workflow automatically publishes new versions when a tag starting with `v` is pushed to the repository.
+
+## 🤝 Contributing
+
+Contributions are welcome! Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for detailed guidelines on:
+- Setting up your development environment
+- Configuring marketplace tokens for publishing
+- Code style guidelines
+- Pull request process
+
 ---
 *Built with ❤️ for developers who value their time.*
