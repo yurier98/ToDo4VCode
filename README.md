@@ -2,6 +2,8 @@
 
 [![Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/yurierherrera.todo4vcode?style=flat-square)](https://marketplace.visualstudio.com/items?itemName=yurierherrera.todo4vcode)
 [![Installs](https://img.shields.io/visual-studio-marketplace/i/yurierherrera.todo4vcode?style=flat-square)](https://marketplace.visualstudio.com/items?itemName=yurierherrera.todo4vcode)
+[![Open VSX Version](https://img.shields.io/open-vsx/v/YurierHerrera/todo4vcode?style=flat-square)](https://open-vsx.org/extension/YurierHerrera/todo4vcode)
+[![Open VSX Downloads](https://img.shields.io/open-vsx/dt/YurierHerrera/todo4vcode?style=flat-square)](https://open-vsx.org/extension/YurierHerrera/todo4vcode)
 
 Stop drowning in endless todo lists. **ToDo4VCode** is a professional task management extension for VS Code that helps you organize project tasks by their true impact, ensuring you always focus on what matters most.
 
