@@ -193,7 +193,8 @@ body {
     outline: none;
     resize: none;
     opacity: 0.6;
-    max-height: 6.3rem; /* ~5 lines (5 * 1.4 * 0.9) */
+    max-height: 6.3rem;
+    /* ~5 lines (5 * 1.4 * 0.9) */
     overflow-y: auto;
     word-wrap: break-word;
     overflow-wrap: break-word;
@@ -260,10 +261,12 @@ body {
     .action-btn span {
         display: none;
     }
+
     .action-btn {
         padding: 6px;
         gap: 0;
     }
+
     .premium-input-card {
         padding: 10px;
     }
@@ -305,23 +308,28 @@ body {
 }
 
 /* Date Colors - Icon and Text focus for contrast */
-.date-color-today i, .date-color-today span {
+.date-color-today i,
+.date-color-today span {
     color: #FF3B30 !important;
 }
 
-.date-color-tomorrow i, .date-color-tomorrow span {
+.date-color-tomorrow i,
+.date-color-tomorrow span {
     color: #FF9500 !important;
 }
 
-.date-color-soon i, .date-color-soon span {
+.date-color-soon i,
+.date-color-soon span {
     color: #4CD964 !important;
 }
 
-.date-color-weekend i, .date-color-weekend span {
+.date-color-weekend i,
+.date-color-weekend span {
     color: var(--vscode-descriptionForeground) !important;
 }
 
-.date-color-custom i, .date-color-custom span {
+.date-color-custom i,
+.date-color-custom span {
     color: var(--vscode-descriptionForeground) !important;
 }
 
@@ -378,9 +386,20 @@ body {
 }
 
 /* Override date colors inside popover items to keep text readable on hover */
-.popover-item.date-color-today i, .popover-item.date-color-today { color: #FF3B30 !important; }
-.popover-item.date-color-tomorrow i, .popover-item.date-color-tomorrow { color: #FF9500 !important; }
-.popover-item.date-color-weekend i, .popover-item.date-color-weekend { color: var(--vscode-foreground) !important; }
+.popover-item.date-color-today i,
+.popover-item.date-color-today {
+    color: #FF3B30 !important;
+}
+
+.popover-item.date-color-tomorrow i,
+.popover-item.date-color-tomorrow {
+    color: #FF9500 !important;
+}
+
+.popover-item.date-color-weekend i,
+.popover-item.date-color-weekend {
+    color: var(--vscode-foreground) !important;
+}
 
 /* Premium Custom Date Input */
 .popover-custom-date {
@@ -511,7 +530,7 @@ body {
     justify-content: center !important;
 }
 
-.flatpickr-months .flatpickr-prev-month, 
+.flatpickr-months .flatpickr-prev-month,
 .flatpickr-months .flatpickr-next-month {
     color: var(--vscode-menu-foreground) !important;
     fill: var(--vscode-menu-foreground) !important;
@@ -526,27 +545,34 @@ body {
     border: none !important;
 }
 
-.flatpickr-months .flatpickr-prev-month { margin-left: 4px !important; margin-top: 4px !important; }
-.flatpickr-months .flatpickr-next-month { margin-right: 4px !important; margin-top: 4px !important; }
+.flatpickr-months .flatpickr-prev-month {
+    margin-left: 4px !important;
+    margin-top: 4px !important;
+}
 
-.flatpickr-months .flatpickr-prev-month svg, 
+.flatpickr-months .flatpickr-next-month {
+    margin-right: 4px !important;
+    margin-top: 4px !important;
+}
+
+.flatpickr-months .flatpickr-prev-month svg,
 .flatpickr-months .flatpickr-next-month svg {
     width: 10px !important;
     height: 10px !important;
 }
 
-.flatpickr-months .flatpickr-prev-month:hover, 
+.flatpickr-months .flatpickr-prev-month:hover,
 .flatpickr-months .flatpickr-next-month:hover {
     background: var(--vscode-toolbar-hoverBackground, var(--vscode-list-hoverBackground)) !important;
     opacity: 1 !important;
 }
 
-.flatpickr-months .flatpickr-prev-month:active, 
+.flatpickr-months .flatpickr-prev-month:active,
 .flatpickr-months .flatpickr-next-month:active {
     transform: scale(0.9);
 }
 
-.flatpickr-months .flatpickr-prev-month:hover svg, 
+.flatpickr-months .flatpickr-prev-month:hover svg,
 .flatpickr-months .flatpickr-next-month:hover svg {
     fill: var(--vscode-foreground) !important;
 }
@@ -614,7 +640,8 @@ span.flatpickr-weekday {
     opacity: 0.2;
 }
 
-.flatpickr-day.prevMonthDay, .flatpickr-day.nextMonthDay {
+.flatpickr-day.prevMonthDay,
+.flatpickr-day.nextMonthDay {
     color: var(--vscode-descriptionForeground) !important;
     opacity: 0.4;
 }
@@ -637,7 +664,8 @@ span.flatpickr-weekday {
     background: transparent !important;
     border: none !important;
     margin: 0 !important;
-    padding: 4px 2px 4px 8px !important; /* Minimal right padding to bring native arrow closer */
+    padding: 4px 2px 4px 8px !important;
+    /* Minimal right padding to bring native arrow closer */
     cursor: pointer !important;
     border-radius: 6px !important;
     transition: all 0.2s ease !important;
@@ -723,7 +751,8 @@ span.flatpickr-weekday {
     background: transparent !important;
 }
 
-.flatpickr-calendar.arrowTop:after, .flatpickr-calendar.arrowTop:before {
+.flatpickr-calendar.arrowTop:after,
+.flatpickr-calendar.arrowTop:before {
     border-bottom-color: var(--vscode-menu-border) !important;
 }
 
@@ -748,16 +777,20 @@ span.flatpickr-weekday {
     border-radius: 0 0 12px 12px !important;
 }
 
-.flatpickr-time input, .flatpickr-time .flatpickr-time-separator, .flatpickr-time .flatpickr-am-pm {
+.flatpickr-time input,
+.flatpickr-time .flatpickr-time-separator,
+.flatpickr-time .flatpickr-am-pm {
     color: var(--vscode-menu-foreground) !important;
     border-radius: 4px !important;
 }
 
-.flatpickr-time input:hover, .flatpickr-time .flatpickr-am-pm:hover {
+.flatpickr-time input:hover,
+.flatpickr-time .flatpickr-am-pm:hover {
     background: var(--vscode-list-hoverBackground) !important;
 }
 
-.flatpickr-innerContainer, .flatpickr-rContainer {
+.flatpickr-innerContainer,
+.flatpickr-rContainer {
     background: transparent !important;
     width: 252px !important;
     display: flex !important;
@@ -847,7 +880,8 @@ span.flatpickr-weekday {
 }
 
 .view-mode-btn.active {
-    background:  var(--vscode-welcomePage-tileBackground); /* Darker background for active state like in the image */
+    background: var(--vscode-welcomePage-tileBackground);
+    /* Darker background for active state like in the image */
     opacity: 1;
     box-shadow: 0 2px 24px rgba(0, 0, 0, 0.1);
     border: 0.5px solid var(--vscode-panel-border);
@@ -887,7 +921,8 @@ span.flatpickr-weekday {
 }
 
 .toggle-switch.active {
-    background: #007AFF; /* iOS style blue or vscode button color */
+    background: #007AFF;
+    /* iOS style blue or vscode button color */
 }
 
 .toggle-slider {
@@ -1080,8 +1115,8 @@ span.flatpickr-weekday {
 .card-desc {
     font-size: 0.8rem;
     opacity: 0.6;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
+    overflow-wrap: anywhere;
+    word-break: break-word;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     line-clamp: 2;
@@ -1128,7 +1163,7 @@ span.flatpickr-weekday {
 }
 
 .task-badge.reminder-badge {
-    color:  var(--vscode-button-background);
+    color: var(--vscode-button-background);
     opacity: 0.8;
 }
 
@@ -1290,15 +1325,34 @@ span.flatpickr-weekday {
 
 /* --- Status Animations --- */
 @keyframes status-pulse {
-    0% { transform: scale(1); opacity: 0.8; }
-    50% { transform: scale(1.15); opacity: 1; }
-    100% { transform: scale(1); opacity: 0.8; }
+    0% {
+        transform: scale(1);
+        opacity: 0.8;
+    }
+
+    50% {
+        transform: scale(1.15);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 0.8;
+    }
 }
 
 @keyframes status-float {
-    0% { transform: translateY(0); }
-    50% { transform: translateY(-3px); }
-    100% { transform: translateY(0); }
+    0% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-3px);
+    }
+
+    100% {
+        transform: translateY(0);
+    }
 }
 
 .anim-pulse {
@@ -1344,6 +1398,10 @@ span.flatpickr-weekday {
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
     cursor: grab;
     transition: transform 0.1s, box-shadow 0.1s;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
 }
 
 .task-card .priority-indicator,
@@ -1490,6 +1548,7 @@ span.flatpickr-weekday {
     overflow-wrap: break-word;
     word-break: break-word;
 }
+
 /* --- Modal --- */
 .modal-overlay {
     position: fixed;
@@ -1508,8 +1567,13 @@ span.flatpickr-weekday {
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }
 
 .modal-container {
@@ -1527,8 +1591,15 @@ span.flatpickr-weekday {
 }
 
 @keyframes slideUp {
-    from { transform: translateY(20px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
 }
 
 .modal-header {
@@ -1726,7 +1797,7 @@ span.flatpickr-weekday {
         position: absolute;
         bottom: 0;
     }
-    
+
     .modal-grid {
         grid-template-columns: 1fr;
     }
