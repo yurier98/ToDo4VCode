@@ -253,6 +253,10 @@ export class TaskWebview {
                             <i class="codicon codicon-edit"></i>
                             <span>Edit</span>
                         </div>
+                        <div class="ctx-item" onclick="handleMenuAction('sendToChat')">
+                            <i class="codicon codicon-comment-discussion"></i>
+                            <span>Send to Chat</span>
+                        </div>
                         <div class="ctx-item" onclick="handleMenuAction('editDesc')">
                             <i class="codicon codicon-list-selection"></i>
                             <span>Edit description</span>

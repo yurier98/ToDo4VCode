@@ -29,15 +29,17 @@ export function activate(context: vscode.ExtensionContext) {
             statusBarItem.tooltip = MESSAGES.ADD_FIRST_TASK;
         } else {
             statusBarItem.text = `$(checklist) ${mustCount} Must | ${inProgressCount} In Progress`;
-            statusBarItem.tooltip = MESSAGES.TASKS_PENDING.replace('{0}', mustCount.toString()) + 
-                '\n' + MESSAGES.TASKS_IN_PROGRESS.replace('{1}', inProgressCount.toString()) + 
+            statusBarItem.tooltip = MESSAGES.TASKS_PENDING.replace('{0}', mustCount.toString()) +
+                '\n' + MESSAGES.TASKS_IN_PROGRESS.replace('{1}', inProgressCount.toString()) +
                 '\n' + MESSAGES.TOTAL_TASKS.replace('{2}', total.toString());
         }
         statusBarItem.show();
     };
 
-    // Initial update
-    taskService.getTasks().then(updateStatusBar);
+    // Initial update - deferred to avoid race conditions with platform initialization
+    setImmediate(() => {
+        taskService.getTasks().then(updateStatusBar);
+    });
 
     // Update on changes
     context.subscriptions.push(taskService.onTasksChanged(tasks => {
@@ -95,4 +97,4 @@ export function activate(context: vscode.ExtensionContext) {
     );
 }
 
-export function deactivate() {}
+export function deactivate() { }

@@ -712,6 +712,11 @@ function handleMenuAction(action) {
     const menuRect = menu ? menu.getBoundingClientRect() : { top: 0, left: 0 };
     if (action === 'delete') {
         vscode.postMessage({ type: 'deleteTask', id: activeTaskId });
+    } else if (action === 'sendToChat') {
+        const task = currentTasks.find(t => t.id === activeTaskId);
+        if (task) {
+            vscode.postMessage({ type: 'sendToChat', text: task.text });
+        }
     } else if (action === 'edit' || action === 'editDesc') {
         openTaskModal(activeTaskId);
     } else if (action === 'date') {
