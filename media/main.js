@@ -624,7 +624,7 @@ function submitTask(text, priority, status, autoEdit = false) {
     shouldAutoEditNewTask = autoEdit;
     vscode.postMessage({
         type: 'addTask',
-        value: { text, priority: priority || 'Must', status: status || 'Todo', description: '' }
+        value: { text, priority: priority || 'Wont', status: status || 'Todo', description: '' }
     });
 }
 
