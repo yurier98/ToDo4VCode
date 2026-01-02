@@ -73,7 +73,9 @@ export class TaskService implements vscode.Disposable {
         const tasks = await this.getTasks();
         orders.forEach(o => {
             const task = tasks.find(t => t.id === o.id);
-            if (task) task.order = o.order;
+            if (task) {
+                task.order = o.order;
+            }
         });
         await this._saveAndNotify(tasks);
         return tasks;
