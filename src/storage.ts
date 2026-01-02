@@ -13,6 +13,7 @@ export interface TodoItem {
     reminders?: number[];
     completed: boolean;
     createdAt: number;
+    order?: number;
 }
 
 export class StorageManager {

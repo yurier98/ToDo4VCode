@@ -255,9 +255,11 @@ function toggleConfigPopover(e) {
         const sortPriorityCheck = document.getElementById('sortPriorityCheck');
         const sortDueDateCheck = document.getElementById('sortDueDateCheck');
         const sortTitleCheck = document.getElementById('sortTitleCheck');
+        const sortCustomCheck = document.getElementById('sortCustomCheck');
         if (sortPriorityCheck) sortPriorityCheck.classList.toggle('hidden', sortBy !== 'priority');
         if (sortDueDateCheck) sortDueDateCheck.classList.toggle('hidden', sortBy !== 'dueDate');
         if (sortTitleCheck) sortTitleCheck.classList.toggle('hidden', sortBy !== 'title');
+        if (sortCustomCheck) sortCustomCheck.classList.toggle('hidden', sortBy !== 'custom');
     }
 }
 
@@ -681,22 +683,156 @@ function setSortBy(val) {
 
 function sortTasks(tasks) {
     return [...tasks].sort((a, b) => {
+        if (sortBy === 'custom') {
+            const oA = a.order || 0;
+            const oB = b.order || 0;
+            if (oA !== oB) return oA - oB;
+            return b.createdAt - a.createdAt;
+        }
         if (sortBy === 'priority') {
             const pA = a.priority === "Won't" ? 'Wont' : a.priority;
             const pB = b.priority === "Won't" ? 'Wont' : b.priority;
             const res = SORT_PRIORITY.indexOf(pA) - SORT_PRIORITY.indexOf(pB);
             if (res !== 0) return res;
-            return b.createdAt - a.createdAt;
         } else if (sortBy === 'dueDate') {
-            if (!a.dueDate && !b.dueDate) return b.createdAt - a.createdAt;
-            if (!a.dueDate) return 1;
-            if (!b.dueDate) return -1;
-            return a.dueDate - b.dueDate;
+            if (a.dueDate || b.dueDate) {
+                if (!a.dueDate) return 1;
+                if (!b.dueDate) return -1;
+                if (a.dueDate !== b.dueDate) return a.dueDate - b.dueDate;
+            }
         } else if (sortBy === 'title') {
-            return a.text.localeCompare(b.text);
+            const res = a.text.localeCompare(b.text);
+            if (res !== 0) return res;
         }
+        // Fallback to order or createdAt
+        const oA = a.order || 0;
+        const oB = b.order || 0;
+        if (oA !== oB) return oA - oB;
         return b.createdAt - a.createdAt;
     });
+}
+
+function cleanupDragState() {
+    document.querySelectorAll('.drag-indicator').forEach(el => el.remove());
+    document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+    document.querySelectorAll('.dragging').forEach(el => el.classList.remove('dragging'));
+}
+
+function handleDragOver(e) {
+    e.preventDefault();
+    const container = e.target.closest('.list-section-content, .tasks-scroll');
+    if (!container) return;
+
+    const dragging = document.querySelector('.dragging');
+    const cards = Array.from(container.querySelectorAll('.list-task-row, .task-card')).filter(c => c !== dragging);
+    
+    let indicator = document.querySelector('.drag-indicator');
+    if (!indicator) {
+        indicator = document.createElement('div');
+        indicator.className = 'drag-indicator';
+    }
+
+    let afterElement = null;
+    let minDistance = Number.POSITIVE_INFINITY;
+
+    for (const card of cards) {
+        const box = card.getBoundingClientRect();
+        const offset = e.clientY - (box.top + box.height / 2);
+        if (offset < 0 && offset > -minDistance) {
+            minDistance = -offset;
+            afterElement = card;
+        }
+    }
+
+    if (afterElement) {
+        if (afterElement.previousElementSibling !== indicator) {
+            afterElement.before(indicator);
+        }
+    } else {
+        const addRow = container.querySelector('.list-add-row, .col-add-task');
+        if (addRow) {
+            if (addRow.previousElementSibling !== indicator) {
+                addRow.before(indicator);
+            }
+        } else {
+            if (container.lastElementChild !== indicator) {
+                container.appendChild(indicator);
+            }
+        }
+    }
+}
+
+function handleTaskDrop(e, targetStatus = null, targetPriority = null) {
+    e.preventDefault();
+    const taskId = e.dataTransfer.getData('text/plain');
+    if (!taskId) return;
+
+    const indicator = document.querySelector('.drag-indicator');
+    const container = indicator ? indicator.parentElement : e.target.closest('.list-section-content, .tasks-scroll');
+    
+    if (!container) {
+        cleanupDragState();
+        return;
+    }
+
+    // 1. Handle Group Transitions
+    if (groupBy === 'status' && targetStatus) {
+        vscode.postMessage({ type: 'updateStatus', id: taskId, status: targetStatus });
+    } else if (groupBy === 'priority' && targetPriority) {
+        const pVal = targetPriority === 'Wont' ? "Won't" : targetPriority;
+        vscode.postMessage({ type: 'updatePriority', id: taskId, priority: pVal });
+    }
+
+    // 2. Handle Reordering
+    const fullTasksSorted = sortTasks(currentTasks);
+    let newOrder = null;
+
+    if (indicator) {
+        const afterElement = indicator.nextElementSibling;
+        if (afterElement && (afterElement.classList.contains('list-task-row') || afterElement.classList.contains('task-card'))) {
+            const targetId = afterElement.dataset.id;
+            const targetIndex = fullTasksSorted.findIndex(t => t.id === targetId);
+            
+            if (targetIndex !== -1) {
+                const targetTask = fullTasksSorted[targetIndex];
+                let prevTask = null;
+                for (let i = targetIndex - 1; i >= 0; i--) {
+                    if (fullTasksSorted[i].id !== taskId) {
+                        prevTask = fullTasksSorted[i];
+                        break;
+                    }
+                }
+                
+                if (prevTask) {
+                    newOrder = (prevTask.order + targetTask.order) / 2;
+                } else {
+                    newOrder = targetTask.order - 1000;
+                }
+            }
+        } else {
+            const tasksInGroup = fullTasksSorted.filter(t => {
+                if (groupBy === 'status') return t.status === (targetStatus || 'Todo');
+                if (groupBy === 'priority') {
+                    const p = targetPriority === 'Wont' ? "Won't" : targetPriority;
+                    return t.priority === (p || 'Should');
+                }
+                return true;
+            }).filter(t => t.id !== taskId);
+
+            if (tasksInGroup.length > 0) {
+                newOrder = tasksInGroup[tasksInGroup.length - 1].order + 1000;
+            } else {
+                newOrder = 1000;
+            }
+        }
+    }
+
+    if (newOrder !== null) {
+        if (sortBy !== 'custom') sortBy = 'custom';
+        vscode.postMessage({ type: 'updateOrders', orders: [{ id: taskId, order: newOrder }] });
+    }
+
+    cleanupDragState();
 }
 
 function toggleCompletedVisibility() {
@@ -876,11 +1012,17 @@ function renderList(tasks) {
     if (groupBy === 'none') {
         container.innerHTML = `
             <div class="list-section">
-                <div class="list-section-content">
+                <div class="list-section-content" 
+                     ondragover="handleDragOver(event)" 
+                     ondrop="handleTaskDrop(event)">
                     ${internalSorted.map(t => `
-                        <div class="list-task-row ${t.status === 'Done' ? 'task-is-done' : ''}" data-id="${t.id}">
-                            ${getPriorityIndicatorHtml(t)}
-                            <div class="card-content">
+                        <div class="list-task-row ${t.status === 'Done' ? 'task-is-done' : ''}" 
+                             data-id="${t.id}" 
+                             draggable="true" 
+                             ondragstart="event.dataTransfer.setData('text/plain', '${t.id}'); this.classList.add('dragging')" 
+                             ondragend="cleanupDragState()">
+                             ${getPriorityIndicatorHtml(t)}
+                             <div class="card-content">
                                 <div class="card-title" ondblclick="event.stopPropagation(); makeEditable(this, '${t.id}')">${t.text}</div>
                                 ${t.description ? `<div class="card-desc" onclick="event.stopPropagation(); openTaskModal('${t.id}')">${t.description}</div>` : `<div class="card-desc empty-desc" onclick="event.stopPropagation(); openTaskModal('${t.id}')">Add description...</div>`}
                                 ${getTaskBadgesHtml(t)}
@@ -919,9 +1061,15 @@ function renderList(tasks) {
                 <span class="section-title">${group}</span>
                 <span class="section-count">${sTasks.length}</span>
             </div>
-            <div class="list-section-content">
+            <div class="list-section-content" 
+                 ondragover="handleDragOver(event)" 
+                 ondrop="handleTaskDrop(event, '${sVal}', '${group === "Wont" ? "Wont" : group}')">
                 ${sTasks.map(t => `
-                    <div class="list-task-row ${t.status === 'Done' ? 'task-is-done' : ''}" data-id="${t.id}">
+                    <div class="list-task-row ${t.status === 'Done' ? 'task-is-done' : ''}" 
+                         data-id="${t.id}" 
+                         draggable="true" 
+                         ondragstart="event.dataTransfer.setData('text/plain', '${t.id}'); this.classList.add('dragging')" 
+                         ondragend="cleanupDragState()">
                         ${getPriorityIndicatorHtml(t)}
                         <div class="card-content">
                             <div class="card-title" ondblclick="event.stopPropagation(); makeEditable(this, '${t.id}')">${t.text}</div>
@@ -963,16 +1111,12 @@ function renderKanban(tasks) {
         const pVal = groupBy === 'status' ? 'null' : (col === 'Wont' ? "Won't" : (groupBy === 'none' ? 'null' : col));
         const sVal = groupBy === 'status' ? col : 'Todo';
         div.ondragover = (e) => { e.preventDefault(); div.classList.add('drag-over'); };
-        div.ondragleave = () => div.classList.remove('drag-over');
-        div.ondrop = (e) => {
-            e.preventDefault();
-            div.classList.remove('drag-over');
-            const taskId = e.dataTransfer.getData('text/plain');
-            if (taskId) {
-                if (groupBy === 'status') vscode.postMessage({ type: 'updateStatus', id: taskId, status: col });
-                else if (groupBy === 'priority') vscode.postMessage({ type: 'updatePriority', id: taskId, priority: col === 'Wont' ? "Won't" : col });
+        div.ondragleave = (e) => {
+            if (!e.currentTarget.contains(e.relatedTarget)) {
+                cleanupDragState();
             }
         };
+        div.ondrop = (e) => handleTaskDrop(e, col, col);
         div.innerHTML = `
             <div class="col-header">
                 <div class="col-title-wrapper">
@@ -981,9 +1125,9 @@ function renderKanban(tasks) {
                 </div>
                 <span class="col-count">${cTasks.length}</span>
             </div>
-            <div class="tasks-scroll">
+            <div class="tasks-scroll" ondragover="handleDragOver(event)">
                 ${cTasks.map(t => `
-                    <div class="task-card ${t.status === 'Done' ? 'task-is-done' : ''}" data-id="${t.id}" draggable="true" ondragstart="event.dataTransfer.setData('text/plain', '${t.id}'); this.classList.add('dragging')" ondragend="this.classList.remove('dragging')">
+                    <div class="task-card ${t.status === 'Done' ? 'task-is-done' : ''}" data-id="${t.id}" draggable="true" ondragstart="event.dataTransfer.setData('text/plain', '${t.id}'); this.classList.add('dragging')" ondragend="cleanupDragState()">
                         ${getPriorityIndicatorHtml(t)}
                         <div class="card-content">
                             <div class="card-title" ondblclick="event.stopPropagation(); makeEditable(this, '${t.id}')">${t.text}</div>

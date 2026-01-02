@@ -47,6 +47,9 @@ export class WebviewHandler {
             case 'updateReminders':
                 await this._taskService.updateReminders(data.id, data.reminders);
                 break;
+            case 'updateOrders':
+                await this._taskService.updateOrders(data.orders);
+                break;
             case 'deleteTask':
                 await this._taskService.deleteTask(data.id);
                 break;

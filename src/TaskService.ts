@@ -23,7 +23,18 @@ export class TaskService implements vscode.Disposable {
     }
 
     public async getTasks(): Promise<TodoItem[]> {
-        return this._storageManager.getTasks();
+        const tasks = await this._storageManager.getTasks();
+        let changed = false;
+        tasks.forEach((t, i) => {
+            if (t.order === undefined) {
+                t.order = (i + 1) * 1000;
+                changed = true;
+            }
+        });
+        if (changed) {
+            await this._storageManager.saveTasks(tasks);
+        }
+        return tasks;
     }
 
     public async addTask(taskData: {
@@ -44,9 +55,26 @@ export class TaskService implements vscode.Disposable {
             dueDate: taskData.dueDate,
             reminders: taskData.reminders,
             completed: taskData.status === 'Done',
-            createdAt: Date.now()
+            createdAt: Date.now(),
+            order: tasks.length > 0 ? Math.max(...tasks.map(t => t.order || 0)) + 1000 : 1000
         };
         tasks.push(newTask);
+        await this._saveAndNotify(tasks);
+        return tasks;
+    }
+
+    public async updateOrder(id: string, newOrder: number): Promise<TodoItem[]> {
+        return this._updateTask(id, task => {
+            task.order = newOrder;
+        });
+    }
+
+    public async updateOrders(orders: { id: string, order: number }[]): Promise<TodoItem[]> {
+        const tasks = await this.getTasks();
+        orders.forEach(o => {
+            const task = tasks.find(t => t.id === o.id);
+            if (task) task.order = o.order;
+        });
         await this._saveAndNotify(tasks);
         return tasks;
     }

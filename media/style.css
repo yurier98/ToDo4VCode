@@ -1404,6 +1404,38 @@ span.flatpickr-weekday {
     overflow: hidden;
 }
 
+.drag-indicator {
+    height: 2px;
+    background: var(--vscode-focusBorder);
+    border-radius: 8px;
+    margin: 4px 0;
+    pointer-events: none;
+    box-shadow: 0 0 8px var(--vscode-focusBorder);
+    animation: pulse-bg 1.5s infinite;
+    transition: transform 0.1s ease;
+}
+
+.list-task-row.dragging,
+.task-card.dragging {
+    opacity: 0.4;
+    background: var(--vscode-list-inactiveSelectionBackground) !important;
+    transform: scale(0.98);
+}
+
+@keyframes pulse-bg {
+    0% {
+        opacity: 0.6;
+    }
+
+    50% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0.6;
+    }
+}
+
 .task-card .priority-indicator,
 .task-card .card-more {
     margin-top: 2px;
@@ -1411,11 +1443,6 @@ span.flatpickr-weekday {
 
 .task-card:active {
     cursor: grabbing;
-}
-
-.task-card.dragging {
-    opacity: 0.5;
-    transform: scale(0.95);
 }
 
 .task-card:hover {

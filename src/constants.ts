@@ -23,6 +23,7 @@ export const UI = {
     ORDER_BY: 'Order By',
     DUE_DATE: 'Due Date',
     TITLE: 'Title',
+    CUSTOM: 'Custom',
     STATUS: 'Status',
     PRIORITY: 'Priority',
     NONE: 'None',

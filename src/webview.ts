@@ -95,6 +95,11 @@ export class TaskWebview {
                                             <span class="row-label">${UI.TITLE}</span>
                                             <i id="sortTitleCheck" class="codicon codicon-check check-mark hidden"></i>
                                         </div>
+                                        <div class="popover-row" onclick="setSortBy('custom')">
+                                            <i class="codicon codicon-move"></i> 
+                                            <span class="row-label">${UI.CUSTOM}</span>
+                                            <i id="sortCustomCheck" class="codicon codicon-check check-mark hidden"></i>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
