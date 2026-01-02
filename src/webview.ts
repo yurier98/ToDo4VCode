@@ -156,6 +156,7 @@ export class TaskWebview {
                                     <div id="modalDateValue" class="grid-item-value">
                                         <i class="codicon codicon-calendar"></i>
                                         <span>No date</span>
+                                        <i class="codicon codicon-close clear-date-btn hidden" onclick="event.stopPropagation(); clearDate()"></i>
                                     </div>
                                 </div>
                                 <div class="modal-grid-item" onclick="toggleReminderPicker(event, true)">
@@ -163,6 +164,7 @@ export class TaskWebview {
                                     <div id="modalReminderValue" class="grid-item-value">
                                         <i class="codicon codicon-bell"></i>
                                         <span>No reminder</span>
+                                        <i class="codicon codicon-close clear-date-btn hidden" onclick="event.stopPropagation(); clearReminder()"></i>
                                     </div>
                                 </div>
                                 <div class="modal-grid-item" onclick="togglePriorityPicker(event, true)">

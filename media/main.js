@@ -57,7 +57,7 @@ function openTaskModal(taskId) {
     if (titleInput) titleInput.value = task.text;
     if (descInput) descInput.value = task.description || '';
     if (statusLabel) statusLabel.innerText = task.status;
-    
+
     if (datePicker) datePicker.setDate(task.dueDate || '', false);
     if (reminderPicker) {
         const r = (task.reminders && task.reminders.length > 0) ? task.reminders[0].time : '';
@@ -67,7 +67,7 @@ function openTaskModal(taskId) {
     updateModalUI();
 
     modal.classList.remove('hidden');
-    
+
     // Auto-resize textareas
     const autoResize = (el) => {
         el.style.height = 'auto';
@@ -95,27 +95,31 @@ function updateModalUI() {
     // Date
     if (dateVal) {
         dateVal.classList.remove('date-color-today', 'date-color-tomorrow', 'date-color-soon', 'date-color-custom');
+        const clearBtn = dateVal.querySelector('.clear-date-btn');
         if (modalDueDate) {
             const d = new Date(modalDueDate);
             const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
             dateVal.querySelector('span').innerText = `${months[d.getMonth()]} ${d.getDate()}`;
             dateVal.classList.add('has-value', getDateColorClass(d));
+            if (clearBtn) clearBtn.classList.remove('hidden');
         } else {
             dateVal.querySelector('span').innerText = 'No date';
             dateVal.classList.remove('has-value');
+            if (clearBtn) clearBtn.classList.add('hidden');
         }
     }
 
     // Reminder
     if (reminderVal) {
         reminderVal.classList.remove('date-color-today', 'date-color-tomorrow', 'date-color-soon', 'date-color-custom');
+        const clearBtn = reminderVal.querySelector('.clear-date-btn');
         if (modalReminders.length > 0) {
             const d = new Date(modalReminders[0]);
             const now = new Date();
             const isToday = d.toDateString() === now.toDateString();
             const h = d.getHours().toString().padStart(2, '0');
             const m = d.getMinutes().toString().padStart(2, '0');
-            
+
             if (isToday) {
                 reminderVal.querySelector('span').innerText = `Today, ${h}:${m}`;
             } else {
@@ -123,9 +127,11 @@ function updateModalUI() {
                 reminderVal.querySelector('span').innerText = `${d.getDate()} ${months[d.getMonth()]}, ${h}:${m}`;
             }
             reminderVal.classList.add('has-value', getDateColorClass(d));
+            if (clearBtn) clearBtn.classList.remove('hidden');
         } else {
             reminderVal.querySelector('span').innerText = 'No reminder';
             reminderVal.classList.remove('has-value');
+            if (clearBtn) clearBtn.classList.add('hidden');
         }
     }
 
@@ -165,7 +171,7 @@ async function saveTaskModal() {
 
     vscode.postMessage({ type: 'updateTaskText', id: modalTaskId, text: title });
     vscode.postMessage({ type: 'updateDescription', id: modalTaskId, description: description });
-    
+
     closeTaskModal();
 }
 
@@ -180,17 +186,17 @@ function toggleStatusPicker(e) {
     if (e) e.stopPropagation();
     const pop = document.getElementById('statusPopover');
     if (!pop) return;
-    
+
     const isShow = pop.classList.contains('show');
     closeAllPopovers(true);
-    
+
     if (!isShow) {
         pop.classList.add('show');
         const rect = e.currentTarget.getBoundingClientRect();
         const popRect = pop.getBoundingClientRect();
-        
+
         pop.style.position = 'fixed';
-        
+
         let left = rect.left;
         if (left + popRect.width > window.innerWidth) {
             left = window.innerWidth - popRect.width - 10;
@@ -248,17 +254,17 @@ function toggleDatePicker(e, fromModal = false) {
     if (e) e.stopPropagation();
     const pop = document.getElementById('datePopover');
     if (!pop) return;
-    
+
     const isShow = pop.classList.contains('show');
     closeAllPopovers(!!editingTaskId || !!modalTaskId);
-    
+
     if (!isShow) {
         pop.classList.add('show');
         const rect = e.currentTarget.getBoundingClientRect();
         const popRect = pop.getBoundingClientRect();
-        
+
         pop.style.position = 'fixed';
-        
+
         let left = rect.left;
         if (left + popRect.width > window.innerWidth) {
             left = window.innerWidth - popRect.width - 10;
@@ -281,17 +287,17 @@ function togglePriorityPicker(e, fromModal = false) {
     if (e) e.stopPropagation();
     const pop = document.getElementById('priorityPopover');
     if (!pop) return;
-    
+
     const isShow = pop.classList.contains('show');
     closeAllPopovers(!!modalTaskId);
-    
+
     if (!isShow) {
         pop.classList.add('show');
         const rect = e.currentTarget.getBoundingClientRect();
         const popRect = pop.getBoundingClientRect();
-        
+
         pop.style.position = 'fixed';
-        
+
         let left = rect.left;
         if (left + popRect.width > window.innerWidth) {
             left = window.innerWidth - popRect.width - 10;
@@ -314,17 +320,17 @@ function toggleReminderPicker(e, fromModal = false) {
     if (e) e.stopPropagation();
     const pop = document.getElementById('reminderPopover');
     if (!pop) return;
-    
+
     const isShow = pop.classList.contains('show');
     closeAllPopovers(!!editingTaskId || !!modalTaskId);
-    
+
     if (!isShow) {
         pop.classList.add('show');
         const rect = e.currentTarget.getBoundingClientRect();
         const popRect = pop.getBoundingClientRect();
-        
+
         pop.style.position = 'fixed';
-        
+
         let left = rect.left;
         if (left + popRect.width > window.innerWidth) {
             left = window.innerWidth - popRect.width - 10;
@@ -344,6 +350,13 @@ function toggleReminderPicker(e, fromModal = false) {
 }
 
 function clearDate() {
+    if (modalTaskId) {
+        modalDueDate = null;
+        vscode.postMessage({ type: 'updateDueDate', id: modalTaskId, dueDate: null });
+        updateModalUI();
+        return;
+    }
+
     currentPremiumDate = null;
     const tag = document.getElementById('selectedDateTag');
     const label = document.getElementById('dateLabel');
@@ -381,7 +394,7 @@ function getDateColorClass(date) {
     if (diffDays === 0) return 'date-color-today';
     if (diffDays === 1) return 'date-color-tomorrow';
     if (diffDays > 1 && diffDays <= 3) return 'date-color-soon';
-    
+
     // Check if it's weekend (Saturday or Sunday)
     const day = d.getDay();
     if (day === 0 || day === 6) return 'date-color-weekend';
@@ -484,6 +497,13 @@ function setPremiumPriority(p) {
 }
 
 function clearReminder() {
+    if (modalTaskId) {
+        modalReminders = [];
+        vscode.postMessage({ type: 'updateReminders', id: modalTaskId, reminders: [] });
+        updateModalUI();
+        return;
+    }
+
     currentPremiumReminders = [];
     const btn = document.getElementById('reminderBtn');
     const label = document.getElementById('reminderLabel');
@@ -505,6 +525,7 @@ function clearReminder() {
 }
 
 function setPremiumReminder(m, labelText, isCustom = false) {
+    if (!m) return;
     let ts;
     if (m === 'tomorrow') {
         const d = new Date();
@@ -516,13 +537,13 @@ function setPremiumReminder(m, labelText, isCustom = false) {
         // Handle formats like "2023-10-27 14:30" or ISO
         ts = new Date(m.replace(' ', 'T')).getTime();
         if (isNaN(ts)) ts = new Date(m).getTime();
-        
+
         const d = new Date(ts);
         const now = new Date();
         const isToday = d.toDateString() === now.toDateString();
         const hours = d.getHours().toString().padStart(2, '0');
         const minutes = d.getMinutes().toString().padStart(2, '0');
-        
+
         if (isToday) {
             labelText = `Today, ${hours}:${minutes}`;
         } else {
@@ -534,7 +555,7 @@ function setPremiumReminder(m, labelText, isCustom = false) {
     }
 
     const colorClass = getDateColorClass(new Date(ts));
-    
+
     // Update custom input color if it exists
     const reminderInput = document.getElementById('taskReminderTime');
     if (reminderInput) {
@@ -1009,7 +1030,7 @@ document.addEventListener('DOMContentLoaded', () => {
         datePicker = flatpickr("#taskDueDate", {
             disableMobile: true,
             dateFormat: "Y-m-d",
-            onChange: function(selectedDates, dateStr) {
+            onChange: function (selectedDates, dateStr) {
                 setPremiumDate(dateStr, true);
             }
         });
@@ -1020,7 +1041,7 @@ document.addEventListener('DOMContentLoaded', () => {
             noCalendar: false,
             dateFormat: "Y-m-d H:i",
             time_24hr: true,
-            onChange: function(selectedDates, dateStr) {
+            onChange: function (selectedDates, dateStr) {
                 setPremiumReminder(dateStr, 'Personalizado', true);
             }
         });
