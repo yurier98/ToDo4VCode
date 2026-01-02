@@ -28,6 +28,9 @@ jobs:
       - name: Compile
         run: npm run compile
 
+      - name: Lint
+        run: npm run lint
+
       - name: Package Extension
         run: npx @vscode/vsce package
 
@@ -47,12 +50,12 @@ jobs:
 
       - name: Publish to Marketplace
         if: startsWith(github.ref, 'refs/tags/')
-        run: npx @vscode/vsce publish -p ${{ secrets.VSCE_PAT }}
+        run: npx vsce publish --packagePath $(ls *.vsix) -p ${{ secrets.VSCE_PAT }}
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
 
       - name: Publish to Open VSX
         if: startsWith(github.ref, 'refs/tags/')
-        run: npx ovsx publish -p ${{ secrets.OVSX_PAT }}
-        env:
-          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+        uses: HaxeFoundation/ovsx-publish@v1
+        with:
+          pat: ${{ secrets.OVSX_PAT }}
