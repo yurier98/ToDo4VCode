@@ -50,8 +50,9 @@ jobs:
 
       - name: Publish to Marketplace
         if: startsWith(github.ref, 'refs/tags/')
-        # Using explicit publisher to avoid ambiguity
-        run: npx vsce publish --packagePath $(ls *.vsix) --publisher YurierHerrera --verbose
+        run: |
+          if [ -z "$VSCE_PAT" ]; then echo "Error: VSCE_PAT is empty. Check your GitHub Secrets."; exit 1; fi
+          npx @vscode/vsce publish --packagePath $(ls *.vsix)
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
 
