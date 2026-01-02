@@ -1578,7 +1578,7 @@ span.flatpickr-weekday {
     overflow-x: hidden;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 12px;
 }
 
 .modal-title-input {
@@ -1617,14 +1617,16 @@ span.flatpickr-weekday {
     border: 1px solid var(--vscode-panel-border);
     color: var(--vscode-foreground);
     border-radius: 8px;
-    padding: 12px;
-    font-size: 0.95rem;
+    padding: 10px;
+    font-size: 0.85rem;
     line-height: 1.5;
     width: 100%;
     max-width: 100%;
     outline: none;
     resize: none;
     min-height: 100px;
+    max-height: 300px;
+    overflow-y: auto;
     display: block;
 }
 
