@@ -1001,7 +1001,8 @@ function updateStatusFromMenu(s) {
     hideContextMenu();
 }
 
-function toggleTaskDone(id, currentStatus) {
+function toggleTaskDone(e, id, currentStatus) {
+    if (e) e.stopPropagation();
     const newStatus = currentStatus === 'Done' ? 'Todo' : 'Done';
     vscode.postMessage({ type: 'updateStatus', id, status: newStatus });
 }
@@ -1021,7 +1022,7 @@ function getPriorityIndicatorHtml(t) {
         <div class="priority-indicator ${statusClass}" 
              style="color: ${PRIORITY_COLORS[t.priority] || '#8e8e93'}"
              title="${t.priority}"
-             onclick="toggleTaskDone('${t.id}', '${t.status}')">
+             onclick="toggleTaskDone(event, '${t.id}', '${t.status}')">
              ${icon}
         </div>
     `;
@@ -1082,11 +1083,12 @@ function renderList(tasks) {
                              data-id="${t.id}" 
                              draggable="true" 
                              ondragstart="event.dataTransfer.setData('text/plain', '${t.id}'); this.classList.add('dragging')" 
-                             ondragend="cleanupDragState()">
+                             ondragend="cleanupDragState()"
+                             onclick="openTaskModal('${t.id}')">
                              ${getPriorityIndicatorHtml(t)}
                              <div class="card-content">
                                 <div class="card-title" ondblclick="makeEditable(this, '${t.id}')">${t.text}</div>
-                                ${t.description ? `<div class="card-desc" onclick="openTaskModal('${t.id}')">${t.description}</div>` : `<div class="card-desc empty-desc" onclick="openTaskModal('${t.id}')">Add description...</div>`}
+                                ${t.description ? `<div class="card-desc">${t.description}</div>` : `<div class="card-desc empty-desc">Add description...</div>`}
                                 ${getTaskBadgesHtml(t)}
                             </div>
                             <div class="card-more" onclick="showContextMenu(event, '${t.id}')">
@@ -1131,11 +1133,12 @@ function renderList(tasks) {
                          data-id="${t.id}" 
                          draggable="true" 
                          ondragstart="event.dataTransfer.setData('text/plain', '${t.id}'); this.classList.add('dragging')" 
-                         ondragend="cleanupDragState()">
+                         ondragend="cleanupDragState()"
+                         onclick="openTaskModal('${t.id}')">
                         ${getPriorityIndicatorHtml(t)}
                         <div class="card-content">
                             <div class="card-title" ondblclick="makeEditable(this, '${t.id}')">${t.text}</div>
-                            ${t.description ? `<div class="card-desc" onclick="openTaskModal('${t.id}')">${t.description}</div>` : `<div class="card-desc empty-desc" onclick="openTaskModal('${t.id}')">Add description...</div>`}
+                            ${t.description ? `<div class="card-desc">${t.description}</div>` : `<div class="card-desc empty-desc">Add description...</div>`}
                             ${getTaskBadgesHtml(t)}
                         </div>
                         <div class="card-more" onclick="showContextMenu(event, '${t.id}')">
@@ -1189,11 +1192,16 @@ function renderKanban(tasks) {
             </div>
             <div class="tasks-scroll" ondragover="handleDragOver(event)">
                 ${cTasks.map(t => `
-                    <div class="task-card ${t.status === 'Done' ? 'task-is-done' : ''}" data-id="${t.id}" draggable="true" ondragstart="event.dataTransfer.setData('text/plain', '${t.id}'); this.classList.add('dragging')" ondragend="cleanupDragState()">
+                    <div class="task-card ${t.status === 'Done' ? 'task-is-done' : ''}" 
+                         data-id="${t.id}" 
+                         draggable="true" 
+                         ondragstart="event.dataTransfer.setData('text/plain', '${t.id}'); this.classList.add('dragging')" 
+                         ondragend="cleanupDragState()"
+                         onclick="openTaskModal('${t.id}')">
                         ${getPriorityIndicatorHtml(t)}
                         <div class="card-content">
                             <div class="card-title" ondblclick="makeEditable(this, '${t.id}')">${t.text}</div>
-                            ${t.description ? `<div class="card-desc" onclick="openTaskModal('${t.id}')">${t.description}</div>` : `<div class="card-desc empty-desc" onclick="openTaskModal('${t.id}')">Add description...</div>`}
+                            ${t.description ? `<div class="card-desc">${t.description}</div>` : `<div class="card-desc empty-desc">Add description...</div>`}
                             ${getTaskBadgesHtml(t)}
                         </div>
                         <div class="card-more" onclick="showContextMenu(event, '${t.id}')">

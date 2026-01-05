@@ -35,8 +35,8 @@
     align-items: flex-start;
     gap: 10px;
     box-shadow: $shadow-sm;
-    cursor: grab;
-    transition: transform 0.1s, box-shadow 0.1s;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.1s, border-color 0.1s;
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
@@ -44,8 +44,11 @@
     flex-shrink: 0;
     min-width: 0;
 
-    &:active {
+    &.dragging {
         cursor: grabbing;
+        opacity: 0.4;
+        background: var(--vscode-list-inactiveSelectionBackground) !important;
+        transform: scale(0.98);
     }
 
     &:hover {

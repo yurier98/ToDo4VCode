@@ -95,11 +95,19 @@
     display: flex;
     align-items: flex-start;
     gap: 12px;
-    padding: 10px 12px; // Padding lateral mínimo para alinear con el header
+    padding: 10px 12px;
     border-radius: $radius-lg;
     margin-bottom: 2px;
     transition: background 0.15s;
     position: relative;
+    cursor: pointer;
+
+    &.dragging {
+        cursor: grabbing;
+        opacity: 0.4;
+        background: var(--vscode-list-inactiveSelectionBackground) !important;
+        transform: scale(0.98);
+    }
 
     .priority-indicator {
         margin-top: 4px;
