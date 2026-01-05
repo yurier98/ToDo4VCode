@@ -50,6 +50,14 @@ export function activate(context: vscode.ExtensionContext) {
         provider.refresh();
     }));
 
+    context.subscriptions.push(taskService.onSettingsChanged(data => {
+        if (fullScreenPanel && data.viewType === 'full') {
+            taskService.getTasks().then(tasks => {
+                fullScreenPanel!.webview.postMessage({ type: 'updateTasks', tasks, settings: data.settings });
+            });
+        }
+    }));
+
     context.subscriptions.push(
         vscode.window.registerWebviewViewProvider(TaskViewProvider.viewType, provider)
     );
@@ -88,7 +96,7 @@ export function activate(context: vscode.ExtensionContext) {
             const updatePanel = async () => {
                 if (fullScreenPanel) {
                     const tasks = await taskService.getTasks();
-                    fullScreenPanel.webview.html = TaskWebview.getHtml(fullScreenPanel.webview, context.extensionUri, tasks);
+                    fullScreenPanel.webview.html = TaskWebview.getHtml(fullScreenPanel.webview, context.extensionUri, tasks, 'full');
                 }
             };
 
@@ -96,13 +104,18 @@ export function activate(context: vscode.ExtensionContext) {
 
             fullScreenPanel.webview.onDidReceiveMessage(async data => {
                 if (fullScreenPanel) {
+                    // Asegurarse de que el mensaje incluya el viewType correcto
+                    if (data.type === 'ready' || data.type === 'updateSettings') {
+                        data.viewType = 'full';
+                    }
                     await webviewHandler.handleMessage(data, fullScreenPanel);
                 }
             });
 
-            const taskChangeSubscription = taskService.onTasksChanged(tasks => {
+            const taskChangeSubscription = taskService.onTasksChanged(async tasks => {
                 if (fullScreenPanel) {
-                    fullScreenPanel.webview.postMessage({ type: 'updateTasks', tasks });
+                    const settings = await taskService.getSettings('full');
+                    fullScreenPanel.webview.postMessage({ type: 'updateTasks', tasks, settings });
                 }
             });
 

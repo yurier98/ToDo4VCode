@@ -32,6 +32,12 @@ export class TaskViewProvider implements vscode.WebviewViewProvider {
         this._taskService.onTasksChanged(tasks => {
             this._updateWebview(tasks);
         });
+
+        this._taskService.onSettingsChanged(data => {
+            if (data.viewType === 'sidebar') {
+                this._updateWebviewWithSettings(data.settings);
+            }
+        });
     }
 
     public async resolveWebviewView(
@@ -47,7 +53,7 @@ export class TaskViewProvider implements vscode.WebviewViewProvider {
         };
 
         const tasks = await this._taskService.getTasks();
-        webviewView.webview.html = TaskWebview.getHtml(webviewView.webview, this._extensionUri, tasks);
+        webviewView.webview.html = TaskWebview.getHtml(webviewView.webview, this._extensionUri, tasks, 'sidebar');
 
         webviewView.webview.onDidReceiveMessage(data => this._webviewHandler.handleMessage(data, webviewView));
     }
@@ -55,13 +61,24 @@ export class TaskViewProvider implements vscode.WebviewViewProvider {
     public async refresh() {
         if (this._view) {
             const tasks = await this._taskService.getTasks();
-            this._updateWebview(tasks);
+            const settings = await this._taskService.getSettings('sidebar');
+            this._view.webview.postMessage({ type: 'updateTasks', tasks, settings });
         }
     }
 
     private _updateWebview(tasks: any[]) {
         if (this._view) {
-            this._view.webview.postMessage({ type: 'updateTasks', tasks });
+            this._taskService.getSettings('sidebar').then(settings => {
+                this._view!.webview.postMessage({ type: 'updateTasks', tasks, settings });
+            });
+        }
+    }
+
+    private _updateWebviewWithSettings(settings: any) {
+        if (this._view) {
+            this._taskService.getTasks().then(tasks => {
+                this._view!.webview.postMessage({ type: 'updateTasks', tasks, settings });
+            });
         }
     }
 

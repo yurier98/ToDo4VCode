@@ -1,16 +1,43 @@
 const vscode = acquireVsCodeApi();
 let currentTasks = [];
-let viewMode = 'list';
-let groupBy = 'status';
-let hideCompleted = false;
+
+// Restore state from VS Code state
+const previousState = vscode.getState();
+let viewMode = previousState?.viewMode || 'list';
+let groupBy = previousState?.groupBy || 'status';
+let hideCompleted = previousState?.hideCompleted || false;
+let sortBy = previousState?.sortBy || 'priority';
+
 let activeTaskId = null;
 let editingTaskId = null;
 let modalTaskId = null;
-let collapsedSections = new Set();
+let collapsedSections = new Set(previousState?.collapsedSections || []);
 let shouldAutoEditNewTask = false;
-let sortBy = 'priority';
+
+// Initialize UI from previous state
+window.addEventListener('DOMContentLoaded', () => {
+    updateViewModeUI();
+    updateGroupByUI();
+});
 
 const SORT_PRIORITY = ['Must', 'Should', 'Could', "Wont"];
+
+// Save state to VS Code
+function saveState() {
+    const state = {
+        viewMode,
+        groupBy,
+        hideCompleted,
+        sortBy,
+        collapsedSections: Array.from(collapsedSections)
+    };
+    vscode.setState(state);
+    vscode.postMessage({ 
+        type: 'updateSettings', 
+        settings: state,
+        viewType: window.viewType || 'sidebar'
+    });
+}
 
 // Modal States
 let modalStatus = 'Todo';
@@ -660,32 +687,43 @@ function submitTask(text, priority, status, autoEdit = false) {
 
 function setViewMode(mode) {
     viewMode = mode;
+    saveState();
+    updateViewModeUI();
+    render();
+}
+
+function updateViewModeUI() {
     const popoverBtnList = document.getElementById('popoverBtnList');
     const popoverBtnKanban = document.getElementById('popoverBtnKanban');
     const listPanel = document.getElementById('listView');
     const kanbanPanel = document.getElementById('kanbanView');
-    if (popoverBtnList) popoverBtnList.classList.toggle('active', mode === 'list');
-    if (popoverBtnKanban) popoverBtnKanban.classList.toggle('active', mode === 'kanban');
-    if (listPanel) listPanel.classList.toggle('hidden', mode !== 'list');
-    if (kanbanPanel) kanbanPanel.classList.toggle('hidden', mode !== 'kanban');
-    render();
+    if (popoverBtnList) popoverBtnList.classList.toggle('active', viewMode === 'list');
+    if (popoverBtnKanban) popoverBtnKanban.classList.toggle('active', viewMode === 'kanban');
+    if (listPanel) listPanel.classList.toggle('hidden', viewMode !== 'list');
+    if (kanbanPanel) kanbanPanel.classList.toggle('hidden', viewMode !== 'kanban');
 }
 
 function setGroupBy(mode) {
     groupBy = mode;
+    saveState();
+    updateGroupByUI();
+    closeAllPopovers();
+    render();
+}
+
+function updateGroupByUI() {
     const statusCheck = document.getElementById('statusCheck');
     const priorityCheck = document.getElementById('priorityCheck');
     const noneCheck = document.getElementById('noneCheck');
-    if (statusCheck) statusCheck.classList.toggle('hidden', mode !== 'status');
-    if (priorityCheck) priorityCheck.classList.toggle('hidden', mode !== 'priority');
-    if (noneCheck) noneCheck.classList.toggle('hidden', mode !== 'none');
-    closeAllPopovers();
-    render();
+    if (statusCheck) statusCheck.classList.toggle('hidden', groupBy !== 'status');
+    if (priorityCheck) priorityCheck.classList.toggle('hidden', groupBy !== 'priority');
+    if (noneCheck) noneCheck.classList.toggle('hidden', groupBy !== 'none');
 }
 
 function setSortBy(val) {
     sortBy = val;
     closeAllPopovers();
+    saveState();
     render();
 }
 
@@ -847,12 +885,14 @@ function toggleCompletedVisibility() {
     hideCompleted = !hideCompleted;
     const toggle = document.getElementById('completedToggle');
     if (toggle) toggle.parentElement.classList.toggle('active', !hideCompleted);
+    saveState();
     render();
 }
 
 function toggleSection(s) {
     if (collapsedSections.has(s)) collapsedSections.delete(s);
     else collapsedSections.add(s);
+    saveState();
     render();
 }
 
@@ -1288,6 +1328,27 @@ document.addEventListener('DOMContentLoaded', () => {
 window.addEventListener('message', e => {
     if (e.data.type === 'updateTasks') {
         currentTasks = e.data.tasks;
+
+        if (e.data.settings) {
+            const s = e.data.settings;
+            viewMode = s.viewMode || viewMode;
+            groupBy = s.groupBy || groupBy;
+            hideCompleted = s.hideCompleted !== undefined ? s.hideCompleted : hideCompleted;
+            sortBy = s.sortBy || sortBy;
+            if (s.collapsedSections) {
+                collapsedSections = new Set(s.collapsedSections);
+            }
+            
+            // Update UI elements to match settings
+            updateViewModeUI();
+            updateGroupByUI();
+            const toggle = document.getElementById('completedToggle');
+            if (toggle) toggle.parentElement.classList.toggle('active', !hideCompleted);
+            
+            // Save to local state as well
+            vscode.setState(s);
+        }
+
         render();
         if (modalTaskId) {
             const task = currentTasks.find(t => t.id === modalTaskId);
@@ -1330,4 +1391,7 @@ window.deleteTaskFromModal = deleteTaskFromModal;
 window.toggleStatusPicker = toggleStatusPicker;
 window.setModalStatus = setModalStatus;
 
-vscode.postMessage({ type: 'ready' });
+vscode.postMessage({ 
+    type: 'ready',
+    viewType: window.viewType || 'sidebar'
+});

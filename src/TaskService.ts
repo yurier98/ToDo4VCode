@@ -1,9 +1,12 @@
 import * as vscode from 'vscode';
-import { StorageManager, TodoItem, Priority, Status } from './storage';
+import { StorageManager, TodoItem, Priority, Status, ViewSettings } from './storage';
 
 export class TaskService implements vscode.Disposable {
     private readonly _onTasksChanged = new vscode.EventEmitter<TodoItem[]>();
     public readonly onTasksChanged = this._onTasksChanged.event;
+
+    private readonly _onSettingsChanged = new vscode.EventEmitter<{ viewType: 'sidebar' | 'full', settings: ViewSettings }>();
+    public readonly onSettingsChanged = this._onSettingsChanged.event;
 
     private readonly _onReminder = new vscode.EventEmitter<TodoItem>();
     public readonly onReminder = this._onReminder.event;
@@ -19,7 +22,17 @@ export class TaskService implements vscode.Disposable {
             clearTimeout(this._reminderTimeout);
         }
         this._onTasksChanged.dispose();
+        this._onSettingsChanged.dispose();
         this._onReminder.dispose();
+    }
+
+    public async getSettings(viewType: 'sidebar' | 'full'): Promise<ViewSettings | undefined> {
+        return this._storageManager.getSettings(viewType);
+    }
+
+    public async saveSettings(viewType: 'sidebar' | 'full', settings: ViewSettings): Promise<void> {
+        await this._storageManager.saveSettings(viewType, settings);
+        this._onSettingsChanged.fire({ viewType, settings });
     }
 
     public async getTasks(): Promise<TodoItem[]> {

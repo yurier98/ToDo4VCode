@@ -3,7 +3,7 @@ import { TodoItem } from './storage';
 import { UI, PRIORITIES, STATUSES } from './constants';
 
 export class TaskWebview {
-    public static getHtml(webview: vscode.Webview, extensionUri: vscode.Uri, tasks: TodoItem[]): string {
+    public static getHtml(webview: vscode.Webview, extensionUri: vscode.Uri, tasks: TodoItem[], viewType: 'sidebar' | 'full'): string {
         const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'media', 'styles', 'main.css'));
         const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'media', 'main.js'));
         const flatpickrCssUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'media', 'flatpickr.min.css'));
@@ -21,6 +21,9 @@ export class TaskWebview {
                 <link rel="stylesheet" href="${flatpickrCssUri}">
                 <link rel="stylesheet" href="${flatpickrDarkCssUri}">
                 <link rel="stylesheet" href="${styleUri}">
+                <script>
+                    window.viewType = '${viewType}';
+                </script>
             </head>
             <body>
                 <div class="app-container">

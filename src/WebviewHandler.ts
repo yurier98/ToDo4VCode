@@ -53,9 +53,13 @@ export class WebviewHandler {
             case 'deleteTask':
                 await this._taskService.deleteTask(data.id);
                 break;
+            case 'updateSettings':
+                await this._taskService.saveSettings(data.viewType || 'sidebar', data.settings);
+                break;
             case 'ready':
                 const tasks = await this._taskService.getTasks();
-                targetWebview.postMessage({ type: 'updateTasks', tasks });
+                const settings = await this._taskService.getSettings(data.viewType || 'sidebar');
+                targetWebview.postMessage({ type: 'updateTasks', tasks, settings });
                 break;
             case 'openFull':
                 vscode.commands.executeCommand('todo4vcode.openFull');
