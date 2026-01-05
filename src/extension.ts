@@ -14,6 +14,9 @@ export function activate(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(taskService);
 
+    // Variable para almacenar el panel full screen
+    let fullScreenPanel: vscode.WebviewPanel | undefined;
+
     // Create Status Bar Item
     const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
     statusBarItem.command = 'todo4vcode-view.focus';
@@ -59,7 +62,14 @@ export function activate(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(
         vscode.commands.registerCommand('todo4vcode.openFull', () => {
-            const panel = vscode.window.createWebviewPanel(
+            // Si ya existe un panel, revelarlo y enfocarlo
+            if (fullScreenPanel) {
+                fullScreenPanel.reveal(vscode.ViewColumn.One);
+                return;
+            }
+
+            // Crear nuevo panel solo si no existe
+            fullScreenPanel = vscode.window.createWebviewPanel(
                 'todo4vcodeFull',
                 'ToDo4VCode',
                 vscode.ViewColumn.One,
@@ -70,28 +80,35 @@ export function activate(context: vscode.ExtensionContext) {
                 }
             );
 
-            panel.iconPath = {
+            fullScreenPanel.iconPath = {
                 light: vscode.Uri.joinPath(context.extensionUri, 'media', 'icon.svg'),
                 dark: vscode.Uri.joinPath(context.extensionUri, 'media', 'icon.svg')
             };
 
             const updatePanel = async () => {
-                const tasks = await taskService.getTasks();
-                panel.webview.html = TaskWebview.getHtml(panel.webview, context.extensionUri, tasks);
+                if (fullScreenPanel) {
+                    const tasks = await taskService.getTasks();
+                    fullScreenPanel.webview.html = TaskWebview.getHtml(fullScreenPanel.webview, context.extensionUri, tasks);
+                }
             };
 
             updatePanel();
 
-            panel.webview.onDidReceiveMessage(async data => {
-                await webviewHandler.handleMessage(data, panel);
+            fullScreenPanel.webview.onDidReceiveMessage(async data => {
+                if (fullScreenPanel) {
+                    await webviewHandler.handleMessage(data, fullScreenPanel);
+                }
             });
 
             const taskChangeSubscription = taskService.onTasksChanged(tasks => {
-                panel.webview.postMessage({ type: 'updateTasks', tasks });
+                if (fullScreenPanel) {
+                    fullScreenPanel.webview.postMessage({ type: 'updateTasks', tasks });
+                }
             });
 
-            panel.onDidDispose(() => {
+            fullScreenPanel.onDidDispose(() => {
                 taskChangeSubscription.dispose();
+                fullScreenPanel = undefined; // Limpiar la referencia cuando se cierre
             });
         })
     );
