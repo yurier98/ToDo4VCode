@@ -4,7 +4,7 @@ import { UI, PRIORITIES, STATUSES } from './constants';
 
 export class TaskWebview {
     public static getHtml(webview: vscode.Webview, extensionUri: vscode.Uri, tasks: TodoItem[]): string {
-        const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'media', 'style.css'));
+        const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'media', 'styles', 'main.css'));
         const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'media', 'main.js'));
         const flatpickrCssUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'media', 'flatpickr.min.css'));
         const flatpickrDarkCssUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'media', 'flatpickr_dark.css'));
@@ -28,7 +28,7 @@ export class TaskWebview {
                         <div class="app-title">${UI.APP_TITLE}</div>
                         <div class="flex-spacer"></div>
                         <div class="popover-wrapper">
-                            <button id="formatBtn" class="view-btn format-btn-inline" onclick="toggleConfigPopover(event)" title="${UI.VIEW_CONFIG}">
+                            <button id="formatBtn" class="format-btn format-btn-inline" onclick="toggleConfigPopover(event)" title="${UI.VIEW_CONFIG}">
                                 <i class="codicon codicon-settings"></i>
                                 <span>${UI.FORMAT}</span>
                             </button>
@@ -105,45 +105,47 @@ export class TaskWebview {
                             </div>
                         </div>
 
-                        <div id="scroll-container">
-                        <div id="premiumInput" class="premium-input-card">
-                            <div class="input-header-row">
-                                <span id="selectedDateTag" class="selected-date-tag hidden"></span>
-                                <input type="text" id="taskTitle" class="title-field" placeholder="${UI.TASK_NAME_PLACEHOLDER}">
-                            </div>
-                            <textarea id="taskDesc" class="desc-field" placeholder="${UI.DESCRIPTION_PLACEHOLDER}" rows="1" oninput="this.style.height = '';this.style.height = this.scrollHeight + 'px'"></textarea>
-                            
-                            <div class="input-footer">
-                                <div class="action-buttons-row">
-                                    <div class="popover-wrapper">
-                                        <button class="action-btn" id="dateBtn" title="${UI.DATE}" onclick="toggleDatePicker(event)">
-                                            <i class="codicon codicon-calendar"></i>
-                                            <span id="dateLabel">${UI.DATE}</span>
-                                            <i class="codicon codicon-close clear-date-btn hidden" onclick="event.stopPropagation(); clearDate()"></i>
-                                        </button>
-                                    </div>
-
-                                    <div class="popover-wrapper">
-                                        <button class="action-btn" id="priorityFlagBtn" onclick="togglePriorityPicker(event)">
-                                            <i class="codicon codicon-flag"></i>
-                                            <span id="priorityLabel">${PRIORITIES.WONT}</span>
-                                        </button>
-                                    </div>
-
-                                    <div class="popover-wrapper">
-                                        <button class="action-btn" id="reminderBtn" title="${UI.REMINDER}" onclick="toggleReminderPicker(event)">
-                                            <i class="codicon codicon-bell"></i>
-                                            <span id="reminderLabel">${UI.REMINDER}</span>
-                                            <i class="codicon codicon-close clear-date-btn hidden" id="clearReminderBtn" onclick="event.stopPropagation(); clearReminder()"></i>
-                                        </button>
-                                    </div>
+                        <div class="input-sticky-container">
+                            <div id="premiumInput" class="premium-input-card">
+                                <div class="input-header-row">
+                                    <span id="selectedDateTag" class="selected-date-tag hidden"></span>
+                                    <input type="text" id="taskTitle" class="title-field" placeholder="${UI.TASK_NAME_PLACEHOLDER}">
                                 </div>
-                                <button class="btn-submit circle-btn" onclick="submitPremiumTask()" title="${UI.ADD_TASK}">
-                                    <i class="codicon codicon-arrow-right"></i>
-                                </button>
+                                <textarea id="taskDesc" class="desc-field" placeholder="${UI.DESCRIPTION_PLACEHOLDER}" rows="1" oninput="this.style.height = '';this.style.height = this.scrollHeight + 'px'"></textarea>
+                                
+                                <div class="input-footer">
+                                    <div class="action-buttons-row">
+                                        <div class="popover-wrapper">
+                                            <button class="action-btn" id="dateBtn" title="${UI.DATE}" onclick="toggleDatePicker(event)">
+                                                <i class="codicon codicon-calendar"></i>
+                                                <span id="dateLabel">${UI.DATE}</span>
+                                                <i class="codicon codicon-close clear-date-btn hidden" onclick="event.stopPropagation(); clearDate()"></i>
+                                            </button>
+                                        </div>
+
+                                        <div class="popover-wrapper">
+                                            <button class="action-btn" id="priorityFlagBtn" onclick="togglePriorityPicker(event)">
+                                                <i class="codicon codicon-flag"></i>
+                                                <span id="priorityLabel">${PRIORITIES.WONT}</span>
+                                            </button>
+                                        </div>
+
+                                        <div class="popover-wrapper">
+                                            <button class="action-btn" id="reminderBtn" title="${UI.REMINDER}" onclick="toggleReminderPicker(event)">
+                                                <i class="codicon codicon-bell"></i>
+                                                <span id="reminderLabel">${UI.REMINDER}</span>
+                                                <i class="codicon codicon-close clear-date-btn hidden" id="clearReminderBtn" onclick="event.stopPropagation(); clearReminder()"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <button class="btn-submit circle-btn" onclick="submitPremiumTask()" title="${UI.ADD_TASK}">
+                                        <i class="codicon codicon-arrow-right"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
+                        <div id="scroll-container">
                         <div id="listView" class="view-panel">
                             <div id="listTasks" class="task-list"></div>
                         </div>
@@ -239,7 +241,7 @@ export class TaskWebview {
                         <div class="custom-date-wrapper">
                             <i class="codicon codicon-calendar"></i>
                             <input type="text" id="taskDueDate" class="custom-date-input date-color-custom" placeholder="Select date...">
-                            <button class="circle-btn primary-btn" onclick="closeAllPopovers()" title="Confirm">
+                            <button class="circle-btn" onclick="closeAllPopovers()" title="Confirm">
                                 <i class="codicon codicon-check"></i>
                             </button>
                         </div>
@@ -254,17 +256,17 @@ export class TaskWebview {
                 </div>
 
                 <div id="reminderPopover" class="premium-popover">
-                    <div class="popover-item" onclick="setPremiumReminder(5, 'In 5 min')">In 5 min</div>
-                    <div class="popover-item" onclick="setPremiumReminder(30, 'In 30 min')">In 30 min</div>
-                    <div class="popover-item" onclick="setPremiumReminder(60, 'In 1 hour')">In 1 hour</div>
-                    <div class="popover-item" onclick="setPremiumReminder('tomorrow', 'Tomorrow')">Tomorrow</div>
+                    <div class="popover-item" onclick="setPremiumReminder(5, 'In 5 min')"><i class="codicon codicon-clockface"></i> In 5 min</div>
+                    <div class="popover-item" onclick="setPremiumReminder(30, 'In 30 min')"><i class="codicon codicon-clockface"></i> In 30 min</div>
+                    <div class="popover-item" onclick="setPremiumReminder(60, 'In 1 hour')"><i class="codicon codicon-clockface"></i> In 1 hour</div>
+                    <div class="popover-item" onclick="setPremiumReminder('tomorrow', 'Tomorrow')"><i class="codicon codicon-clockface"></i> Tomorrow</div>
                     <div class="popover-divider"></div>
                     <div class="popover-section-title">Custom</div>
                     <div class="popover-custom-date">
                         <div class="custom-date-wrapper">
-                            <i class="codicon codicon-watch"></i>
+                            <i class="codicon codicon-calendar"></i>
                             <input type="text" id="taskReminderTime" class="custom-date-input" placeholder="Date and time...">
-                            <button class="circle-btn primary-btn" onclick="closeAllPopovers()" title="Confirm">
+                            <button class="circle-btn" onclick="closeAllPopovers()" title="Confirm">
                                 <i class="codicon codicon-check"></i>
                             </button>
                         </div>

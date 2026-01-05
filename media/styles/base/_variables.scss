@@ -1,0 +1,89 @@
+// ==========================================================================
+// VARIABLES & CONFIGURACIÓN (SCSS)
+// ==========================================================================
+
+// 1. Tokens de VSCode (Abstracciones para facilitar el uso)
+// --------------------------------------------------------------------------
+$bg-sidebar: var(--vscode-sideBar-background);
+$bg-editor: var(--vscode-editor-background);
+$bg-menu: var(--vscode-menu-background);
+$fg-main: var(--vscode-foreground);
+$fg-desc: var(--vscode-descriptionForeground);
+$border-color: var(--vscode-panel-border);
+$focus-border: var(--vscode-focusBorder);
+$bg-button: var(--vscode-button-background);
+$fg-button: var(--vscode-button-foreground);
+$bg-button-hover: var(--vscode-button-hoverBackground);
+$accent: #007AFF; // Tu variable --accent-color original
+$color-error: #FF3B30;
+$color-warning: #FF9500;
+$color-success: #29b240;
+
+// 2. Configuración de Efectos (Glassmorphism & Shadows)
+// --------------------------------------------------------------------------
+$blur-value: blur(20px);
+$glass-border: rgba(255, 255, 255, 0.1);
+$glass-bg-opacity: 65%;
+
+$shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05);
+$shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+$shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+$shadow-premium: 0 4px 10px rgba(166, 150, 109, 0.3);
+
+// 3. Mapa de Colores de Prioridad / Fechas
+// --------------------------------------------------------------------------
+// Esto permite automatizar las clases .date-color-today, etc.
+$date-colors: (
+    "today":    #FF3B30,
+    "tomorrow": #FF9500,
+    "soon":     #29b240,
+    "weekend":  var(--vscode-descriptionForeground),
+    "custom":   var(--vscode-descriptionForeground)
+);
+
+$status-colors: (
+    "todo":         #8E8E93,
+    "ready":        #007AFF,
+    "in-progress":  #FF9500,
+    "testing":      #AF52DE,
+    "done":         #29b240
+);
+
+$priority-colors: (
+    "Must":   #FF3B30,
+    "Should": #FF9500,
+    "Could":  #007AFF,
+    "Wont":   #8E8E93
+);
+
+// 4. Mixins de Reutilización
+// --------------------------------------------------------------------------
+
+// Para aplicar el efecto Glassmorphism de tus popovers y flatpickr
+@mixin glass-panel {
+    background: color-mix(in srgb, #{$bg-menu}, transparent #{$glass-bg-opacity}) !important;
+    backdrop-filter: $blur-value saturate(180%) !important;
+    -webkit-backdrop-filter: $blur-value saturate(180%) !important;
+    border: 1px solid var(--vscode-menu-border);
+}
+
+// Para las animaciones de estado que tienes (pulse, float, etc)
+@mixin status-animation($name, $duration: 2s) {
+    animation: #{$name} #{$duration} infinite ease-in-out;
+}
+
+// 5. Tipografía
+// --------------------------------------------------------------------------
+$font-stack: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+$font-vscode: var(--vscode-font-family, $font-stack);
+
+// 6. Border Radius
+// --------------------------------------------------------------------------
+$radius-sm: 4px;
+$radius-md: 6px;
+$radius-lg: 8px;
+$radius-xl: 10px;
+$radius-2xl: 12px;
+$radius-3xl: 16px;
+$radius-pill: 20px;
+$radius-circle: 50%;

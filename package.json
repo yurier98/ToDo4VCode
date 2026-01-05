@@ -22,6 +22,9 @@
     "categories": [
         "Other"
     ],
+    "activationEvents": [
+        "*"
+    ],
     "keywords": [
         "todo",
         "task",
@@ -36,9 +39,6 @@
         "reminders",
         "due-date",
         "multi-root ready"
-    ],
-    "activationEvents": [
-        "onView:todo4vcode-view"
     ],
     "main": "./out/extension.js",
     "icon": "media/icon.png",
@@ -107,8 +107,10 @@
     },
     "scripts": {
         "vscode:prepublish": "npm run compile",
-        "compile": "tsc -p ./",
-        "watch": "tsc -watch -p ./",
+        "compile": "npm run compile:ts && npm run compile:sass",
+        "compile:ts": "tsc -p ./",
+        "compile:sass": "sass media/styles/main.scss media/styles/main.css --style=compressed",
+        "watch": "tsc -watch -p ./ & sass --watch media/styles/main.scss media/styles/main.css",
         "package": "vsce package",
         "publish": "vsce publish && ovsx publish",
         "pretest": "npm run compile && npm run lint",
@@ -123,6 +125,7 @@
         "@vscode/vsce": "^3.7.1",
         "eslint": "^8.41.0",
         "ovsx": "^0.10.7",
+        "sass": "^1.97.1",
         "typescript": "^5.1.3"
     },
     "dependencies": {

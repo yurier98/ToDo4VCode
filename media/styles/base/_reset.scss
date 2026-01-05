@@ -1,0 +1,75 @@
+// ==========================================================================
+// BASE: RESET & ESTILOS GLOBALES
+// ==========================================================================
+
+@use 'variables' as *;
+
+:root {
+    --bg-blur: blur(20px);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --accent-color: #007AFF;
+}
+
+* {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent; // Optimización para clics
+}
+
+body {
+    font-family: $font-vscode; // Usamos la variable definida en _variables.scss
+    color: $fg-main;
+    background-color: var(--vscode-sideBar-background); // Fondo de barra lateral para contraste
+    padding: 0;
+    margin: 0;
+    overflow: hidden; // Evita scroll doble innecesario en el body
+    height: 100vh;
+    width: 100vw;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+// Utilidades de visibilidad
+[hidden],
+.hidden {
+    display: none !important;
+}
+
+// Flex utilities
+.flex-spacer {
+    flex: 1;
+}
+
+textarea, input {
+    font-family: inherit;
+    color: inherit;
+}
+
+// Contenedor principal de la extensión
+.app-container {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+// Configuración global de iconos (Lucide o FontAwesome si usas)
+i, svg {
+    display: inline-block;
+    vertical-align: middle;
+    flex-shrink: 0;
+}
+
+// Estilo de selección de texto
+::selection {
+    background-color: var(--vscode-editor-selectionBackground);
+    color: var(--vscode-editor-selectionForeground);
+}
+
+// Reset de Inputs básicos (para que hereden la fuente de VSCode)
+input, button, textarea, select {
+    font-family: inherit;
+    font-size: inherit;
+    color: inherit;
+    outline: none;
+}

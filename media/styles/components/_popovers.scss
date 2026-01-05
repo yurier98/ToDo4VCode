@@ -1,0 +1,353 @@
+// ==========================================================================
+// COMPONENTE: POPOVERS & MENUS
+// ==========================================================================
+
+@use '../base/variables' as *;
+
+.popover, .ctx-menu, .premium-popover {
+    @include glass-panel; // Efecto cristal centralizado en _variables.scss
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    z-index: 1000;
+    border-radius: $radius-xl;
+    padding: 4px;
+    min-width: 180px;
+    display: none;
+    flex-direction: column;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    animation: popInDown 0.15s ease-out;
+
+    &.show {
+        display: flex !important;
+    }
+}
+
+.popover-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.ctx-menu {
+    display: flex; // Permitir que el atributo [hidden] controle la visibilidad
+    position: fixed;
+    min-width: 140px;
+    max-width: 260px; // Evitar que se estire demasiado
+    right: auto; // IMPORTANTE: Evita que se estire si se define 'left' por JS
+    z-index: 2000;
+}
+
+.premium-popover {
+    top: calc(100% + 8px);
+    left: 0;
+    right: auto;
+    min-width: 100px;
+    max-width: calc(100vw - 20px);
+    z-index: 4000;
+
+    &[style*="position: fixed"] {
+        z-index: 3000;
+        margin: 0;
+    }
+}
+
+// View Mode Selector in Popover
+.view-mode-selector {
+    display: flex;
+    gap: 4px;
+    padding: 3px;
+    background: $bg-editor;
+    border-radius: $radius-lg;
+    margin: 4px 8px 12px;
+}
+
+.view-mode-btn {
+    flex: 1 1 0;
+    width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 2px;
+    border-radius: $radius-md;
+    cursor: pointer;
+    transition: all 0.2s;
+    gap: 4px;
+    color: $fg-main;
+    opacity: 0.5;
+    border: 1px solid transparent;
+
+    i { font-size: 1.1rem; }
+    span { 
+        font-size: 0.7rem; 
+        font-weight: 500;
+        white-space: nowrap;
+    }
+
+    &:hover {
+        background: var(--vscode-welcomePage-tileHoverBackground);
+        opacity: 0.8;
+    }
+
+    &.active {
+        background: var(--vscode-welcomePage-tileBackground);
+        opacity: 1;
+        box-shadow: $shadow-md;
+        border: 0.5px solid $border-color;
+    }
+
+    &.disabled {
+        opacity: 0.25;
+        cursor: default;
+        &:hover { background: transparent; }
+    }
+}
+
+// Toggle Switch
+.toggle-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    cursor: pointer;
+    border-radius: $radius-md;
+    margin: 0 4px;
+
+    &:hover { background: var(--vscode-list-hoverBackground); }
+}
+
+.toggle-switch {
+    position: relative;
+    width: 34px;
+    height: 18px;
+    background: #444;
+    border-radius: $radius-pill;
+    transition: background 0.2s;
+
+    &.active {
+        background: #007AFF;
+        .toggle-slider { transform: translateX(16px); }
+    }
+}
+
+.toggle-slider {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 14px;
+    height: 14px;
+    background: white;
+    border-radius: $radius-circle;
+    transition: transform 0.2s;
+}
+
+.popover-section-title {
+    font-size: 0.65rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    opacity: 0.5;
+    padding: 6px 12px 2px;
+    letter-spacing: 0.5px;
+}
+
+.popover-row, .popover-item {
+    padding: 6px 8px;
+    border-radius: $radius-md;
+    cursor: pointer;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--vscode-menu-foreground);
+    transition: background 0.1s;
+
+    &:hover {
+        background: var(--vscode-list-hoverBackground) !important;
+        color: var(--vscode-list-hoverForeground, $fg-main) !important;
+    }
+
+    &.date-color-today {
+        color: $color-error !important;
+        i { color: $color-error !important; }
+    }
+
+    &.date-color-tomorrow {
+        color: $color-warning !important;
+        i { color: $color-warning !important; }
+    }
+
+    &.date-color-weekend {
+        color: $fg-main !important;
+        i { color: $fg-main !important; }
+    }
+}
+
+.row-label { flex: 1; }
+.check-mark { font-size: 0.9rem; opacity: 0.8; }
+
+.popover-divider, .ctx-divider {
+    height: 1px;
+    background: $border-color;
+    margin: 2px 8px;
+    opacity: 0.5;
+}
+
+// Context Menu Specifics
+.ctx-item {
+    padding: 4px 8px;
+    border-radius: $radius-md;
+    cursor: pointer;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--vscode-menu-foreground);
+    transition: all 0.15s ease;
+
+    i {
+        font-size: 0.9rem;
+        opacity: 0.7;
+    }
+
+    &:hover {
+        background: var(--vscode-list-hoverBackground);
+        color: var(--vscode-list-hoverForeground, $fg-main);
+        
+        i { opacity: 1; }
+    }
+
+    &.delete-item {
+        color: $color-error !important;
+        
+        &:hover {
+            background: rgba($color-error, 0.1) !important;
+        }
+    }
+}
+
+.ctx-label {
+    font-size: 0.65rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    opacity: 0.4;
+    padding: 4px 8px 2px;
+    letter-spacing: 0.5px;
+    color: $fg-main;
+    display: block;
+}
+
+.ctx-priority-row {
+    display: flex;
+    justify-content: space-around;
+    padding: 2px 8px;
+    gap: 4px;
+}
+
+.flag-opt {
+    cursor: pointer;
+    padding: 4px;
+    border-radius: $radius-md;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    transition: all 0.2s;
+
+    i { font-size: 1.1rem; }
+
+    &:hover {
+        background: var(--vscode-list-hoverBackground);
+        transform: scale(1.1);
+    }
+}
+
+.ctx-status-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.ctx-section {
+    display: flex;
+    flex-direction: column;
+}
+
+// Premium Custom Date Input
+.popover-custom-date {
+    padding: 8px 12px 12px;
+    display: flex;
+    justify-content: center;
+}
+
+.custom-date-wrapper {
+    display: flex;
+    align-items: center;
+    background: transparent;
+    border: none;
+    border-radius: $radius-md;
+    padding: 0 6px;
+    gap: 4px;
+    transition: all 0.2s ease;
+    width: 100%;
+    max-width: 180px;
+    min-width: 0;
+
+    i {
+        font-size: 18px;
+        opacity: 1;
+        color: $fg-main;
+    }
+
+    .custom-date-input {
+        background: transparent !important;
+        border: none !important;
+        color: var(--vscode-input-foreground);
+        font-size: 0.8rem !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        outline: none !important;
+        padding: 4px 0 !important;
+        font-family: $font-vscode !important;
+
+        &::placeholder {
+            color: var(--vscode-input-placeholderForeground) !important;
+            opacity: 0.5 !important;
+        }
+    }
+
+    .circle-btn {
+        background: $bg-button !important;
+        color: $fg-button !important;
+        border: none !important;
+        width: 24px !important;
+        height: 24px !important;
+        border-radius: $radius-md !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        cursor: pointer !important;
+        transition: all 0.2s ease !important;
+        padding: 0 !important;
+        margin-left: 4px !important;
+        flex-shrink: 0 !important;
+
+        i { 
+            font-size: 14px !important; 
+            opacity: 1 !important;
+            color: inherit !important;
+        }
+        
+        &:hover {
+            background: $bg-button-hover !important;
+            transform: scale(1.05);
+        }
+        
+        &:active {
+            transform: scale(0.95);
+        }
+    }
+}
+
+@keyframes popInDown {
+    from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}

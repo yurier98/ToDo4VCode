@@ -1,0 +1,265 @@
+// ==========================================================================
+// FLATPICKR VS CODE THEME OVERRIDES
+// ==========================================================================
+
+@use '../base/variables' as *;
+
+.flatpickr-calendar {
+    @include glass-panel; // Usamos el mixin definido en _variables.scss
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3) !important;
+    color: var(--vscode-foreground) !important;
+    z-index: 9999 !important;
+    width: 280px !important;
+    font-size: 13px !important;
+    border-radius: $radius-2xl !important;
+    font-family: $font-vscode !important;
+    padding: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    border: 1px solid var(--vscode-panel-border) !important;
+
+    // Flechas de navegación y bordes superiores
+    &.arrowTop:after, &.arrowTop:before {
+        border-bottom-color: var(--vscode-panel-border) !important;
+    }
+}
+
+.flatpickr-months {
+    background: transparent !important;
+    border-bottom: none !important;
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: 40px !important;
+    border-radius: $radius-2xl $radius-2xl 0 0 !important;
+    position: relative !important;
+    padding: 0 4px !important;
+
+    .flatpickr-month {
+        background: transparent !important;
+        color: var(--vscode-foreground) !important;
+        fill: var(--vscode-foreground) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        height: 100% !important;
+        flex: 1 !important;
+    }
+
+    .flatpickr-prev-month, .flatpickr-next-month {
+        color: var(--vscode-foreground) !important;
+        fill: var(--vscode-foreground) !important;
+        border-radius: $radius-md !important;
+        padding: 8px !important;
+        transition: all 0.2s ease !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        position: static !important; // Cambiamos a static para que el flex del padre los posicione
+        height: 32px !important;
+        width: 32px !important;
+        
+        &:hover {
+            background: var(--vscode-toolbar-hoverBackground) !important;
+            color: var(--vscode-button-background) !important;
+            svg { fill: var(--vscode-button-background) !important; }
+        }
+        
+        &:active { transform: scale(0.9); }
+    }
+}
+
+.flatpickr-current-month {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px !important;
+    padding: 0 !important;
+    position: static !important;
+    width: auto !important;
+    height: 100% !important;
+
+    .flatpickr-monthDropdown-months {
+        color: var(--vscode-foreground) !important;
+        font-weight: 700 !important;
+        font-size: 14px !important;
+        background: transparent !important;
+        border-radius: $radius-md !important;
+        padding: 4px 8px !important;
+        cursor: pointer !important;
+        
+        &:hover {
+            background: var(--vscode-toolbar-hoverBackground) !important;
+        }
+    }
+
+    .numInputWrapper {
+        width: 65px !important;
+        border-radius: $radius-md !important;
+        
+        input.cur-year {
+            color: var(--vscode-foreground) !important;
+            font-weight: 700 !important;
+            font-size: 14px !important;
+            background: transparent !important;
+            padding: 4px !important;
+        }
+
+        &:hover { background: var(--vscode-toolbar-hoverBackground) !important; }
+        
+        span {
+            border: none !important;
+            opacity: 0.5;
+            &:after { border-top-color: var(--vscode-foreground) !important; }
+            &.arrowUp:after { border-bottom-color: var(--vscode-foreground) !important; }
+        }
+    }
+}
+
+.flatpickr-weekdays {
+    height: 30px !important;
+    background: transparent !important;
+    border-bottom: 1px solid var(--vscode-panel-border) !important;
+    margin-bottom: 4px !important;
+    display: flex !important;
+    width: 100% !important;
+    
+    .flatpickr-weekdaycontainer {
+        display: flex !important;
+        width: 100% !important;
+        background: transparent !important;
+    }
+    
+    span.flatpickr-weekday {
+        background: transparent !important;
+        color: var(--vscode-descriptionForeground) !important;
+        font-weight: 700 !important;
+        font-size: 11px !important;
+        text-transform: uppercase !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        flex: 1 !important;
+    }
+}
+
+.flatpickr-days {
+    width: 280px !important;
+    background: transparent !important;
+    display: flex !important;
+    justify-content: center !important;
+}
+
+.dayContainer {
+    width: 252px !important;
+    min-width: 252px !important;
+    max-width: 252px !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: flex-start !important;
+    padding: 0 !important;
+}
+
+.flatpickr-day {
+    color: var(--vscode-foreground) !important;
+    max-width: 32px !important;
+    height: 32px !important;
+    line-height: 32px !important;
+    border-radius: $radius-md !important;
+    margin: 2px !important;
+    transition: all 0.2s ease !important;
+    border: 1px solid transparent !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    &:hover {
+        background: var(--vscode-list-hoverBackground) !important;
+        color: var(--vscode-foreground) !important;
+        transform: scale(1.05);
+    }
+
+    &.selected {
+        background: var(--vscode-button-background) !important;
+        border-color: var(--vscode-button-background) !important;
+        color: var(--vscode-button-foreground) !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+        font-weight: 700 !important;
+    }
+
+    &.today {
+        border-color: var(--vscode-button-background) !important;
+        color: var(--vscode-button-background) !important;
+        font-weight: 700 !important;
+
+        &.selected { color: var(--vscode-button-foreground) !important; }
+    }
+
+    &.flatpickr-disabled {
+        color: var(--vscode-disabledForeground) !important;
+        opacity: 0.3;
+    }
+
+    &.prevMonthDay, &.nextMonthDay {
+        color: var(--vscode-descriptionForeground) !important;
+        opacity: 0.4;
+    }
+}
+
+.flatpickr-time {
+    border-top: 1px solid var(--vscode-panel-border) !important;
+    padding: 14px 0 !important;
+    height: 60px !important;
+    line-height: 32px !important;
+    background: transparent !important;
+    border-radius: 0 0 $radius-2xl $radius-2xl !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    .numInputWrapper {
+        height: 32px !important;
+        border-radius: $radius-md !important;
+        margin: 0 4px !important;
+        
+        &:hover {
+            background: var(--vscode-toolbar-hoverBackground) !important;
+        }
+    }
+
+    input, .flatpickr-time-separator, .flatpickr-am-pm {
+        color: var(--vscode-foreground) !important;
+        font-weight: 700 !important;
+        background: transparent !important;
+        border: none !important;
+        font-size: 16px !important;
+    }
+
+    input:hover, .flatpickr-am-pm:hover {
+        background: var(--vscode-toolbar-hoverBackground) !important;
+        border-radius: $radius-md !important;
+    }
+
+    .flatpickr-am-pm {
+        padding: 0 10px !important;
+        height: 32px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        border-radius: $radius-md !important;
+        margin-left: 4px !important;
+    }
+
+    .numInputWrapper span {
+        border: none !important;
+        &:after { border-top-color: var(--vscode-foreground) !important; }
+        &.arrowUp:after { border-bottom-color: var(--vscode-foreground) !important; }
+    }
+}
+
+.flatpickr-innerContainer {
+    padding: 4px 8px !important;
+    background: transparent !important;
+}

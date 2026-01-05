@@ -69,6 +69,7 @@ function openTaskModal(taskId) {
 
     updateModalUI();
 
+    modal.classList.add('active');
     modal.classList.remove('hidden');
 
     // Auto-resize textareas
@@ -152,14 +153,18 @@ function updateModalUI() {
     if (statusVal) {
         statusVal.querySelector('span').innerText = modalStatus;
         const icon = statusVal.querySelector('i');
-        icon.className = `codicon ${STATUS_ICONS[modalStatus]}`;
+        const iconClass = STATUS_ICONS[modalStatus].replace(/anim-\S+/g, '').trim();
+        icon.className = `codicon ${iconClass}`;
     }
     if (statusLabel) statusLabel.innerText = modalStatus;
 }
 
 function closeTaskModal() {
     const modal = document.getElementById('taskModal');
-    if (modal) modal.classList.add('hidden');
+    if (modal) {
+        modal.classList.remove('active');
+        modal.classList.add('hidden');
+    }
     modalTaskId = null;
     closeAllPopovers();
 }
@@ -231,6 +236,9 @@ function setModalStatus(s) {
 
 function closeAllPopovers(keepEditingId = false) {
     document.querySelectorAll('.premium-popover, .popover').forEach(p => p.classList.remove('show'));
+    hideContextMenu();
+    if (datePicker) datePicker.close();
+    if (reminderPicker) reminderPicker.close();
     if (!keepEditingId) editingTaskId = null;
 }
 
@@ -859,6 +867,7 @@ function handleAddTaskClick(el) {
 function showContextMenu(e, taskId) {
     e.preventDefault();
     e.stopPropagation();
+    closeAllPopovers();
     activeTaskId = taskId;
     const menu = document.getElementById('taskContextMenu');
     if (!menu) return;
@@ -869,17 +878,30 @@ function showContextMenu(e, taskId) {
         if (clearDateBtn) clearDateBtn.style.display = task.dueDate ? 'flex' : 'none';
         if (clearReminderBtn) clearReminderBtn.style.display = (task.reminders && task.reminders.length > 0) ? 'flex' : 'none';
     }
+    
+    // Mostrar temporalmente para medir
     menu.hidden = false;
-    const menuWidth = menu.offsetWidth || 160;
-    const menuHeight = menu.offsetHeight || 200;
+    menu.style.visibility = 'hidden';
+    menu.style.display = 'flex';
+    
+    const menuWidth = menu.offsetWidth || 180;
+    const menuHeight = menu.offsetHeight || 280;
+    
+    menu.style.visibility = 'visible';
+    
     const windowWidth = window.innerWidth;
     const windowHeight = window.innerHeight;
     let left = e.clientX;
     let top = e.clientY;
+    
     if (left + menuWidth > windowWidth) left = windowWidth - menuWidth - 10;
     if (top + menuHeight > windowHeight) top = windowHeight - menuHeight - 10;
+    if (left < 10) left = 10;
+    if (top < 10) top = 10;
+
     menu.style.top = `${top}px`;
     menu.style.left = `${left}px`;
+    menu.style.right = 'auto';
 }
 
 function hideContextMenu() {
@@ -959,7 +981,7 @@ function getPriorityIndicatorHtml(t) {
         <div class="priority-indicator ${statusClass}" 
              style="color: ${PRIORITY_COLORS[t.priority] || '#8e8e93'}"
              title="${t.priority}"
-             onclick="event.stopPropagation(); toggleTaskDone('${t.id}', '${t.status}')">
+             onclick="toggleTaskDone('${t.id}', '${t.status}')">
              ${icon}
         </div>
     `;
@@ -1023,8 +1045,8 @@ function renderList(tasks) {
                              ondragend="cleanupDragState()">
                              ${getPriorityIndicatorHtml(t)}
                              <div class="card-content">
-                                <div class="card-title" ondblclick="event.stopPropagation(); makeEditable(this, '${t.id}')">${t.text}</div>
-                                ${t.description ? `<div class="card-desc" onclick="event.stopPropagation(); openTaskModal('${t.id}')">${t.description}</div>` : `<div class="card-desc empty-desc" onclick="event.stopPropagation(); openTaskModal('${t.id}')">Add description...</div>`}
+                                <div class="card-title" ondblclick="makeEditable(this, '${t.id}')">${t.text}</div>
+                                ${t.description ? `<div class="card-desc" onclick="openTaskModal('${t.id}')">${t.description}</div>` : `<div class="card-desc empty-desc" onclick="openTaskModal('${t.id}')">Add description...</div>`}
                                 ${getTaskBadgesHtml(t)}
                             </div>
                             <div class="card-more" onclick="showContextMenu(event, '${t.id}')">
@@ -1072,8 +1094,8 @@ function renderList(tasks) {
                          ondragend="cleanupDragState()">
                         ${getPriorityIndicatorHtml(t)}
                         <div class="card-content">
-                            <div class="card-title" ondblclick="event.stopPropagation(); makeEditable(this, '${t.id}')">${t.text}</div>
-                            ${t.description ? `<div class="card-desc" onclick="event.stopPropagation(); openTaskModal('${t.id}')">${t.description}</div>` : `<div class="card-desc empty-desc" onclick="event.stopPropagation(); openTaskModal('${t.id}')">Add description...</div>`}
+                            <div class="card-title" ondblclick="makeEditable(this, '${t.id}')">${t.text}</div>
+                            ${t.description ? `<div class="card-desc" onclick="openTaskModal('${t.id}')">${t.description}</div>` : `<div class="card-desc empty-desc" onclick="openTaskModal('${t.id}')">Add description...</div>`}
                             ${getTaskBadgesHtml(t)}
                         </div>
                         <div class="card-more" onclick="showContextMenu(event, '${t.id}')">
@@ -1130,8 +1152,8 @@ function renderKanban(tasks) {
                     <div class="task-card ${t.status === 'Done' ? 'task-is-done' : ''}" data-id="${t.id}" draggable="true" ondragstart="event.dataTransfer.setData('text/plain', '${t.id}'); this.classList.add('dragging')" ondragend="cleanupDragState()">
                         ${getPriorityIndicatorHtml(t)}
                         <div class="card-content">
-                            <div class="card-title" ondblclick="event.stopPropagation(); makeEditable(this, '${t.id}')">${t.text}</div>
-                            ${t.description ? `<div class="card-desc" onclick="event.stopPropagation(); openTaskModal('${t.id}')">${t.description}</div>` : `<div class="card-desc empty-desc" onclick="event.stopPropagation(); openTaskModal('${t.id}')">Add description...</div>`}
+                            <div class="card-title" ondblclick="makeEditable(this, '${t.id}')">${t.text}</div>
+                            ${t.description ? `<div class="card-desc" onclick="openTaskModal('${t.id}')">${t.description}</div>` : `<div class="card-desc empty-desc" onclick="openTaskModal('${t.id}')">Add description...</div>`}
                             ${getTaskBadgesHtml(t)}
                         </div>
                         <div class="card-more" onclick="showContextMenu(event, '${t.id}')">
@@ -1204,11 +1226,20 @@ function makeEditable(el, id, field = 'text') {
 }
 
 document.addEventListener('click', (e) => {
-    const isTrigger = e.target.closest('.popover-wrapper') || e.target.closest('.format-btn') || e.target.closest('.ctx-menu') || e.target.closest('.modal-grid-item');
-    const isPopover = e.target.closest('.popover') || e.target.closest('.premium-popover') || e.target.closest('.flatpickr-calendar');
-    if (!isTrigger && !isPopover) closeAllPopovers();
-    const ctxMenu = document.getElementById('taskContextMenu');
-    if (ctxMenu && !ctxMenu.contains(e.target)) hideContextMenu();
+    const isPopover = e.target.closest('.popover') || 
+                      e.target.closest('.premium-popover') || 
+                      e.target.closest('.ctx-menu') || 
+                      e.target.closest('.flatpickr-calendar');
+                      
+    const isTrigger = e.target.closest('.popover-wrapper') || 
+                      e.target.closest('.format-btn') || 
+                      e.target.closest('.action-btn') ||
+                      e.target.closest('.card-more') ||
+                      e.target.closest('.modal-grid-item');
+
+    if (!isPopover && !isTrigger) {
+        closeAllPopovers();
+    }
 });
 
 let datePicker, reminderPicker;

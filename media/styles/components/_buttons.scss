@@ -1,0 +1,166 @@
+@use '../base/variables' as *;
+
+// ==========================================================================
+// COMPONENTE: BOTONES
+// ==========================================================================
+
+// 1. Estilo Base para todos los botones de la extensión
+// --------------------------------------------------------------------------
+.view-btn, .action-btn, .circle-btn, .modal-btn {
+    cursor: pointer;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: $font-vscode;
+    
+    &:active {
+        transform: scale(0.95);
+        opacity: 0.8;
+    }
+    
+    &:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+        filter: grayscale(1);
+    }
+}
+
+// 2. Botones de Navegación Superior (Top Bar)
+// --------------------------------------------------------------------------
+.view-btn {
+    background: transparent;
+    border: none;
+    color: $fg-main;
+    width: 28px;
+    height: 24px;
+    cursor: pointer;
+    border-radius: $radius-sm;
+    opacity: 0.6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &.active {
+        background: var(--vscode-button-secondaryBackground);
+        opacity: 1;
+    }
+}
+
+// 3. Botones Circulares e Iconos de Acción
+// --------------------------------------------------------------------------
+.circle-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: $radius-circle;
+    padding: 0;
+    justify-content: center;
+    flex-shrink: 0;
+
+    i {
+        font-size: 14px !important;
+        font-weight: 600;
+        -webkit-text-stroke: 0.5px;
+    }
+}
+
+.action-btn {
+    background: var(--vscode-welcomePage-tileBackground, rgba(0, 0, 0, 0.05));
+    color: $fg-main;
+    border: none;
+    padding: 6px 10px;
+    border-radius: $radius-md;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+    font-weight: 500;
+    opacity: 0.8;
+
+    i {
+        font-size: 14px;
+        opacity: 0.6;
+    }
+
+    &:hover {
+        background: var(--vscode-welcomePage-tileHoverBackground, rgba(0, 0, 0, 0.08)) !important;
+        opacity: 1;
+    }
+
+    &.has-value {
+        background: var(--vscode-button-secondaryBackground);
+        color: var(--vscode-button-secondaryForeground);
+        opacity: 1;
+    }
+}
+
+.btn-submit {
+    background: $bg-button;
+    color: $fg-button;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: $radius-md;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+
+    &:hover {
+        background: $bg-button-hover;
+        transform: scale(1.1);
+    }
+
+    &:active {
+        transform: scale(0.95);
+    }
+}
+
+// 4. Botones de Modales y Formularios
+// --------------------------------------------------------------------------
+.modal-btn {
+    padding: 8px 16px;
+    border-radius: $radius-lg;
+    font-size: 0.9rem;
+    font-weight: 600;
+    gap: 8px;
+
+    &.primary-btn {
+        background: $bg-button;
+        color: $fg-button;
+        
+        &:hover {
+            background: $bg-button-hover;
+        }
+    }
+
+    &.delete-btn {
+        background: transparent;
+        color: $color-error;
+        opacity: 0.8;
+
+        &:hover {
+            background: rgba($color-error, 0.1);
+            opacity: 1;
+        }
+    }
+}
+
+// 5. Generación Automática de Botones de Fecha/Color
+// --------------------------------------------------------------------------
+// Aquí usamos el mapa que definimos en _variables.scss
+@each $name, $color in $date-colors {
+    .date-color-#{$name} {
+        i, span { color: $color !important; }
+    }
+
+    .action-btn.has-value.date-color-#{$name} {
+        background: var(--vscode-welcomePage-tileBackground) !important;
+        color: $color !important;
+    }
+}

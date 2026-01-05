@@ -1,0 +1,19 @@
+// media/styles/main.scss
+
+// 1. Base
+@use 'base/variables' as *;
+@use 'base/reset' as *;
+
+// 2. Layouts
+@use 'layouts/navigation' as *;
+@use 'layouts/kanban' as *;
+@use 'layouts/list' as *;
+
+// 3. Componentes
+@use 'components/buttons' as *;
+@use 'components/cards' as *;
+@use 'components/modals' as *;
+@use 'components/popovers' as *;
+
+// 4. Vendors
+@use 'vendors/flatpickr' as *;

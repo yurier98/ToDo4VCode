@@ -1,0 +1,119 @@
+// ==========================================================================
+// LAYOUT: NAVIGATION (Top Bar)
+// ==========================================================================
+
+@use '../base/variables' as *;
+
+.top-bar {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px; // Aumentado de 8px 12px
+    background: var(--vscode-sideBar-background);
+    border-bottom: 1px solid var(--vscode-panel-border);
+    gap: 8px;
+    z-index: 50; // Por debajo de los popovers
+
+    .app-title {
+        font-size: 0.75rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        opacity: 0.5;
+        letter-spacing: 1px;
+        margin-right: 4px;
+    }
+
+    .view-toggle-group {
+        display: flex;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 6px;
+        padding: 2px;
+    }
+
+    .view-group-divider {
+        width: 1px;
+        background: var(--vscode-panel-border);
+        margin: 4px 4px;
+        opacity: 0.5;
+    }
+
+    .flex-spacer {
+        flex: 1;
+    }
+
+    .format-btn {
+        background: transparent;
+        border: none;
+        color: var(--vscode-foreground);
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        opacity: 0.8;
+        white-space: nowrap; // Evita que el texto se rompa o se oculte
+
+        &:hover {
+            background: var(--vscode-toolbar-hoverBackground);
+            opacity: 1;
+        }
+
+        &.format-btn-inline {
+            width: auto !important;
+            padding: 4px 10px !important; // Aumentado para que no se vea aplastado
+            gap: 6px;
+            font-size: 0.75rem;
+
+            span {
+                font-weight: 500;
+            }
+        }
+    }
+
+    .view-controls {
+        display: flex;
+        background: var(--vscode-welcomePage-tileBackground);
+        padding: 2px;
+        border-radius: 8px;
+        gap: 2px;
+    }
+
+    .nav-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+}
+
+/* --- Input Sticky Area --- */
+.input-sticky-container {
+    padding: 12px 12px 0px 12px; // Aumentado para dar espacio al degradado
+    background: linear-gradient(
+        to bottom, 
+        var(--vscode-sideBar-background) 10%, 
+        var(--vscode-sideBar-background) 80%, 
+        color-mix(in srgb, var(--vscode-sideBar-background), transparent 20%) 80%,
+        transparent 100%
+    );
+    z-index: 40;
+    flex-shrink: 0;
+    margin-bottom: -20px; // Tira de la lista hacia arriba para que pase por debajo del degradado
+    pointer-events: none; // Permite hacer scroll/clic a través del área transparente del degradado
+
+    & > * {
+        pointer-events: auto; // Asegura que el card de input sí reciba clics
+    }
+}
+
+/* --- Scroll Area --- */
+#scroll-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0; // Importante para flexbox y scroll
+    overflow-y: auto; // El scroll debe estar aquí
+    overflow-x: hidden;
+}
