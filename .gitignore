@@ -5,4 +5,5 @@ out
 .vscode-test
 .vscode
 .agent
+.continue
 
