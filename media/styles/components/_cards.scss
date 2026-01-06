@@ -177,9 +177,9 @@
         font-weight: 400;
         padding: 2px 6px;
         border-radius: $radius-md;
-        background: rgba(255, 255, 255, 0.04);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        color: $fg-main;
+        background: var(--vscode-badge-background);
+        border: 1px solid $border-color;
+        color: var(--vscode-badge-foreground);
         opacity: 0.9;
         white-space: nowrap;
 
