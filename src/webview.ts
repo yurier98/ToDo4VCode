@@ -158,70 +158,106 @@ export class TaskWebview {
 
                 <div id="taskModal" class="modal-overlay hidden" onclick="closeTaskModal()">
                     <div class="modal-container" onclick="if(!event.target.closest('.premium-popover')) closeAllPopovers(true); event.stopPropagation()">
-                        <div class="modal-header">
-                            <div class="modal-header-left">
-                                <div id="modalPriorityIndicator" class="priority-indicator"></div>
-                                <span id="modalStatusLabel" class="modal-status-badge">${STATUSES.TODO}</span>
-                            </div>
-                            <button class="modal-close-btn" onclick="closeTaskModal()">
-                                <i class="codicon codicon-close"></i>
-                            </button>
-                        </div>
+                        <button class="modal-close-btn-global" onclick="closeTaskModal()" title="Close">
+                            <i class="codicon codicon-close"></i>
+                        </button>
                         
-                        <div class="modal-body">
-                            <textarea id="modalTaskTitle" class="modal-title-input" placeholder="${UI.TASK_NAME_PLACEHOLDER}" rows="1"></textarea>
-                            
-                            <div class="modal-section">
-                                <div class="modal-section-header">
-                                    <i class="codicon codicon-list-selection"></i>
-                                    <span>${UI.DESCRIPTION_PLACEHOLDER}</span>
+                        <div class="modal-content-wrapper">
+                            <!-- Sección de Título (Ahora fuera de main-content para grid) -->
+                            <div class="modal-section title-section-modern">
+                                <div class="task-completion-wrapper">
+                                    <div id="modalTaskCheckbox" class="priority-indicator" onclick="toggleMainTaskCompletion()"></div>
+                                    <textarea id="modalTaskTitle" class="modal-title-input" placeholder="${UI.TASK_NAME_PLACEHOLDER}" rows="1" oninput="this.style.height = '';this.style.height = this.scrollHeight + 'px'"></textarea>
                                 </div>
-                                <textarea id="modalTaskDesc" class="modal-desc-input" placeholder="Add a more detailed description..." rows="3"></textarea>
                             </div>
 
-                            <div class="modal-grid">
-                                <div class="modal-grid-item" onclick="toggleDatePicker(event, true)">
-                                    <div class="grid-item-label">Due Date</div>
-                                    <div id="modalDateValue" class="grid-item-value">
-                                        <i class="codicon codicon-calendar"></i>
-                                        <span>No date</span>
-                                        <i class="codicon codicon-close clear-date-btn hidden" onclick="event.stopPropagation(); clearDate()"></i>
+                            <!-- Columna Principal -->
+                            <div class="modal-main-content">
+                                <div class="modal-scrollable-area">
+                                    <div class="modal-section description-section">
+                                        <div class="modal-section-header no-border">
+                                            <i class="codicon codicon-menu"></i>
+                                            <span>${UI.DESCRIPTION}</span>
+                                        </div>
+                                        <textarea id="modalTaskDesc" class="modal-desc-input" placeholder="${UI.DESCRIPTION_PLACEHOLDER}" rows="3"></textarea>
+                                    </div>
+
+                                    <div class="modal-section subtasks-section-modern">
+                                        <div class="modal-section-header collapsible" onclick="toggleSubtasksCollapse()">
+                                            <div class="header-left">
+                                                <i id="subtasksChevron" class="codicon codicon-chevron-down"></i>
+                                                <span>${UI.SUBTASKS}</span>
+                                                <span id="subtaskProgress" class="progress-count-simple">0/0</span>
+                                            </div>
+                                            <div class="header-right">
+                                                <button id="hideCompletedSubtasks" class="hide-completed-btn" onclick="event.stopPropagation(); toggleHideCompletedSubtasks()">
+                                                    <i class="codicon codicon-eye-closed"></i>
+                                                    <span>${UI.HIDE_COMPLETED_SUBTASKS}</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div id="subtasksContainer" class="subtasks-collapsible-content">
+                                            <div id="subtaskList" class="subtask-list-modern"></div>
+                                            <div class="add-subtask-minimal" onclick="focusSubtaskInput()">
+                                                <i class="codicon codicon-add"></i>
+                                                <input type="text" id="newSubtaskInput" placeholder="${UI.ADD_SUBTASK_PLACEHOLDER}" onkeydown="if(event.key === 'Enter') addSubtask()">
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="modal-grid-item" onclick="toggleReminderPicker(event, true)">
-                                    <div class="grid-item-label">${UI.REMINDER}</div>
-                                    <div id="modalReminderValue" class="grid-item-value">
-                                        <i class="codicon codicon-bell"></i>
-                                        <span>No reminder</span>
-                                        <i class="codicon codicon-close clear-date-btn hidden" onclick="event.stopPropagation(); clearReminder()"></i>
+                            </div>
+
+                            <!-- Columna Lateral (Sidebar completo) -->
+                            <div class="modal-sidebar">
+                                <div class="sidebar-header-spacer"></div>
+
+                                <div class="sidebar-content">
+                                    <div class="modal-grid">
+                                        <div class="modal-grid-item" onclick="toggleStatusPicker(event)">
+                                            <div class="grid-item-label">${UI.STATUS}</div>
+                                            <div id="modalStatusValue" class="grid-item-value">
+                                                <i class="codicon codicon-layers"></i>
+                                                <span id="modalStatusLabel">${STATUSES.TODO}</span>
+                                            </div>
+                                        </div>
+                                        <div class="modal-grid-item" onclick="togglePriorityPicker(event, true)">
+                                            <div class="grid-item-label">${UI.PRIORITY}</div>
+                                            <div id="modalPriorityValue" class="grid-item-value">
+                                                <i class="codicon codicon-flag"></i>
+                                                <span>${PRIORITIES.WONT}</span>
+                                            </div>
+                                        </div>
+                                        <div class="modal-grid-item" onclick="toggleDatePicker(event, true)">
+                                            <div class="grid-item-label">Due Date</div>
+                                            <div id="modalDateValue" class="grid-item-value">
+                                                <i class="codicon codicon-calendar"></i>
+                                                <span>No date</span>
+                                                <i class="codicon codicon-close clear-date-btn hidden" onclick="event.stopPropagation(); clearDate()"></i>
+                                            </div>
+                                        </div>
+                                        <div class="modal-grid-item" onclick="toggleReminderPicker(event, true)">
+                                            <div class="grid-item-label">${UI.REMINDER}</div>
+                                            <div id="modalReminderValue" class="grid-item-value">
+                                                <i class="codicon codicon-bell"></i>
+                                                <span>No reminder</span>
+                                                <i class="codicon codicon-close clear-date-btn hidden" onclick="event.stopPropagation(); clearReminder()"></i>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="modal-grid-item" onclick="togglePriorityPicker(event, true)">
-                                    <div class="grid-item-label">${UI.PRIORITY}</div>
-                                    <div id="modalPriorityValue" class="grid-item-value">
-                                        <i class="codicon codicon-flag"></i>
-                                        <span>${PRIORITIES.WONT}</span>
-                                    </div>
-                                </div>
-                                <div class="modal-grid-item" onclick="toggleStatusPicker(event)">
-                                    <div class="grid-item-label">${UI.STATUS}</div>
-                                    <div id="modalStatusValue" class="grid-item-value">
-                                        <i class="codicon codicon-layers"></i>
-                                        <span>${STATUSES.TODO}</span>
-                                    </div>
+
+                                <div class="sidebar-footer">
+                                    <button class="modal-btn delete-btn" onclick="deleteTaskFromModal()">
+                                        <span>${UI.DELETE}</span>
+                                    </button>
+                                    <button class="modal-btn primary-btn" onclick="saveTaskModal()">
+                                        <span>${UI.SAVE}</span>
+                                    </button>
                                 </div>
                             </div>
                         </div>
-
-                        <div class="modal-footer">
-                            <button class="modal-btn delete-btn" onclick="deleteTaskFromModal()">
-                                <i class="codicon codicon-trash"></i>
-                                <span>${UI.DELETE}</span>
-                            </button>
-                            <div class="flex-spacer"></div>
-                            <button class="modal-btn primary-btn" onclick="saveTaskModal()">
-                                <span>${UI.SAVE}</span>
-                            </button>
+                    </div>
+                </div>
                         </div>
                     </div>
                 </div>

@@ -138,6 +138,43 @@ export class TaskService implements vscode.Disposable {
         return tasks;
     }
 
+    public async addSubtask(taskId: string, text: string): Promise<TodoItem[]> {
+        return this._updateTask(taskId, task => {
+            if (!task.subtasks) task.subtasks = [];
+            task.subtasks.push({
+                id: Math.random().toString(36).substring(2, 11),
+                text,
+                completed: false
+            });
+        });
+    }
+
+    public async toggleSubtask(taskId: string, subtaskId: string): Promise<TodoItem[]> {
+        return this._updateTask(taskId, task => {
+            const subtask = task.subtasks?.find(s => s.id === subtaskId);
+            if (subtask) {
+                subtask.completed = !subtask.completed;
+            }
+        });
+    }
+
+    public async deleteSubtask(taskId: string, subtaskId: string): Promise<TodoItem[]> {
+        return this._updateTask(taskId, task => {
+            if (task.subtasks) {
+                task.subtasks = task.subtasks.filter(s => s.id !== subtaskId);
+            }
+        });
+    }
+
+    public async updateSubtaskText(taskId: string, subtaskId: string, text: string): Promise<TodoItem[]> {
+        return this._updateTask(taskId, task => {
+            const subtask = task.subtasks?.find(s => s.id === subtaskId);
+            if (subtask) {
+                subtask.text = text;
+            }
+        });
+    }
+
     private async _updateTask(id: string, updater: (task: TodoItem) => void): Promise<TodoItem[]> {
         const tasks = await this.getTasks();
         const task = tasks.find(t => t.id === id);

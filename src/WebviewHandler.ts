@@ -53,6 +53,18 @@ export class WebviewHandler {
             case 'deleteTask':
                 await this._taskService.deleteTask(data.id);
                 break;
+            case 'addSubtask':
+                await this._taskService.addSubtask(data.taskId, data.text);
+                break;
+            case 'toggleSubtask':
+                await this._taskService.toggleSubtask(data.taskId, data.subtaskId);
+                break;
+            case 'deleteSubtask':
+                await this._taskService.deleteSubtask(data.taskId, data.subtaskId);
+                break;
+            case 'updateSubtaskText':
+                await this._taskService.updateSubtaskText(data.taskId, data.subtaskId, data.text);
+                break;
             case 'updateSettings':
                 await this._taskService.saveSettings(data.viewType || 'sidebar', data.settings);
                 break;

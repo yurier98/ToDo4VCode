@@ -8,6 +8,8 @@ let groupBy = previousState?.groupBy || 'status';
 let hideCompleted = previousState?.hideCompleted || false;
 let sortBy = previousState?.sortBy || 'priority';
 
+let hideCompletedSubtasksState = previousState?.hideCompletedSubtasksState || false;
+
 let activeTaskId = null;
 let editingTaskId = null;
 let modalTaskId = null;
@@ -28,6 +30,7 @@ function saveState() {
         viewMode,
         groupBy,
         hideCompleted,
+        hideCompletedSubtasksState,
         sortBy,
         collapsedSections: Array.from(collapsedSections)
     };
@@ -82,15 +85,24 @@ function openTaskModal(taskId) {
     const titleInput = document.getElementById('modalTaskTitle');
     const descInput = document.getElementById('modalTaskDesc');
     const statusLabel = document.getElementById('modalStatusLabel');
-    const priorityIndicator = document.getElementById('modalPriorityIndicator');
+    const taskCheckbox = document.getElementById('modalTaskCheckbox');
 
     if (titleInput) titleInput.value = task.text;
     if (descInput) descInput.value = task.description || '';
     if (statusLabel) statusLabel.innerText = task.status;
 
+    // Checkbox de tarea principal
+    if (taskCheckbox) {
+        if (task.status === 'Done') {
+            taskCheckbox.classList.add('completed');
+        } else {
+            taskCheckbox.classList.remove('completed');
+        }
+    }
+
     if (datePicker) datePicker.setDate(task.dueDate || '', false);
     if (reminderPicker) {
-        const r = (task.reminders && task.reminders.length > 0) ? task.reminders[0].time : '';
+        const r = (task.reminders && task.reminders.length > 0) ? task.reminders[0] : '';
         reminderPicker.setDate(r, false);
     }
 
@@ -100,18 +112,178 @@ function openTaskModal(taskId) {
     modal.classList.remove('hidden');
 
     // Auto-resize textareas
-    const autoResize = (el) => {
+    const autoResize = (el, maxHeight) => {
         el.style.height = 'auto';
-        el.style.height = el.scrollHeight + 'px';
+        let newHeight = el.scrollHeight;
+        if (maxHeight && newHeight > maxHeight) {
+            newHeight = maxHeight;
+            el.style.overflowY = 'auto';
+        } else {
+            el.style.overflowY = 'hidden';
+        }
+        el.style.height = newHeight + 'px';
     };
 
     if (titleInput) {
-        autoResize(titleInput);
-        titleInput.oninput = () => autoResize(titleInput);
+        autoResize(titleInput, 80); // Aprox 3 líneas
+        titleInput.oninput = () => autoResize(titleInput, 80);
     }
     if (descInput) {
-        autoResize(descInput);
-        descInput.oninput = () => autoResize(descInput);
+        autoResize(descInput, 200);
+        descInput.oninput = () => autoResize(descInput, 200);
+    }
+
+    renderSubtasks(task.subtasks || []);
+}
+
+function renderSubtasks(subtasks) {
+    const list = document.getElementById('subtaskList');
+    const progress = document.getElementById('subtaskProgress');
+    const hideToggle = document.getElementById('hideCompletedSubtasks');
+    const addSubtaskContainer = document.querySelector('.add-subtask-minimal');
+    if (!list) return;
+
+    list.innerHTML = '';
+    
+    const completedCount = subtasks.length > 0 ? subtasks.filter(s => s.completed).length : 0;
+    if (progress) progress.innerText = `${completedCount}/${subtasks.length}`;
+
+    // Update Toggle Text and Icon
+    if (hideToggle) {
+        const iconClass = hideCompletedSubtasksState ? 'codicon-eye' : 'codicon-eye-closed';
+        const text = hideCompletedSubtasksState ? 'Show completed' : 'Hide completed';
+        hideToggle.innerHTML = `<i class="codicon ${iconClass}"></i><span>${text}</span>`;
+    }
+
+    // Split into incomplete and completed
+    const incomplete = subtasks.filter(s => !s.completed);
+    const completed = subtasks.filter(s => s.completed);
+
+    // 1. Render incomplete subtasks
+    incomplete.forEach(s => {
+        const item = createSubtaskElement(s);
+        list.appendChild(item);
+    });
+
+    // 2. Render "Add Subtask" UI in the middle (after incomplete)
+    if (addSubtaskContainer) {
+        list.appendChild(addSubtaskContainer);
+    }
+
+    // 3. Render completed subtasks (if not hidden)
+    if (!hideCompletedSubtasksState) {
+        completed.forEach(s => {
+            const item = createSubtaskElement(s);
+            list.appendChild(item);
+        });
+    }
+}
+
+function createSubtaskElement(s) {
+    const item = document.createElement('div');
+    item.className = 'subtask-item';
+    item.innerHTML = `
+        <div class="subtask-checkbox ${s.completed ? 'completed' : ''}" onclick="toggleSubtask('${s.id}')"></div>
+        <input type="text" class="subtask-text-input ${s.completed ? 'completed' : ''}" 
+            value="${s.text}" 
+            onchange="updateSubtaskText('${s.id}', this.value)"
+            onkeydown="if(event.key === 'Enter') this.blur()">
+        <button class="subtask-delete-btn" onclick="deleteSubtask('${s.id}')">
+            <i class="codicon codicon-trash"></i>
+        </button>
+    `;
+    return item;
+}
+
+function toggleHideCompletedSubtasks() {
+    hideCompletedSubtasksState = !hideCompletedSubtasksState;
+    saveState();
+    
+    const task = currentTasks.find(t => t.id === modalTaskId);
+    if (task) {
+        renderSubtasks(task.subtasks || []);
+    }
+}
+
+function toggleSubtasksCollapse() {
+    const header = document.querySelector('.subtasks-section-modern .modal-section-header');
+    const container = document.getElementById('subtasksContainer');
+    if (container && header) {
+        container.classList.toggle('hidden');
+        header.classList.toggle('collapsed');
+    }
+}
+
+function focusSubtaskInput() {
+    const input = document.getElementById('newSubtaskInput');
+    if (input) input.focus();
+}
+
+function toggleMainTaskCompletion() {
+    if (!modalTaskId) return;
+    const task = currentTasks.find(t => t.id === modalTaskId);
+    if (!task) return;
+
+    const newStatus = modalStatus === 'Done' ? 'Todo' : 'Done';
+    setModalStatus(newStatus);
+}
+
+function addSubtask() {
+    const input = document.getElementById('newSubtaskInput');
+    const text = input.value.trim();
+    if (!text || !modalTaskId) return;
+
+    vscode.postMessage({ type: 'addSubtask', taskId: modalTaskId, text });
+    input.value = '';
+
+    // Optimistic update
+    const task = currentTasks.find(t => t.id === modalTaskId);
+    if (task) {
+        if (!task.subtasks) task.subtasks = [];
+        const newSub = { id: 'temp-' + Date.now(), text, completed: false };
+        task.subtasks.push(newSub);
+        renderSubtasks(task.subtasks);
+    }
+}
+
+function toggleSubtask(subtaskId) {
+    if (!modalTaskId) return;
+    vscode.postMessage({ type: 'toggleSubtask', taskId: modalTaskId, subtaskId });
+
+    // Optimistic update
+    const task = currentTasks.find(t => t.id === modalTaskId);
+    if (task && task.subtasks) {
+        const sub = task.subtasks.find(s => s.id === subtaskId);
+        if (sub) {
+            sub.completed = !sub.completed;
+            renderSubtasks(task.subtasks);
+        }
+    }
+}
+
+function deleteSubtask(subtaskId) {
+    if (!modalTaskId) return;
+    vscode.postMessage({ type: 'deleteSubtask', taskId: modalTaskId, subtaskId });
+
+    // Optimistic update
+    const task = currentTasks.find(t => t.id === modalTaskId);
+    if (task && task.subtasks) {
+        task.subtasks = task.subtasks.filter(s => s.id !== subtaskId);
+        renderSubtasks(task.subtasks);
+    }
+}
+
+function updateSubtaskText(subtaskId, text) {
+    if (!modalTaskId || !text.trim()) return;
+    vscode.postMessage({ type: 'updateSubtaskText', taskId: modalTaskId, subtaskId, text: text.trim() });
+
+    // Optimistic update
+    const task = currentTasks.find(t => t.id === modalTaskId);
+    if (task && task.subtasks) {
+        const sub = task.subtasks.find(s => s.id === subtaskId);
+        if (sub) {
+            sub.text = text.trim();
+        }
     }
 }
 
@@ -121,16 +293,27 @@ function updateModalUI() {
     const priorityVal = document.getElementById('modalPriorityValue');
     const statusVal = document.getElementById('modalStatusValue');
     const statusLabel = document.getElementById('modalStatusLabel');
-    const priorityIndicator = document.getElementById('modalPriorityIndicator');
+    const taskCheckbox = document.getElementById('modalTaskCheckbox');
 
     // Date
     if (dateVal) {
-        dateVal.classList.remove('date-color-today', 'date-color-tomorrow', 'date-color-soon', 'date-color-custom');
+        dateVal.classList.remove('date-color-today', 'date-color-tomorrow', 'date-color-soon', 'date-color-weekend', 'date-color-custom');
         const clearBtn = dateVal.querySelector('.clear-date-btn');
         if (modalDueDate) {
             const d = new Date(modalDueDate);
+            d.setHours(0, 0, 0, 0);
+            const now = new Date();
+            now.setHours(0, 0, 0, 0);
+            const tomorrow = new Date(now);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+
             const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-            dateVal.querySelector('span').innerText = `${months[d.getMonth()]} ${d.getDate()}`;
+            let label = `${months[d.getMonth()]} ${d.getDate()}`;
+            
+            if (d.getTime() === now.getTime()) label = 'Today';
+            else if (d.getTime() === tomorrow.getTime()) label = 'Tomorrow';
+
+            dateVal.querySelector('span').innerText = label;
             dateVal.classList.add('has-value', getDateColorClass(d));
             if (clearBtn) clearBtn.classList.remove('hidden');
         } else {
@@ -142,7 +325,7 @@ function updateModalUI() {
 
     // Reminder
     if (reminderVal) {
-        reminderVal.classList.remove('date-color-today', 'date-color-tomorrow', 'date-color-soon', 'date-color-custom');
+        reminderVal.classList.remove('date-color-today', 'date-color-tomorrow', 'date-color-soon', 'date-color-weekend', 'date-color-custom');
         const clearBtn = reminderVal.querySelector('.clear-date-btn');
         if (modalReminders.length > 0) {
             const d = new Date(modalReminders[0]);
@@ -171,9 +354,11 @@ function updateModalUI() {
         priorityVal.querySelector('span').innerText = modalPriority === 'Wont' ? "Won't" : modalPriority;
         priorityVal.querySelector('i').style.color = PRIORITY_COLORS[modalPriority];
     }
-    if (priorityIndicator) {
-        priorityIndicator.style.color = PRIORITY_COLORS[modalPriority];
-        priorityIndicator.className = `priority-indicator is-${modalStatus.toLowerCase().replace(' ', '-')}`;
+    if (taskCheckbox) {
+        taskCheckbox.style.color = PRIORITY_COLORS[modalPriority] || '#8e8e93';
+        const cleanStatus = modalStatus.toLowerCase().replace(' ', '-');
+        taskCheckbox.className = `priority-indicator is-${cleanStatus}`;
+        taskCheckbox.innerHTML = modalStatus === 'Done' ? '<i class="codicon codicon-check"></i>' : '';
     }
 
     // Status
@@ -1366,6 +1551,7 @@ window.addEventListener('message', e => {
                 modalDueDate = task.dueDate;
                 modalReminders = task.reminders || [];
                 updateModalUI();
+                renderSubtasks(task.subtasks || []);
             } else closeTaskModal();
         }
     }
@@ -1398,6 +1584,10 @@ window.saveTaskModal = saveTaskModal;
 window.deleteTaskFromModal = deleteTaskFromModal;
 window.toggleStatusPicker = toggleStatusPicker;
 window.setModalStatus = setModalStatus;
+window.addSubtask = addSubtask;
+window.toggleSubtask = toggleSubtask;
+window.deleteSubtask = deleteSubtask;
+window.updateSubtaskText = updateSubtaskText;
 
 vscode.postMessage({ 
     type: 'ready',

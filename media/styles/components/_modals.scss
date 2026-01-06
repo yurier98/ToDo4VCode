@@ -1,5 +1,5 @@
 // ==========================================================================
-// COMPONENTE: MODALES Y OVERLAYS
+// COMPONENTE: MODALES Y OVERLAYS (DISEÑO PROFESIONAL DOS COLUMNAS)
 // ==========================================================================
 
 @use '../base/variables' as *;
@@ -35,227 +35,658 @@
 // 2. Contenedor del Modal
 // --------------------------------------------------------------------------
 .modal-container {
-    background: $bg-editor !important;
+    background: transparent;
     border: 1px solid $border-color;
-    border-radius: $radius-2xl;
-    width: 100%;
-    max-width: 400px;
-    max-height: 85vh;
+    border-radius: $radius-2xl; 
+    width: 90%;
+    max-width: 800px;
+    height: 80vh; // Más compacto
     display: flex;
     flex-direction: column;
     box-shadow: $shadow-lg;
     animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     overflow: hidden;
+    position: relative;
 
-    .modal-header {
-        padding: 12px 14px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        border-bottom: 1px solid $border-color;
+    @media (max-width: 768px) {
+        width: 95%;
+        height: 90vh;
     }
 
-    .modal-header-left {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
-
-    .modal-status-badge {
-        font-size: 0.7rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        padding: 4px 10px;
-        border-radius: $radius-md;
-        background: rgba(200, 200, 200, 0.2) !important;
-        color: $fg-main !important;
-    }
-
-    .modal-close-btn {
-        background: transparent;
+    @media (max-width: 600px) {
+        width: 100%;
+        height: 100%;
+        max-height: 100vh;
+        border-radius: 0;
         border: none;
-        color: $fg-main;
-        cursor: pointer;
-        opacity: 0.6;
-        padding: 4px;
-        border-radius: $radius-sm;
-        display: flex;
+    }
+}
 
-        &:hover {
-            background: var(--vscode-toolbar-hoverBackground);
-            opacity: 1;
+// Botón de Cerrar Global (Círculo Gris)
+.modal-close-btn-global {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 22px;
+    height: 22px;
+    border-radius: $radius-circle;
+    background: rgba(128, 128, 128, 0.2);
+    border: none;
+    color: $fg-desc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 1001;
+    transition: all 0.2s;
+
+    &:hover {
+        background: rgba(128, 128, 128, 0.35);
+        color: $fg-main;
+        transform: scale(1.1);
+    }
+
+    i { font-size: 12px; }
+
+    @media (max-width: 600px) {
+        top: 8px;
+        right: 8px;
+    }
+}
+
+// Wrapper para las dos columnas (GRID para control total)
+.modal-content-wrapper {
+    display: grid;
+    grid-template-columns: 1fr 200px;
+    grid-template-rows: auto 1fr;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+
+    @media (max-width: 600px) {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr auto; // El medio (main content) es flexible
+        overflow: hidden; 
+    }
+}
+
+// Columna Principal (Izquierda)
+.modal-main-content {
+    grid-column: 1 / 3;
+    grid-row: 2;
+    background: $bg-editor;
+    display: flex;
+    flex-direction: column;
+    padding: 0; 
+    overflow: hidden; 
+    min-height: 0;
+
+    @media (max-width: 600px) {
+        grid-row: 2 / 4;
+        min-height: 0;
+        overflow: hidden;
+    }
+}
+
+.modal-scrollable-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 220px 20px 20px;
+
+    @media (max-width: 600px) {
+        padding: 0 16px 180px 16px;
+    }
+
+    &::-webkit-scrollbar { width: 8px; }
+    &::-webkit-scrollbar-thumb { 
+        background: rgba(255, 255, 255, 0.05); 
+        border-radius: 10px; 
+    }
+}
+
+.modal-sidebar {
+    grid-column: 2;
+    grid-row: 1 / 3;
+    background: color-mix(in srgb, #{$bg-sidebar}, transparent 15%);
+    backdrop-filter: blur(30px) saturate(150%);
+    -webkit-backdrop-filter: blur(30px) saturate(150%);
+    border: none; 
+    border-left: 1px solid rgba($border-color, 0.3);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+    z-index: 5;
+
+    @media (max-width: 600px) {
+        grid-row: 3;
+        grid-column: 1;
+        width: 100%;
+        border-left: none;
+        border-top: 1px solid $border-color;
+        background: color-mix(in srgb, #{$bg-sidebar}, transparent 8%);
+        height: auto;
+        flex-shrink: 0;
+    }
+    
+    .sidebar-header-spacer {
+        height: 40px;
+        flex-shrink: 0;
+
+        @media (max-width: 600px) {
+            display: none;
+        }
+    }
+    
+    .sidebar-content {
+        flex: 1;
+        padding: 0;
+        overflow-y: auto;
+
+        @media (max-width: 600px) {
+            padding: 0; 
+            overflow: visible; // Las opciones en móvil se ven todas
         }
     }
 
-    .modal-body {
-        padding: 14px;
-        overflow-y: auto;
-        overflow-x: hidden;
+    // Grid de Opciones (Status, Priority, etc)
+    .modal-grid {
         display: flex;
         flex-direction: column;
-        gap: 10px;
+        gap: 0;
+
+        @media (max-width: 600px) {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            width: 100%;
+        }
+    }
+
+    .modal-grid-item {
+        padding: 8px 12px;
+        margin: 2px 8px;
+        border-radius: $radius-lg;
+        position: relative;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+
+        @media (max-width: 600px) {
+            padding: 6px 12px;
+            margin: 6px;
+            gap: 2px;
+            border: 1px solid rgba($border-color, 0.15);
+            
+            &::after { display: none; }
+        }
+
+        &::after {
+            content: "";
+            position: absolute;
+            bottom: -2px;
+            left: 12px;
+            right: 12px;
+            height: 1px;
+            background: $border-color;
+            opacity: 0.4;
+        }
+
+        &:last-child::after {
+            display: none;
+        }
+
+        &:hover {
+            background: var(--vscode-list-hoverBackground);
+        }
+
+        .grid-item-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: $fg-desc;
+            letter-spacing: 0.5px;
+            opacity: 0.8;
+
+            @media (max-width: 600px) {
+                font-size: 8.5px;
+            }
+        }
+
+        .grid-item-value {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: $fg-main;
+
+            @media (max-width: 600px) {
+                font-size: 11.5px;
+            }
+
+            i { font-size: 14px; opacity: 0.9; }
+
+            // Date colors
+            &.date-color-today { 
+                color: #FF3B30 !important; 
+                i { color: inherit; opacity: 1; } 
+            }
+            &.date-color-tomorrow { 
+                color: #FF9500 !important; 
+                i { color: inherit; opacity: 1; } 
+            }
+            &.date-color-soon { 
+                color: #29b240 !important; 
+                i { color: inherit; opacity: 1; } 
+            }
+            &.date-color-weekend { 
+                color: var(--vscode-descriptionForeground) !important; 
+                i { color: inherit; opacity: 0.8; } 
+            }
+            &.date-color-custom {
+                color: var(--vscode-descriptionForeground) !important;
+                i { color: inherit; opacity: 0.8; }
+            }
+        }
+    }
+
+    .sidebar-footer {
+        padding: 12px 10px;
+        border-top: 1px solid $border-color;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+
+        @media (max-width: 600px) {
+            flex-direction: row;
+            padding: 12px 16px;
+            background: $bg-sidebar;
+            position: sticky;
+            bottom: 0;
+            z-index: 10;
+        }
+
+        .modal-btn {
+            width: 100%;
+            padding: 8px;
+            border-radius: $radius-md;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            border: none;
+            transition: all 0.2s;
+
+            @media (max-width: 600px) {
+                flex: 1;
+            }
+
+            &.primary-btn {
+                background: $bg-button;
+                color: $fg-button;
+                &:hover { background: $bg-button-hover; }
+            }
+
+            &.delete-btn {
+                background: transparent;
+                color: $color-error;
+                border: 1px solid rgba(248, 81, 73, 0.2);
+                &:hover {
+                    background: rgba(248, 81, 73, 0.1);
+                    border-color: $color-error;
+                }
+            }
+        }
+    }
+}
+
+// Secciones del Modal
+.title-section-modern {
+    grid-column: 1;
+    grid-row: 1;
+    background: $bg-editor;
+    padding: 16px 20px 8px 20px;
+    margin-bottom: 0; 
+    z-index: 10;
+
+    @media (max-width: 400px) {
+        grid-row: 1;
+        padding: 8px 40px 8px 16px;
+    }
+
+    .task-completion-wrapper {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+
+        .priority-indicator {
+            width: 18px;
+            height: 18px;
+            margin-top: 5px;
+            opacity: 1;
+
+            &.is-done i {
+                font-size: 12px !important;
+            }
+        }
     }
 
     .modal-title-input {
         background: transparent;
-        border: none;
+        border: 1px solid transparent; 
         color: $fg-main;
-        font-size: 0.875rem;
-        font-weight: 600;
+        font-size: 14px; 
+        font-weight: 500;
         width: 100%;
-        max-width: 100%;
         outline: none;
         resize: none;
-        padding: 0;
-        line-height: 1.3;
-        display: block;
-    }
-
-    .modal-section {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-        width: 100%;
-    }
-
-    .modal-section-header {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        opacity: 0.7;
-    }
-
-    .modal-desc-input {
-        background: var(--vscode-welcomePage-tileBackground, rgba(255, 255, 255, 0.05)) !important;
-        border: 1px solid $border-color;
-        color: $fg-main;
+        padding: 4px 8px; 
+        margin-left: -8px; 
         border-radius: $radius-lg;
-        padding: 8px;
-        font-size: 0.8rem;
-        line-height: 1.4;
-        width: 100%;
-        max-width: 100%;
-        outline: none;
-        resize: none;
-        min-height: 60px;
-        max-height: 200px;
+        max-height: 110px;
         overflow-y: auto;
-        display: block;
+        transition: all 0.2s ease;
+
+        &::placeholder { color: var(--vscode-input-placeholderForeground); opacity: 0.5; }
 
         &:focus {
-            background: var(--vscode-welcomePage-tileHoverBackground, rgba(255, 255, 255, 0.1)) !important;
-            border-color: $focus-border;
+            background: var(--vscode-input-background);
+            border: 1px solid var(--vscode-input-border);
+            color: var(--vscode-input-foreground);
+            box-shadow: 0 0 0 1px $focus-border;
         }
-    }
 
-    .modal-footer {
-        padding: 12px 14px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        border-top: 1px solid $border-color;
+        &:hover:not(:focus) {
+            background: rgba(255, 255, 255, 0.03);
+            cursor: text;
+        }
     }
 }
 
-// 3. Cuadrícula de Formulario dentro de Modales
-// --------------------------------------------------------------------------
-.modal-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
+.description-section {
+    margin-bottom: 4px;
 
-    .modal-grid-item {
-        background: var(--vscode-welcomePage-tileBackground, rgba(255, 255, 255, 0.05)) !important;
-        padding: 8px 10px;
-        border-radius: $radius-xl;
+    .modal-section-header.no-border {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: $fg-desc;
+        margin-bottom: 0px; 
+        padding-bottom: 6px; 
+        border-bottom: 1px solid $border-color; 
+        font-weight: 600;
+        font-size: 11px;
+        text-transform: uppercase;
+        opacity: 0.8;
+        
+        i { font-size: 14px; }
+        span { letter-spacing: 0.5px; }
+    }
+}
+
+.subtasks-section-modern {
+    .modal-section-header.collapsible {
         cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 4px 0 6px 0;
+        opacity: 1;
+        border-bottom: 1px solid $border-color; 
+        margin-bottom: 0px; 
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .header-right {
+            margin-left: auto;
+        }
+
+        .hide-completed-btn {
+            background: transparent;
+            border: none;
+            color: $fg-main;
+            padding: 3px 6px;
+            border-radius: $radius-md;
+            font-size: 11px !important;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            opacity: 0.7;
+            transition: all 0.2s;
+            font-weight: 400 !important;
+            
+            i {
+                font-size: 11px;
+            }
+
+            span {
+                font-size: 11px !important;
+                font-weight: 400 !important;
+                letter-spacing: normal !important;
+            }
+            
+            &:hover {
+                background: var(--vscode-toolbar-hoverBackground);
+                opacity: 1;
+            }
+        }
+        
+        i { 
+            font-size: 16px; 
+            transition: transform 0.2s;
+        }
+        
+        span { 
+            text-transform: none; 
+            font-size: 14px; 
+            font-weight: 700;
+            letter-spacing: normal;
+        }
+
+        .progress-count-simple {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 6px;
+            border-radius: $radius-md;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            opacity: 0.7;
+            font-weight: 400;
+            font-size: 11px;
+            margin-left: 6px;
+        }
+
+        &.collapsed i { transform: rotate(-90deg); }
+    }
+
+    .subtasks-collapsible-content {
+        display: flex;
+        flex-direction: column;
+        transition: all 0.3s ease-in-out;
+        overflow: hidden;
+
+        &.hidden { display: none; }
+    }
+}
+
+// Lista de Subtareas estilo "Limpio"
+.subtask-list-modern {
+    display: flex;
+    flex-direction: column;
+    border-top: none; 
+
+    .subtask-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 6px 0;
+        border-bottom: 1px solid rgba($border-color, 0.4);
+        background: transparent !important;
 
         &:hover {
-            background: var(--vscode-welcomePage-tileHoverBackground, rgba(255, 255, 255, 0.1)) !important;
-            border-color: $focus-border;
+            .subtask-delete-btn { opacity: 0.8; }
         }
 
-        &.has-value {
-            background: var(--vscode-welcomePage-tileBackground);
-            border-color: $bg-button;
+        .subtask-checkbox {
+            width: 16px;
+            height: 16px;
+            border: 2px solid $fg-desc;
+            border-radius: $radius-circle;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex-shrink: 0;
+            background: transparent !important;
+            position: relative;
 
-            &.date-color-today .grid-item-value { color: $color-error !important; }
-            &.date-color-tomorrow .grid-item-value { color: $color-warning !important; }
-            &.date-color-soon .grid-item-value { color: $color-success !important; }
-            &.date-color-weekend .grid-item-value,
-            &.date-color-custom .grid-item-value { color: $fg-main !important; }
+            &:hover { 
+                border-color: $bg-button;
+                background: rgba($bg-button, 0.1) !important;
+            }
+
+            &.completed {
+                background: #8e8e93 !important; 
+                border-color: #8e8e93;
+                opacity: 0.7;
+
+                &::after {
+                    content: '\eab2';
+                    font-family: 'codicon';
+                    color: $bg-editor;
+                    font-size: 12px;
+                    font-weight: 900;
+                    -webkit-text-stroke: 1px currentColor;
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                }
+            }
+        }
+
+        .subtask-text-input {
+            background: transparent !important;
+            border: none !important;
+            color: $fg-main;
+            font-size: 14px;
+            outline: none;
+            flex: 1;
+
+            &.completed {
+                text-decoration: line-through;
+                opacity: 0.5;
+            }
+        }
+
+        .subtask-delete-btn {
+            background: transparent !important;
+            border: none !important;
+            color: $color-error;
+            cursor: pointer;
+            padding: 4px;
+            opacity: 0;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: $radius-sm;
+            box-shadow: none !important;
+
+            &:hover { 
+                background: rgba(var(--vscode-errorForeground), 0.1) !important; 
+            }
+        }
+    }
+}
+
+.add-subtask-minimal {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 4px;
+    cursor: text;
+    border-bottom: 1px solid rgba($border-color, 0.4);
+    transition: all 0.2s ease;
+
+    &:hover {
+        i {
+            transform: scale(1.2);
+        }
+        
+        input {
+            color: $fg-main;
+            opacity: 1;
         }
     }
 
-    .grid-item-label {
-        font-size: 0.6rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        opacity: 0.6;
-        margin-bottom: 3px;
-        color: var(--vscode-foreground);
-    }
-
-    .grid-item-value {
+    i {
+        color: $color-error; 
+        font-size: 16px;
         display: flex;
         align-items: center;
-        gap: 6px;
-        font-size: 0.8rem;
-        color: var(--vscode-foreground);
-        font-weight: 500;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        justify-content: center;
+        background: transparent;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        flex-shrink: 0;
 
-        i { font-size: 18px; }
-    }
-}
-
-@media (max-width: 400px) {
-    .modal-container {
-        max-width: 100%;
-        border-radius: $radius-2xl $radius-2xl 0 0;
-        position: absolute;
-        bottom: 0;
-    }
-
-    .modal-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-@keyframes slideUp {
-    from {
-        transform: translateY(20px);
-        opacity: 0;
-    }
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
-}
-
-// 5. Adaptación para Pantallas Pequeñas (Responsive)
-// --------------------------------------------------------------------------
-@media (max-width: 480px) {
-    .modal-container {
-        width: 100%;
-        max-width: none;
-        border-radius: $radius-lg $radius-lg 0 0;
-        position: absolute;
-        bottom: 0;
-        transform: translateY(100%); // Sale desde abajo
-
-        &.active {
-            transform: translateY(0);
+        &::before {
+            display: block;
+            transform: translateY(1px); 
         }
     }
 
-    .modal-grid {
-        grid-template-columns: 1fr;
-        .full-width { grid-column: span 1; }
+    input {
+        background: transparent;
+        border: none;
+        color: $fg-desc;
+        font-size: 13px;
+        outline: none;
+        flex: 1;
+        opacity: 0.6;
+        transition: all 0.2s ease;
+
+        &::placeholder { color: $fg-desc; opacity: 0.6; }
     }
+}
+
+// Input de Descripción (USANDO VARIABLES DEL EDITOR)
+.modal-desc-input {
+    background: var(--vscode-input-background);
+    border: 1px solid var(--vscode-input-border);
+    color: var(--vscode-input-foreground);
+    border-radius: $radius-lg;
+    padding: 10px;
+    font-size: 13px;
+    line-height: 1.5;
+    width: 100%;
+    outline: none;
+    resize: vertical;
+    min-height: 120px;
+    font-family: $font-vscode;
+    margin-top: 4px;
+
+    &:focus {
+        border-color: $focus-border;
+        background: var(--vscode-input-background);
+    }
+
+    &::placeholder {
+        color: var(--vscode-input-placeholderForeground);
+        opacity: 0.4;
+    }
+}
+
+// Animaciones
+@keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
 }

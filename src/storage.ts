@@ -3,6 +3,12 @@ import * as vscode from 'vscode';
 export type Priority = 'Must' | 'Should' | 'Could' | 'Won\'t';
 export type Status = 'Todo' | 'Ready' | 'In Progress' | 'Testing' | 'Done';
 
+export interface SubTask {
+    id: string;
+    text: string;
+    completed: boolean;
+}
+
 export interface TodoItem {
     id: string;
     text: string;
@@ -14,6 +20,7 @@ export interface TodoItem {
     completed: boolean;
     createdAt: number;
     order?: number;
+    subtasks?: SubTask[];
 }
 
 export interface ViewSettings {
