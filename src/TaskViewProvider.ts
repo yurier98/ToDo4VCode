@@ -24,7 +24,13 @@ export class TaskViewProvider implements vscode.WebviewViewProvider {
             
             vscode.window.showInformationMessage(message, MESSAGES.VIEW_TASK).then(selection => {
                 if (selection === MESSAGES.VIEW_TASK) {
-                    vscode.commands.executeCommand('todo4vcode-view.focus');
+                    // Abrir en vista completa y mostrar el modal de la tarea
+                    vscode.commands.executeCommand('todo4vcode.openFull').then(() => {
+                        // Esperar un momento para que el webview esté listo
+                        setTimeout(() => {
+                            vscode.commands.executeCommand('todo4vcode.openTaskModal', task.id);
+                        }, 500);
+                    });
                 }
             });
         });

@@ -1554,6 +1554,13 @@ window.addEventListener('message', e => {
                 renderSubtasks(task.subtasks || []);
             } else closeTaskModal();
         }
+    } else if (e.data.type === 'openTaskModal') {
+        // Abrir el modal de una tarea específica
+        const taskId = e.data.taskId;
+        const task = currentTasks.find(t => t.id === taskId);
+        if (task) {
+            openTaskModal(taskId);
+        }
     }
 });
 

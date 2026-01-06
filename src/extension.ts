@@ -125,6 +125,15 @@ export function activate(context: vscode.ExtensionContext) {
             });
         })
     );
+
+    // Comando para abrir el modal de una tarea específica
+    context.subscriptions.push(
+        vscode.commands.registerCommand('todo4vcode.openTaskModal', (taskId: string) => {
+            if (fullScreenPanel) {
+                fullScreenPanel.webview.postMessage({ type: 'openTaskModal', taskId });
+            }
+        })
+    );
 }
 
 export function deactivate() { }
