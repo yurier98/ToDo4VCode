@@ -23,7 +23,7 @@
         "Other"
     ],
     "activationEvents": [
-        "*"
+        "onView:todo4vcode-view"
     ],
     "keywords": [
         "todo",
