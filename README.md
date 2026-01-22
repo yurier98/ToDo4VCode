@@ -20,10 +20,27 @@ This extension uses the proven MoSCoW technique to help you categorize tasks eff
 
 - 🎯 **Impact-Driven Organization**: Categorize tasks by priority to maintain focus.
 - 📁 **Workspace-Specific Lists**: Keep your project tasks isolated and relevant to your current work.
-- 📊 **Multiple Views**: Switch between a clean **List View** and a productive **Kanban Board**.
+- 📊 **Multiple Views**: Switch between a clean **List View** and a productive **Kanban Board**, or open tasks in **Full Screen** mode for focused work.
+- 📈 **StatusBar Statistics**: Real-time task statistics displayed in VS Code's status bar with detailed tooltip on hover.
+- ✅ **Subtasks Support**: Break down complex tasks into manageable subtasks with progress tracking.
 - 🔔 **Smart Reminders**: Integrated VS Code notifications for upcoming deadlines.
 - 🧹 **Zero Clutter**: Data is stored securely in VS Code's internal storage.
 - 🌓 **Native Integration**: Fully supports VS Code themes and Codicons for a seamless experience.
+- ⚡ **Auto-Activation**: Extension activates automatically when VS Code starts, no manual setup required.
+
+## 📊 StatusBar Statistics
+
+ToDo4VCode automatically displays task statistics in VS Code's status bar (bottom-right corner). The status bar item shows a quick summary of your most critical tasks:
+
+- **Display**: Shows count of "Must" priority tasks and tasks "In Progress"
+- **Tooltip**: Hover over the status bar item to see detailed statistics including:
+  - Total number of tasks
+  - Completed tasks count
+  - Must priority tasks count
+  - Tasks in progress
+  - Overdue tasks count
+
+The statistics update in real-time as you manage your tasks. You can customize which statistics appear in the tooltip through VS Code settings.
 
 ## 📸 Features in Action
 
@@ -53,17 +70,58 @@ Whether you prefer Dark or Light themes, ToDo4VCode adapts beautifully to your w
 
 ## 🛠 How to Use
 
-1. **Open the Sidebar**: Click the Priority Tasks icon in the Activity Bar.
-2. **Add a Task**: Type your task name, set a priority, and add an optional description or due date.
-3. **Manage**: Drag and drop tasks in Kanban mode or use the context menu to update status and priority.
-4. **Focus**: See your pending high-priority tasks at a glance.
+1. **StatusBar**: The extension activates automatically when VS Code starts. Check the status bar (bottom-right) to see your task summary at a glance. Hover over it for detailed statistics.
+
+2. **Open the Sidebar**: Click the Priority Tasks icon in the Activity Bar to access the full task management interface.
+
+3. **Add a Task**: Type your task name, set a priority, and add an optional description or due date. You can also add reminders for important deadlines.
+
+4. **Manage Tasks**: 
+   - **Drag and Drop**: Move tasks between columns in Kanban mode or reorder them in List view
+   - **Context Menu**: Right-click any task to quickly update status, priority, or add dates/reminders
+   - **Task Modal**: Click on a task to open detailed view where you can edit all properties
+
+5. **Subtasks**: Open a task's detail modal to add subtasks. Track progress with the completion counter (X/Y completed).
+
+6. **Full Screen Mode**: Click the "Open in full screen" button in the sidebar header for a distraction-free task management experience.
+
+7. **Focus**: See your pending high-priority tasks at a glance in the status bar and sidebar.
+
+## ✅ Subtasks
+
+Break down complex tasks into smaller, manageable subtasks:
+
+1. **Add Subtasks**: Open any task's detail modal and scroll to the "Subtasks" section. Click "Add subtask" and type your subtask name.
+
+2. **Manage Subtasks**: 
+   - **Complete**: Click the checkbox next to a subtask to mark it as done
+   - **Edit**: Click on the subtask text to edit it inline
+   - **Delete**: Click the trash icon to remove a subtask
+
+3. **Track Progress**: The subtasks section header shows completion progress (e.g., "3/5" means 3 out of 5 subtasks completed).
+
+4. **Hide Completed**: Toggle the "Hide completed" button to focus only on remaining subtasks.
+
+Subtasks help you track detailed progress within larger tasks and maintain clarity on what needs to be done.
 
 ## ⚙️ Configuration
 
 You can customize the extension behavior in your VS Code settings:
 
+### Task Management
 - `todo4vcode.hideCompleted`: Toggle to hide or show completed tasks in your list.
 - `todo4vcode.defaultPriority`: Set the default priority for newly created tasks (Must, Should, Could, Wont).
+
+### Statistics Display
+Configure which statistics appear in the StatusBar tooltip:
+
+- `todo4vcode.stats.showTotal`: Show total number of tasks (default: `true`)
+- `todo4vcode.stats.showDone`: Show number of completed tasks (default: `true`)
+- `todo4vcode.stats.showMust`: Show number of Must priority tasks (default: `true`)
+- `todo4vcode.stats.showInProgress`: Show number of tasks in progress (default: `true`)
+- `todo4vcode.stats.showOverdue`: Show number of overdue tasks (default: `true`)
+
+To configure these settings, open VS Code Settings (Cmd/Ctrl + ,) and search for "todo4vcode".
 
 ## 💻 Development & Installation
 
@@ -77,25 +135,11 @@ You can customize the extension behavior in your VS Code settings:
 2. Package: `vsce package`.
 3. Install the generated `.vsix` file via the Extensions view.
 
-## 🚀 Publishing
-
-This extension is published to both the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=yurierherrera.todo4vcode) and [Open VSX Registry](https://open-vsx.org/extension/YurierHerrera/todo4vcode).
-
-### For Maintainers
-
-Publishing requires Personal Access Tokens (PATs) configured as GitHub repository secrets:
-- `VSCE_PAT` - Token from Azure DevOps for VS Code Marketplace
-- `OVSX_PAT` - Token from Open VSX Registry
-
-For detailed setup instructions, see [CONTRIBUTING.md](./CONTRIBUTING.md#setting-up-marketplace-tokens).
-
-The GitHub Actions workflow automatically publishes new versions when a tag starting with `v` is pushed to the repository.
 
 ## 🤝 Contributing
 
 Contributions are welcome! Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for detailed guidelines on:
 - Setting up your development environment
-- Configuring marketplace tokens for publishing
 - Code style guidelines
 - Pull request process
 
