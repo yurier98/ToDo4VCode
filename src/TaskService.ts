@@ -50,6 +50,33 @@ export class TaskService implements vscode.Disposable {
         return tasks;
     }
 
+    public async getStatistics(): Promise<{
+        total: number;
+        done: number;
+        must: number;
+        inProgress: number;
+        overdue: number;
+    }> {
+        const tasks = await this.getTasks();
+        const now = Date.now();
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const todayTimestamp = today.getTime();
+
+        return {
+            total: tasks.length,
+            done: tasks.filter(t => t.status === 'Done').length,
+            must: tasks.filter(t => t.priority === 'Must').length,
+            inProgress: tasks.filter(t => t.status === 'In Progress').length,
+            overdue: tasks.filter(t => {
+                if (!t.dueDate || t.status === 'Done') return false;
+                const dueDate = new Date(t.dueDate);
+                dueDate.setHours(0, 0, 0, 0);
+                return dueDate.getTime() < todayTimestamp;
+            }).length
+        };
+    }
+
     public async addTask(taskData: {
         text: string,
         priority: Priority,

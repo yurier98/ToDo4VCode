@@ -19,35 +19,69 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Create Status Bar Item
     const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
-    statusBarItem.command = 'todo4vcode-view.focus';
     context.subscriptions.push(statusBarItem);
 
-    const updateStatusBar = (tasks: TodoItem[]) => {
+    const updateStatusBar = async (tasks: TodoItem[]) => {
         const total = tasks.length;
         const mustCount = tasks.filter(t => t.priority === 'Must' && t.status !== 'Done').length;
         const inProgressCount = tasks.filter(t => t.status === 'In Progress').length;
 
+        // Obtener estadísticas completas para el tooltip
+        const statistics = await taskService.getStatistics();
+        const config = vscode.workspace.getConfiguration('todo4vcode.stats');
+        
         if (total === 0) {
             statusBarItem.text = `$(checklist) ${MESSAGES.NO_TASKS}`;
             statusBarItem.tooltip = MESSAGES.ADD_FIRST_TASK;
         } else {
             statusBarItem.text = `$(checklist) ${mustCount} Must | ${inProgressCount} In Progress`;
-            statusBarItem.tooltip = MESSAGES.TASKS_PENDING.replace('{0}', mustCount.toString()) +
-                '\n' + MESSAGES.TASKS_IN_PROGRESS.replace('{1}', inProgressCount.toString()) +
-                '\n' + MESSAGES.TOTAL_TASKS.replace('{2}', total.toString());
+            
+            // Construir tooltip con las estadísticas configuradas
+            const tooltipParts: string[] = [];
+            
+            if (config.get<boolean>('showTotal', true)) {
+                tooltipParts.push(`Total Tasks: ${statistics.total}`);
+            }
+            
+            if (config.get<boolean>('showDone', true)) {
+                tooltipParts.push(`Completed: ${statistics.done}`);
+            }
+            
+            if (config.get<boolean>('showMust', true)) {
+                tooltipParts.push(`Must Priority: ${statistics.must}`);
+            }
+            
+            if (config.get<boolean>('showInProgress', true)) {
+                tooltipParts.push(`In Progress: ${statistics.inProgress}`);
+            }
+            
+            if (config.get<boolean>('showOverdue', true)) {
+                tooltipParts.push(`Overdue: ${statistics.overdue}`);
+            }
+            
+            statusBarItem.tooltip = tooltipParts.join('\n') || 'Task Statistics';
         }
         statusBarItem.show();
     };
 
     // Initial update - deferred to avoid race conditions with platform initialization
-    setImmediate(() => {
-        taskService.getTasks().then(updateStatusBar);
+    setImmediate(async () => {
+        const tasks = await taskService.getTasks();
+        await updateStatusBar(tasks);
     });
 
     // Update on changes
-    context.subscriptions.push(taskService.onTasksChanged(tasks => {
-        updateStatusBar(tasks);
+    context.subscriptions.push(taskService.onTasksChanged(async tasks => {
+        await updateStatusBar(tasks);
         provider.refresh();
+    }));
+    
+    // Update when configuration changes
+    context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(async (e) => {
+        if (e.affectsConfiguration('todo4vcode.stats')) {
+            const tasks = await taskService.getTasks();
+            await updateStatusBar(tasks);
+        }
     }));
 
     context.subscriptions.push(taskService.onSettingsChanged(data => {
@@ -134,6 +168,7 @@ export function activate(context: vscode.ExtensionContext) {
             }
         })
     );
+
 }
 
 export function deactivate() { }

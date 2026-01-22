@@ -23,7 +23,7 @@
         "Other"
     ],
     "activationEvents": [
-        "onView:todo4vcode-view"
+        "onStartupFinished"
     ],
     "keywords": [
         "todo",
@@ -101,6 +101,31 @@
                     ],
                     "default": "Should",
                     "description": "Default priority for new tasks."
+                },
+                "todo4vcode.stats.showTotal": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Show total number of tasks in statistics panel."
+                },
+                "todo4vcode.stats.showDone": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Show number of completed (Done) tasks in statistics panel."
+                },
+                "todo4vcode.stats.showMust": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Show number of Must priority tasks in statistics panel."
+                },
+                "todo4vcode.stats.showInProgress": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Show number of In Progress tasks in statistics panel."
+                },
+                "todo4vcode.stats.showOverdue": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Show number of overdue tasks in statistics panel."
                 }
             }
         }

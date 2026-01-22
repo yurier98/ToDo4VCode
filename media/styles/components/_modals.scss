@@ -672,6 +672,8 @@
     outline: none;
     resize: vertical;
     min-height: 120px;
+    max-height: 400px;
+    overflow-y: auto;
     font-family: $font-vscode;
     margin-top: 4px;
 
