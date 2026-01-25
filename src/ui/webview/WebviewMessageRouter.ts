@@ -24,7 +24,7 @@ export class WebviewMessageRouter {
         this._settingsHandler = new SettingsHandler(_taskService);
         this._chatHandler = new ChatHandler();
         const importExportService = new ImportExportService(_taskService, _storageManager);
-        this._configHandler = new ConfigHandler(importExportService);
+        this._configHandler = new ConfigHandler(importExportService, _taskService);
     }
 
     public async handleMessage(

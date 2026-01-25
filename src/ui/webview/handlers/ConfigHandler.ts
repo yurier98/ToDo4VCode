@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { ConfigService } from '../../../core/services/ConfigService';
 import { ImportExportService } from '../../../core/services/ImportExportService';
+import { TaskService } from '../../../core/services/TaskService';
 import { Priority } from '../../../core/models/task';
 import { StatisticsConfig } from '../../../core/models/settings';
 import { ConfigReadyMessage, UpdateConfigMessage, ExportDataMessage, ImportDataMessage, ClearAllDataMessage } from '../../../core/models/webview-messages';
@@ -8,7 +9,10 @@ import { BaseHandler } from './BaseHandler';
 import { Logger } from '../../../utils/logger';
 
 export class ConfigHandler extends BaseHandler {
-    constructor(private readonly _importExportService: ImportExportService) {
+    constructor(
+        private readonly _importExportService: ImportExportService,
+        private readonly _taskService: TaskService
+    ) {
         super();
     }
 
@@ -64,6 +68,7 @@ export class ConfigHandler extends BaseHandler {
         try {
             if (key === 'hideCompleted') {
                 await ConfigService.updateHideCompleted(value as boolean);
+                await this._syncHideCompletedToViews(value as boolean);
             } else if (key === 'defaultPriority') {
                 await ConfigService.updateDefaultPriority(value as Priority);
             } else if (key.startsWith('stats.')) {
@@ -77,6 +82,21 @@ export class ConfigHandler extends BaseHandler {
         } catch (error) {
             Logger.error(`Error updating config key: ${key}`, error);
             throw error;
+        }
+    }
+
+    private async _syncHideCompletedToViews(hideCompleted: boolean): Promise<void> {
+        try {
+            for (const viewType of ['sidebar', 'full'] as const) {
+                const currentSettings = await this._taskService.getSettings(viewType);
+                const updatedSettings = {
+                    ...(currentSettings || ConfigService.getDefaultViewSettings()),
+                    hideCompleted
+                };
+                await this._taskService.saveSettings(viewType, updatedSettings);
+            }
+        } catch (error) {
+            Logger.error('Error syncing hideCompleted to views', error);
         }
     }
 }

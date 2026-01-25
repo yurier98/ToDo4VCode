@@ -18,7 +18,7 @@ export class ConfigPanel implements vscode.Disposable {
         private readonly _storageManager: StorageManager
     ) {
         this._importExportService = new ImportExportService(this._taskService, this._storageManager);
-        this._configHandler = new ConfigHandler(this._importExportService);
+        this._configHandler = new ConfigHandler(this._importExportService, this._taskService);
     }
 
     public async reveal(): Promise<void> {
