@@ -1,6 +1,8 @@
 import * as vscode from 'vscode';
-import { WebviewMessage, ConfigReadyMessage, UpdateConfigMessage } from '../../core/models/webview-messages';
+import { WebviewMessage, ConfigReadyMessage, UpdateConfigMessage, ExportDataMessage, ImportDataMessage } from '../../core/models/webview-messages';
 import { TaskService } from '../../core/services/TaskService';
+import { StorageManager } from '../../core/storage/StorageManager';
+import { ImportExportService } from '../../core/services/ImportExportService';
 import { TaskHandler } from './handlers/TaskHandler';
 import { SettingsHandler } from './handlers/SettingsHandler';
 import { ChatHandler } from './handlers/ChatHandler';
@@ -14,11 +16,15 @@ export class WebviewMessageRouter {
     private readonly _chatHandler: ChatHandler;
     private readonly _configHandler: ConfigHandler;
 
-    constructor(private readonly _taskService: TaskService) {
+    constructor(
+        private readonly _taskService: TaskService,
+        private readonly _storageManager: StorageManager
+    ) {
         this._taskHandler = new TaskHandler(_taskService);
         this._settingsHandler = new SettingsHandler(_taskService);
         this._chatHandler = new ChatHandler();
-        this._configHandler = new ConfigHandler();
+        const importExportService = new ImportExportService(_taskService, _storageManager);
+        this._configHandler = new ConfigHandler(importExportService);
     }
 
     public async handleMessage(
@@ -32,8 +38,8 @@ export class WebviewMessageRouter {
 
         const msg = message as { type: string };
 
-        if (msg.type === 'configReady' || msg.type === 'updateConfig') {
-            await this._configHandler.process(message as ConfigReadyMessage | UpdateConfigMessage, webview);
+        if (msg.type === 'configReady' || msg.type === 'updateConfig' || msg.type === 'exportData' || msg.type === 'importData') {
+            await this._configHandler.process(message as ConfigReadyMessage | UpdateConfigMessage | ExportDataMessage | ImportDataMessage, webview);
             return;
         }
 

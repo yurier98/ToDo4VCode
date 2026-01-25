@@ -224,6 +224,12 @@ export class TaskService implements vscode.Disposable {
         }
     }
 
+    public async saveTasks(tasks: TodoItem[]): Promise<void> {
+        await this._saveTasks(tasks);
+        this._onTasksChanged.fire(tasks);
+        this._reminderService.scheduleNextReminder();
+    }
+
     private async _saveTasks(tasks: TodoItem[]): Promise<void> {
         await this._storageManager.saveTasks(tasks);
     }

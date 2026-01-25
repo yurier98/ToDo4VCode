@@ -1,12 +1,17 @@
 import * as vscode from 'vscode';
 import { ConfigService } from '../../../core/services/ConfigService';
+import { ImportExportService } from '../../../core/services/ImportExportService';
 import { Priority } from '../../../core/models/task';
 import { StatisticsConfig } from '../../../core/models/settings';
-import { ConfigReadyMessage, UpdateConfigMessage } from '../../../core/models/webview-messages';
+import { ConfigReadyMessage, UpdateConfigMessage, ExportDataMessage, ImportDataMessage } from '../../../core/models/webview-messages';
 import { BaseHandler } from './BaseHandler';
 import { Logger } from '../../../utils/logger';
 
 export class ConfigHandler extends BaseHandler {
+    constructor(private readonly _importExportService: ImportExportService) {
+        super();
+    }
+
     protected async handle(message: unknown, webview: vscode.Webview | vscode.WebviewPanel | vscode.WebviewView): Promise<void> {
         const targetWebview = 'webview' in webview ? webview.webview : webview;
 
@@ -23,17 +28,23 @@ export class ConfigHandler extends BaseHandler {
                 await this._updateConfig(message.key, message.value);
                 await this._sendConfigData(targetWebview);
                 break;
+            case 'exportData':
+                await this._importExportService.exportWorkspaceData();
+                break;
+            case 'importData':
+                await this._importExportService.importWorkspaceData();
+                break;
             default:
-                Logger.warn(`ConfigHandler received unhandled message type: ${(message as ConfigReadyMessage | UpdateConfigMessage).type}`);
+                Logger.warn(`ConfigHandler received unhandled message type: ${(message as ConfigReadyMessage | UpdateConfigMessage | ExportDataMessage | ImportDataMessage).type}`);
         }
     }
 
-    private _isConfigMessage(message: unknown): message is ConfigReadyMessage | UpdateConfigMessage {
+    private _isConfigMessage(message: unknown): message is ConfigReadyMessage | UpdateConfigMessage | ExportDataMessage | ImportDataMessage {
         return (
             typeof message === 'object' &&
             message !== null &&
             'type' in message &&
-            (message.type === 'configReady' || message.type === 'updateConfig')
+            (message.type === 'configReady' || message.type === 'updateConfig' || message.type === 'exportData' || message.type === 'importData')
         );
     }
 

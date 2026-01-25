@@ -118,7 +118,43 @@
         gap: 12px;
     }
     
-    .config-item-action {
-        align-self: flex-end; 
+.config-item-action {
+    align-self: flex-end; 
+}
+
+.export-btn, .import-btn {
+    background: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground);
+    border: none;
+    padding: 8px 14px;
+    border-radius: $radius-md;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 500;
+
+    i {
+        font-size: 14px;
     }
+
+    &:hover {
+        background: var(--vscode-button-secondaryHoverBackground);
+    }
+
+    &:active {
+        transform: scale(0.95);
+    }
+}
+
+.import-btn {
+    background: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+
+    &:hover {
+        background: var(--vscode-button-hoverBackground);
+    }
+}
 }

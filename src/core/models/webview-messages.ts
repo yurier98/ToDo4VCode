@@ -122,6 +122,14 @@ export interface UpdateConfigMessage extends BaseWebviewMessage {
     value: boolean | string;
 }
 
+export interface ExportDataMessage extends BaseWebviewMessage {
+    type: 'exportData';
+}
+
+export interface ImportDataMessage extends BaseWebviewMessage {
+    type: 'importData';
+}
+
 export type WebviewMessage =
     | AddTaskMessage
     | UpdateStatusMessage
@@ -142,7 +150,9 @@ export type WebviewMessage =
     | SendToChatMessage
     | OpenTaskModalMessage
     | ConfigReadyMessage
-    | UpdateConfigMessage;
+    | UpdateConfigMessage
+    | ExportDataMessage
+    | ImportDataMessage;
 
 export interface WebviewResponse {
     type: 'updateTasks';

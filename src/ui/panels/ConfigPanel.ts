@@ -1,15 +1,24 @@
 import * as vscode from 'vscode';
 import { ConfigWebview } from '../webview/ConfigWebview';
 import { ConfigHandler } from '../webview/handlers/ConfigHandler';
+import { TaskService } from '../../core/services/TaskService';
+import { StorageManager } from '../../core/storage/StorageManager';
+import { ImportExportService } from '../../core/services/ImportExportService';
 import { Logger } from '../../utils/logger';
 import { MEDIA_PATHS } from '../../core/constants/media-paths';
 
 export class ConfigPanel implements vscode.Disposable {
     private _panel: vscode.WebviewPanel | undefined;
     private readonly _configHandler: ConfigHandler;
+    private readonly _importExportService: ImportExportService;
 
-    constructor(private readonly _extensionUri: vscode.Uri) {
-        this._configHandler = new ConfigHandler();
+    constructor(
+        private readonly _extensionUri: vscode.Uri,
+        private readonly _taskService: TaskService,
+        private readonly _storageManager: StorageManager
+    ) {
+        this._importExportService = new ImportExportService(this._taskService, this._storageManager);
+        this._configHandler = new ConfigHandler(this._importExportService);
     }
 
     public async reveal(): Promise<void> {

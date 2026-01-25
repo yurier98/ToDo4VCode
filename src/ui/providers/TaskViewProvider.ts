@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { TaskService } from '../../core/services/TaskService';
+import { StorageManager } from '../../core/storage/StorageManager';
 import { TaskWebview } from '../webview/TaskWebview';
 import { WebviewMessageRouter } from '../webview/WebviewMessageRouter';
 import { SoundPlayer } from '../../utils/sound-player';
@@ -15,9 +16,10 @@ export class TaskViewProvider implements vscode.WebviewViewProvider {
 
     constructor(
         private readonly _extensionUri: vscode.Uri,
-        private readonly _taskService: TaskService
+        private readonly _taskService: TaskService,
+        private readonly _storageManager: StorageManager
     ) {
-        this._messageRouter = new WebviewMessageRouter(this._taskService);
+        this._messageRouter = new WebviewMessageRouter(this._taskService, this._storageManager);
 
         this._taskService.onReminder((task) => {
             const message = MESSAGES.TASK_REMINDER.replace('{0}', task.text);

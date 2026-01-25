@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { TaskService } from '../../core/services/TaskService';
+import { StorageManager } from '../../core/storage/StorageManager';
 import { TaskWebview } from '../webview/TaskWebview';
 import { WebviewMessageRouter } from '../webview/WebviewMessageRouter';
 import { Logger } from '../../utils/logger';
@@ -13,9 +14,10 @@ export class FullScreenPanel implements vscode.Disposable {
 
     constructor(
         private readonly _extensionUri: vscode.Uri,
-        private readonly _taskService: TaskService
+        private readonly _taskService: TaskService,
+        private readonly _storageManager: StorageManager
     ) {
-        this._messageRouter = new WebviewMessageRouter(_taskService);
+        this._messageRouter = new WebviewMessageRouter(_taskService, _storageManager);
     }
 
     public async reveal(): Promise<void> {

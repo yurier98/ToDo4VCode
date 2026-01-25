@@ -16,9 +16,9 @@ export function activate(context: vscode.ExtensionContext): void {
     const storageManager = new StorageManager(context);
     const taskService = new TaskService(storageManager);
     const statusBarManager = new StatusBarManager();
-    const fullScreenPanel = new FullScreenPanel(context.extensionUri, taskService);
-    const configPanel = new ConfigPanel(context.extensionUri);
-    const provider = new TaskViewProvider(context.extensionUri, taskService);
+    const fullScreenPanel = new FullScreenPanel(context.extensionUri, taskService, storageManager);
+    const configPanel = new ConfigPanel(context.extensionUri, taskService, storageManager);
+    const provider = new TaskViewProvider(context.extensionUri, taskService, storageManager);
 
     context.subscriptions.push(taskService);
     context.subscriptions.push(statusBarManager);

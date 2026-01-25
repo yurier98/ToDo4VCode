@@ -151,6 +151,41 @@ export class ConfigWebview {
                                 </div>
                             </div>
                         </div>
+                        
+                        <div class="config-section-content" id="data-management-section">
+                            <h1 class="config-title">Data Management</h1>
+                            
+                            <h2 class="section-label">Import / Export</h2>
+                            <div class="config-card">
+                                <div class="config-section-items">
+                                    <div class="config-item">
+                                        <div class="config-item-info">
+                                            <div class="config-item-title">Export Workspace Data</div>
+                                            <div class="config-item-desc">Export all tasks, settings, and configurations to a JSON file.</div>
+                                        </div>
+                                        <div class="config-item-action">
+                                            <button class="action-btn export-btn" onclick="exportWorkspaceData()">
+                                                <i class="codicon codicon-git-stash-pop"></i>
+                                                <span>Export</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="config-item">
+                                        <div class="config-item-info">
+                                            <div class="config-item-title">Import Workspace Data</div>
+                                            <div class="config-item-desc">Import tasks, settings, and configurations from a previously exported JSON file.</div>
+                                        </div>
+                                        <div class="config-item-action">
+                                            <button class="action-btn import-btn" onclick="importWorkspaceData()">
+                                                <i class="codicon codicon-git-stash"></i>
+                                                <span>Import</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 
@@ -311,6 +346,14 @@ export class ConfigWebview {
                             updateConfig('reminders.playSound', newState);
                         });
                     });
+                    
+                    function exportWorkspaceData() {
+                        vscode.postMessage({ type: 'exportData' });
+                    }
+                    
+                    function importWorkspaceData() {
+                        vscode.postMessage({ type: 'importData' });
+                    }
                     
                     window.addEventListener('message', event => {
                         const message = event.data;
