@@ -164,3 +164,17 @@
         color: $color !important;
     }
 }
+
+.toggle-switch {
+    position: relative;
+    width: 34px;
+    height: 18px;
+    background: #444;
+    border-radius: $radius-pill;
+    transition: background 0.2s;
+
+    &.active {
+        background: #007AFF;
+        .toggle-slider { transform: translateX(16px); }
+    }
+}

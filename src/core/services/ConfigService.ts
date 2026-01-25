@@ -12,8 +12,22 @@ export class ConfigService {
         return {
             hideCompleted: config.get<boolean>('hideCompleted', false),
             defaultPriority: config.get<Priority>('defaultPriority', 'Should'),
-            stats: ConfigService.getStatisticsConfig()
+            stats: ConfigService.getStatisticsConfig(),
+            reminders: ConfigService.getRemindersConfig()
         };
+    }
+
+    public static getRemindersConfig(): { playSound: boolean } {
+        const config = vscode.workspace.getConfiguration(`${ConfigService.CONFIG_SECTION}.reminders`);
+        
+        return {
+            playSound: config.get<boolean>('playSound', true)
+        };
+    }
+
+    public static getReminderSoundEnabled(): boolean {
+        const config = vscode.workspace.getConfiguration(`${ConfigService.CONFIG_SECTION}.reminders`);
+        return config.get<boolean>('playSound', true);
     }
 
     public static getStatisticsConfig(): StatisticsConfig {
@@ -51,5 +65,31 @@ export class ConfigService {
 
     public static affectsStatisticsConfig(e: vscode.ConfigurationChangeEvent): boolean {
         return e.affectsConfiguration(`${ConfigService.CONFIG_SECTION}.stats`);
+    }
+
+    public static async updateHideCompleted(value: boolean): Promise<void> {
+        const config = vscode.workspace.getConfiguration(ConfigService.CONFIG_SECTION);
+        await config.update('hideCompleted', value, vscode.ConfigurationTarget.Global);
+        Logger.debug('Updated hideCompleted', { value });
+    }
+
+    public static async updateDefaultPriority(value: Priority): Promise<void> {
+        const config = vscode.workspace.getConfiguration(ConfigService.CONFIG_SECTION);
+        await config.update('defaultPriority', value, vscode.ConfigurationTarget.Global);
+        Logger.debug('Updated defaultPriority', { value });
+    }
+
+    public static async updateStatisticsConfig(updates: Partial<StatisticsConfig>): Promise<void> {
+        const config = vscode.workspace.getConfiguration(`${ConfigService.CONFIG_SECTION}.stats`);
+        for (const [key, value] of Object.entries(updates)) {
+            await config.update(key, value, vscode.ConfigurationTarget.Global);
+        }
+        Logger.debug('Updated statistics config', updates);
+    }
+
+    public static async updateReminderSoundEnabled(value: boolean): Promise<void> {
+        const config = vscode.workspace.getConfiguration(`${ConfigService.CONFIG_SECTION}.reminders`);
+        await config.update('playSound', value, vscode.ConfigurationTarget.Global);
+        Logger.debug('Updated reminder sound enabled', { value });
     }
 }

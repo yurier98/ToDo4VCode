@@ -3,6 +3,7 @@ import { TaskService } from '../../core/services/TaskService';
 import { TaskWebview } from '../webview/TaskWebview';
 import { WebviewMessageRouter } from '../webview/WebviewMessageRouter';
 import { SoundPlayer } from '../../utils/sound-player';
+import { ConfigService } from '../../core/services/ConfigService';
 import { MESSAGES } from '../../constants';
 import { Logger } from '../../utils/logger';
 
@@ -21,7 +22,9 @@ export class TaskViewProvider implements vscode.WebviewViewProvider {
         this._taskService.onReminder((task) => {
             const message = MESSAGES.TASK_REMINDER.replace('{0}', task.text);
 
-            SoundPlayer.playNotificationSound(this._extensionUri);
+            if (ConfigService.getReminderSoundEnabled()) {
+                SoundPlayer.playNotificationSound(this._extensionUri);
+            }
 
             vscode.window.showInformationMessage(message, MESSAGES.VIEW_TASK).then((selection) => {
                 if (selection === MESSAGES.VIEW_TASK) {

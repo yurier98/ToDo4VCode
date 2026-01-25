@@ -520,7 +520,6 @@
     }
 }
 
-// Lista de Subtareas estilo "Limpio"
 .subtask-list-modern {
     display: flex;
     flex-direction: column;
@@ -563,7 +562,7 @@
                     content: '\eab2';
                     font-family: 'codicon';
                     color: $bg-editor;
-                    font-size: 12px;
+                    font-size: 10px;
                     font-weight: 900;
                     -webkit-text-stroke: 1px currentColor;
                     position: absolute;
@@ -578,7 +577,7 @@
             background: transparent !important;
             border: none !important;
             color: $fg-main;
-            font-size: 14px;
+            font-size: 12px;
             outline: none;
             flex: 1;
 

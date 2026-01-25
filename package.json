@@ -72,12 +72,22 @@
                 "command": "todo4vcode.openFull",
                 "title": "Open in full screen",
                 "icon": "$(screen-full)"
+            },
+            {
+                "command": "todo4vcode.openConfig",
+                "title": "Open Settings",
+                "icon": "$(settings-gear)"
             }
         ],
         "menus": {
             "view/title": [
                 {
                     "command": "todo4vcode.openFull",
+                    "when": "view == todo4vcode-view",
+                    "group": "navigation"
+                },
+                {
+                    "command": "todo4vcode.openConfig",
                     "when": "view == todo4vcode-view",
                     "group": "navigation"
                 }
@@ -126,6 +136,11 @@
                     "type": "boolean",
                     "default": true,
                     "description": "Show number of overdue tasks in statistics panel."
+                },
+                "todo4vcode.reminders.playSound": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Play a sound when a task reminder is triggered."
                 }
             }
         }

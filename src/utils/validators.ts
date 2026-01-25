@@ -61,7 +61,7 @@ export class MessageValidator {
             this._isValidPriority(value.priority) &&
             (value.status === undefined || this._isValidStatus(value.status)) &&
             (value.description === undefined || typeof value.description === 'string') &&
-            (value.dueDate === undefined || typeof value.dueDate === 'number') &&
+            (value.dueDate === undefined || value.dueDate === null || typeof value.dueDate === 'number') &&
             (value.reminders === undefined || Array.isArray(value.reminders))
         );
     }

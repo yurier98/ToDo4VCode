@@ -5,9 +5,10 @@ import { ConfigService } from './core/services/ConfigService';
 import { StatisticsService } from './core/services/StatisticsService';
 import { TaskViewProvider } from './ui/providers/TaskViewProvider';
 import { FullScreenPanel } from './ui/panels/FullScreenPanel';
+import { ConfigPanel } from './ui/panels/ConfigPanel';
 import { StatusBarManager } from './ui/statusbar/StatusBarManager';
 import { Logger } from './utils/logger';
-import { registerRefreshCommand, registerOpenFullCommand, registerOpenTaskModalCommand } from './commands';
+import { registerRefreshCommand, registerOpenFullCommand, registerOpenTaskModalCommand, registerOpenConfigCommand } from './commands';
 
 export function activate(context: vscode.ExtensionContext): void {
     Logger.initialize();
@@ -16,11 +17,13 @@ export function activate(context: vscode.ExtensionContext): void {
     const taskService = new TaskService(storageManager);
     const statusBarManager = new StatusBarManager();
     const fullScreenPanel = new FullScreenPanel(context.extensionUri, taskService);
+    const configPanel = new ConfigPanel(context.extensionUri);
     const provider = new TaskViewProvider(context.extensionUri, taskService);
 
     context.subscriptions.push(taskService);
     context.subscriptions.push(statusBarManager);
     context.subscriptions.push(fullScreenPanel);
+    context.subscriptions.push(configPanel);
 
     const updateStatusBar = async (): Promise<void> => {
         try {
@@ -73,6 +76,7 @@ export function activate(context: vscode.ExtensionContext): void {
     registerRefreshCommand(context, provider);
     registerOpenFullCommand(context, fullScreenPanel);
     registerOpenTaskModalCommand(context, fullScreenPanel);
+    registerOpenConfigCommand(context, configPanel);
 }
 
 export function deactivate(): void {

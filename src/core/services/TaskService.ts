@@ -133,8 +133,12 @@ export class TaskService implements vscode.Disposable {
     }
 
     public async updateTaskText(id: string, text: string): Promise<TodoItem[]> {
+        if (!text || !text.trim()) {
+            Logger.warn('Attempted to update task text with empty value', { id });
+            throw new Error('Task text cannot be empty');
+        }
         return this._updateTask(id, task => {
-            task.text = text;
+            task.text = text.trim();
         });
     }
 

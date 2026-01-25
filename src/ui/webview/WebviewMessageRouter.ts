@@ -1,9 +1,10 @@
 import * as vscode from 'vscode';
-import { WebviewMessage } from '../../core/models/webview-messages';
+import { WebviewMessage, ConfigReadyMessage, UpdateConfigMessage } from '../../core/models/webview-messages';
 import { TaskService } from '../../core/services/TaskService';
 import { TaskHandler } from './handlers/TaskHandler';
 import { SettingsHandler } from './handlers/SettingsHandler';
 import { ChatHandler } from './handlers/ChatHandler';
+import { ConfigHandler } from './handlers/ConfigHandler';
 import { MessageValidator } from '../../utils/validators';
 import { Logger } from '../../utils/logger';
 
@@ -11,17 +12,31 @@ export class WebviewMessageRouter {
     private readonly _taskHandler: TaskHandler;
     private readonly _settingsHandler: SettingsHandler;
     private readonly _chatHandler: ChatHandler;
+    private readonly _configHandler: ConfigHandler;
 
     constructor(private readonly _taskService: TaskService) {
         this._taskHandler = new TaskHandler(_taskService);
         this._settingsHandler = new SettingsHandler(_taskService);
         this._chatHandler = new ChatHandler();
+        this._configHandler = new ConfigHandler();
     }
 
     public async handleMessage(
         message: unknown,
         webview: vscode.Webview | vscode.WebviewPanel | vscode.WebviewView
     ): Promise<void> {
+        if (!message || typeof message !== 'object' || !('type' in message)) {
+            Logger.warn('Invalid message received', message);
+            return;
+        }
+
+        const msg = message as { type: string };
+
+        if (msg.type === 'configReady' || msg.type === 'updateConfig') {
+            await this._configHandler.process(message as ConfigReadyMessage | UpdateConfigMessage, webview);
+            return;
+        }
+
         if (!MessageValidator.validate(message)) {
             Logger.warn('Invalid message received', message);
             return;

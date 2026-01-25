@@ -1,9 +1,15 @@
 import * as vscode from 'vscode';
 import { Logger } from './logger';
 import { MEDIA_PATHS } from '../core/constants/media-paths';
+import { ConfigService } from '../core/services/ConfigService';
 
 export class SoundPlayer {
     public static playNotificationSound(extensionUri: vscode.Uri): void {
+        if (!ConfigService.getReminderSoundEnabled()) {
+            Logger.debug('Reminder sound is disabled, skipping playback');
+            return;
+        }
+
         try {
             const soundPath = vscode.Uri.joinPath(extensionUri, MEDIA_PATHS.SOUND_ALERT);
             const soundUri = soundPath.fsPath;

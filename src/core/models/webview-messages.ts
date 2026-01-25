@@ -1,5 +1,5 @@
 import { TodoItem, Priority, Status } from './task';
-import { ViewSettings } from './settings';
+import { ViewSettings, ExtensionConfig } from './settings';
 
 export interface BaseWebviewMessage {
     type: string;
@@ -112,6 +112,16 @@ export interface OpenTaskModalMessage extends BaseWebviewMessage {
     taskId: string;
 }
 
+export interface ConfigReadyMessage extends BaseWebviewMessage {
+    type: 'configReady';
+}
+
+export interface UpdateConfigMessage extends BaseWebviewMessage {
+    type: 'updateConfig';
+    key: string;
+    value: boolean | string;
+}
+
 export type WebviewMessage =
     | AddTaskMessage
     | UpdateStatusMessage
@@ -130,10 +140,17 @@ export type WebviewMessage =
     | ReadyMessage
     | OpenFullMessage
     | SendToChatMessage
-    | OpenTaskModalMessage;
+    | OpenTaskModalMessage
+    | ConfigReadyMessage
+    | UpdateConfigMessage;
 
 export interface WebviewResponse {
     type: 'updateTasks';
     tasks: TodoItem[];
     settings?: ViewSettings;
+}
+
+export interface ConfigDataResponse {
+    type: 'configData';
+    config: ExtensionConfig;
 }

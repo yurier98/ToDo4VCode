@@ -14,6 +14,7 @@
 @use 'components/cards' as *;
 @use 'components/modals' as *;
 @use 'components/popovers' as *;
+@use 'components/config' as *;
 
 // 4. Vendors
 @use 'vendors/flatpickr' as *;

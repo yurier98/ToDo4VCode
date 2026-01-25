@@ -384,15 +384,33 @@ function closeTaskModal() {
 async function saveTaskModal() {
     if (!modalTaskId) return;
 
-    const title = document.getElementById('modalTaskTitle').value.trim();
-    const description = document.getElementById('modalTaskDesc').value.trim();
+    const titleInput = document.getElementById('modalTaskTitle');
+    const descInput = document.getElementById('modalTaskDesc');
+    
+    if (!titleInput) {
+        console.error('Modal title input not found');
+        return;
+    }
 
-    if (!title) return;
+    const title = titleInput.value.trim();
+    const description = descInput ? descInput.value.trim() : '';
 
-    vscode.postMessage({ type: 'updateTaskText', id: modalTaskId, text: title });
-    vscode.postMessage({ type: 'updateDescription', id: modalTaskId, description: description });
+    if (!title) {
+        titleInput.focus();
+        titleInput.style.borderColor = 'var(--vscode-inputValidation-errorBorder)';
+        setTimeout(() => {
+            if (titleInput) titleInput.style.borderColor = '';
+        }, 2000);
+        return;
+    }
 
-    closeTaskModal();
+    try {
+        vscode.postMessage({ type: 'updateTaskText', id: modalTaskId, text: title });
+        vscode.postMessage({ type: 'updateDescription', id: modalTaskId, description: description });
+        closeTaskModal();
+    } catch (error) {
+        console.error('Error saving task:', error);
+    }
 }
 
 function deleteTaskFromModal() {
@@ -836,16 +854,21 @@ function submitPremiumTask() {
     const titleEl = document.getElementById('taskTitle');
     const descEl = document.getElementById('taskDesc');
     if (titleEl && titleEl.value.trim()) {
+        const taskData = {
+            text: titleEl.value.trim(),
+            description: descEl ? descEl.value.trim() : '',
+            priority: currentPremiumPriority,
+            status: currentPremiumStatus,
+            reminders: currentPremiumReminders.length > 0 ? currentPremiumReminders : undefined
+        };
+        
+        if (currentPremiumDate !== null && currentPremiumDate !== undefined) {
+            taskData.dueDate = currentPremiumDate;
+        }
+        
         vscode.postMessage({
             type: 'addTask',
-            value: {
-                text: titleEl.value.trim(),
-                description: descEl ? descEl.value.trim() : '',
-                priority: currentPremiumPriority,
-                status: currentPremiumStatus,
-                dueDate: currentPremiumDate,
-                reminders: currentPremiumReminders
-            }
+            value: taskData
         });
         clearInput();
     }
@@ -1245,6 +1268,11 @@ function getTaskBadgesHtml(t) {
             label = `${d.getDate()} ${months[d.getMonth()]}, ${h}:${m}`;
         }
         html += `<div class="task-badge reminder-badge"><i class="codicon codicon-bell"></i><span>${label}</span></div>`;
+    }
+    if (t.subtasks && t.subtasks.length > 0) {
+        const completedCount = t.subtasks.filter(s => s.completed).length;
+        const totalCount = t.subtasks.length;
+        html += `<div class="task-badge subtasks-badge"><i class="codicon codicon-tasklist"></i><span>${completedCount}/${totalCount}</span></div>`;
     }
     return html ? `<div class="task-badges">${html}</div>` : '';
 }

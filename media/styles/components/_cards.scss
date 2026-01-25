@@ -90,7 +90,7 @@
     }
 
     .card-desc {
-        font-size: 0.8rem;
+        font-size: 0.75rem;
         opacity: 0.6;
         overflow-wrap: anywhere;
         word-break: break-word;
@@ -103,7 +103,7 @@
         &.empty-desc {
             opacity: 0.3;
             font-style: italic;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
         }
 
         &:hover {
