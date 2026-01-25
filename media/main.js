@@ -386,6 +386,7 @@ async function saveTaskModal() {
 
     const titleInput = document.getElementById('modalTaskTitle');
     const descInput = document.getElementById('modalTaskDesc');
+    const subtaskInput = document.getElementById('newSubtaskInput');
     
     if (!titleInput) {
         console.error('Modal title input not found');
@@ -405,6 +406,12 @@ async function saveTaskModal() {
     }
 
     try {
+        if (subtaskInput && subtaskInput.value.trim()) {
+            const subtaskText = subtaskInput.value.trim();
+            vscode.postMessage({ type: 'addSubtask', taskId: modalTaskId, text: subtaskText });
+            subtaskInput.value = '';
+        }
+        
         vscode.postMessage({ type: 'updateTaskText', id: modalTaskId, text: title });
         vscode.postMessage({ type: 'updateDescription', id: modalTaskId, description: description });
         closeTaskModal();
