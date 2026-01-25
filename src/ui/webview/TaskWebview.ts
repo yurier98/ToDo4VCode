@@ -1,15 +1,16 @@
 import * as vscode from 'vscode';
-import { TodoItem } from './storage';
-import { UI, PRIORITIES, STATUSES } from './constants';
+import { TodoItem } from '../../core/models/task';
+import { UI, PRIORITIES, STATUSES } from '../../constants';
+import { MEDIA_PATHS } from '../../core/constants/media-paths';
 
 export class TaskWebview {
     public static getHtml(webview: vscode.Webview, extensionUri: vscode.Uri, tasks: TodoItem[], viewType: 'sidebar' | 'full'): string {
-        const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'media', 'styles', 'main.css'));
-        const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'media', 'main.js'));
-        const flatpickrCssUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'media', 'flatpickr.min.css'));
-        const flatpickrDarkCssUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'media', 'flatpickr_dark.css'));
-        const flatpickrJsUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'media', 'flatpickr.min.js'));
-        const codiconsUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'node_modules', '@vscode/codicons', 'dist', 'codicon.css'));
+        const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, MEDIA_PATHS.STYLES_MAIN_CSS));
+        const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, MEDIA_PATHS.SCRIPT_MAIN_JS));
+        const flatpickrCssUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, MEDIA_PATHS.FLATPICKR_CSS));
+        const flatpickrDarkCssUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, MEDIA_PATHS.FLATPICKR_DARK_CSS));
+        const flatpickrJsUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, MEDIA_PATHS.FLATPICKR_JS));
+        const codiconsUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, MEDIA_PATHS.CODICONS_CSS));
 
         return `<!DOCTYPE html>
             <html lang="en">
@@ -163,7 +164,6 @@ export class TaskWebview {
                         </button>
                         
                         <div class="modal-content-wrapper">
-                            <!-- Sección de Título (Ahora fuera de main-content para grid) -->
                             <div class="modal-section title-section-modern">
                                 <div class="task-completion-wrapper">
                                     <div id="modalTaskCheckbox" class="priority-indicator" onclick="toggleMainTaskCompletion()"></div>
@@ -171,7 +171,6 @@ export class TaskWebview {
                                 </div>
                             </div>
 
-                            <!-- Columna Principal -->
                             <div class="modal-main-content">
                                 <div class="modal-scrollable-area">
                                     <div class="modal-section description-section">
@@ -207,7 +206,6 @@ export class TaskWebview {
                                 </div>
                             </div>
 
-                            <!-- Columna Lateral (Sidebar completo) -->
                             <div class="modal-sidebar">
                                 <div class="sidebar-header-spacer"></div>
 
@@ -255,9 +253,6 @@ export class TaskWebview {
                                     </button>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                </div>
                         </div>
                     </div>
                 </div>
@@ -321,10 +316,6 @@ export class TaskWebview {
                         <div class="ctx-item" onclick="handleMenuAction('sendToChat')">
                             <i class="codicon codicon-comment-discussion"></i>
                             <span>Send to Chat</span>
-                        </div>
-                        <div class="ctx-item" onclick="handleMenuAction('editDesc')">
-                            <i class="codicon codicon-list-selection"></i>
-                            <span>Edit description</span>
                         </div>
                         <div class="ctx-item" onclick="handleMenuAction('date')">
                             <i class="codicon codicon-calendar"></i>
