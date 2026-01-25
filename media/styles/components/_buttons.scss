@@ -86,7 +86,7 @@
         opacity: 0.6;
     }
 
-    &:hover {
+    &:not(.clear-btn):hover {
         background: var(--vscode-welcomePage-tileHoverBackground, rgba(0, 0, 0, 0.08)) !important;
         opacity: 1;
     }

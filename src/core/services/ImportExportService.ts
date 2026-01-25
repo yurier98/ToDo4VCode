@@ -111,8 +111,8 @@ export class ImportExportService {
             const action = await vscode.window.showWarningMessage(
                 confirmMessage,
                 { modal: true },
-                'Yes',
-                'No'
+                'No',
+                'Yes'
             );
 
             if (action !== 'Yes') {
@@ -170,6 +170,30 @@ export class ImportExportService {
         }
 
         return true;
+    }
+
+    public async clearAllData(): Promise<void> {
+        try {
+            const confirmMessage = 'This will permanently delete all tasks. This action cannot be undone. Continue?';
+            const action = await vscode.window.showWarningMessage(
+                confirmMessage,
+                { modal: true },
+                'No',
+                'Yes'
+            );
+
+            if (action !== 'Yes') {
+                return;
+            }
+
+            await this.taskService.clearAllTasks();
+            vscode.window.showInformationMessage('All tasks have been deleted');
+            Logger.info('All data cleared by user');
+        } catch (error) {
+            Logger.error('Error clearing all data', error);
+            vscode.window.showErrorMessage(`Failed to clear all data: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            throw error;
+        }
     }
 
     private async restoreExtensionConfig(config: ExtensionConfig): Promise<void> {

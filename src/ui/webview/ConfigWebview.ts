@@ -183,6 +183,19 @@ export class ConfigWebview {
                                             </button>
                                         </div>
                                     </div>
+                                    
+                                    <div class="config-item">
+                                        <div class="config-item-info">
+                                            <div class="config-item-title">Clear All Data</div>
+                                            <div class="config-item-desc">Delete all tasks and reset the workspace. This action cannot be undone.</div>
+                                        </div>
+                                        <div class="config-item-action">
+                                            <button class="action-btn clear-btn" onclick="clearAllData()">
+                                                <i class="codicon codicon-trash"></i>
+                                                <span>Clear</span>
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -353,6 +366,10 @@ export class ConfigWebview {
                     
                     function importWorkspaceData() {
                         vscode.postMessage({ type: 'importData' });
+                    }
+                    
+                    function clearAllData() {
+                        vscode.postMessage({ type: 'clearAllData' });
                     }
                     
                     window.addEventListener('message', event => {

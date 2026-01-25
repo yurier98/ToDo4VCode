@@ -172,6 +172,16 @@ export class TaskService implements vscode.Disposable {
         }
     }
 
+    public async clearAllTasks(): Promise<void> {
+        try {
+            await this.saveTasks([]);
+            Logger.info('All tasks cleared');
+        } catch (error) {
+            Logger.error('Error clearing all tasks', error);
+            throw error;
+        }
+    }
+
     public async addSubtask(taskId: string, text: string): Promise<TodoItem[]> {
         return this._updateTask(taskId, task => {
             if (!task.subtasks) task.subtasks = [];

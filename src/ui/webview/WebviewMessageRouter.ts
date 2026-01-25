@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { WebviewMessage, ConfigReadyMessage, UpdateConfigMessage, ExportDataMessage, ImportDataMessage } from '../../core/models/webview-messages';
+import { WebviewMessage, ConfigReadyMessage, UpdateConfigMessage, ExportDataMessage, ImportDataMessage, ClearAllDataMessage } from '../../core/models/webview-messages';
 import { TaskService } from '../../core/services/TaskService';
 import { StorageManager } from '../../core/storage/StorageManager';
 import { ImportExportService } from '../../core/services/ImportExportService';
@@ -38,8 +38,8 @@ export class WebviewMessageRouter {
 
         const msg = message as { type: string };
 
-        if (msg.type === 'configReady' || msg.type === 'updateConfig' || msg.type === 'exportData' || msg.type === 'importData') {
-            await this._configHandler.process(message as ConfigReadyMessage | UpdateConfigMessage | ExportDataMessage | ImportDataMessage, webview);
+        if (msg.type === 'configReady' || msg.type === 'updateConfig' || msg.type === 'exportData' || msg.type === 'importData' || msg.type === 'clearAllData') {
+            await this._configHandler.process(message as ConfigReadyMessage | UpdateConfigMessage | ExportDataMessage | ImportDataMessage | ClearAllDataMessage, webview);
             return;
         }
 

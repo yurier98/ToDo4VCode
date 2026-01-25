@@ -3,7 +3,7 @@ import { ConfigService } from '../../../core/services/ConfigService';
 import { ImportExportService } from '../../../core/services/ImportExportService';
 import { Priority } from '../../../core/models/task';
 import { StatisticsConfig } from '../../../core/models/settings';
-import { ConfigReadyMessage, UpdateConfigMessage, ExportDataMessage, ImportDataMessage } from '../../../core/models/webview-messages';
+import { ConfigReadyMessage, UpdateConfigMessage, ExportDataMessage, ImportDataMessage, ClearAllDataMessage } from '../../../core/models/webview-messages';
 import { BaseHandler } from './BaseHandler';
 import { Logger } from '../../../utils/logger';
 
@@ -34,17 +34,20 @@ export class ConfigHandler extends BaseHandler {
             case 'importData':
                 await this._importExportService.importWorkspaceData();
                 break;
+            case 'clearAllData':
+                await this._importExportService.clearAllData();
+                break;
             default:
-                Logger.warn(`ConfigHandler received unhandled message type: ${(message as ConfigReadyMessage | UpdateConfigMessage | ExportDataMessage | ImportDataMessage).type}`);
+                Logger.warn(`ConfigHandler received unhandled message type: ${(message as ConfigReadyMessage | UpdateConfigMessage | ExportDataMessage | ImportDataMessage | ClearAllDataMessage).type}`);
         }
     }
 
-    private _isConfigMessage(message: unknown): message is ConfigReadyMessage | UpdateConfigMessage | ExportDataMessage | ImportDataMessage {
+    private _isConfigMessage(message: unknown): message is ConfigReadyMessage | UpdateConfigMessage | ExportDataMessage | ImportDataMessage | ClearAllDataMessage {
         return (
             typeof message === 'object' &&
             message !== null &&
             'type' in message &&
-            (message.type === 'configReady' || message.type === 'updateConfig' || message.type === 'exportData' || message.type === 'importData')
+            (message.type === 'configReady' || message.type === 'updateConfig' || message.type === 'exportData' || message.type === 'importData' || message.type === 'clearAllData')
         );
     }
 

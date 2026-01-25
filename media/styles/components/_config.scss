@@ -157,4 +157,26 @@
         background: var(--vscode-button-hoverBackground);
     }
 }
+
+.config-section-items .config-item-action .action-btn.clear-btn {
+    background: #FF3B30 !important;
+    color: #ffffff !important;
+    opacity: 1 !important;
+    border: none !important;
+
+    &:hover {
+        background: #E6342A !important;
+        color: #ffffff !important;
+        opacity: 1 !important;
+    }
+
+    i {
+        color: #ffffff !important;
+        opacity: 1 !important;
+    }
+
+    span {
+        color: #ffffff !important;
+    }
+}
 }

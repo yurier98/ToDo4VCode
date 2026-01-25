@@ -130,6 +130,10 @@ export interface ImportDataMessage extends BaseWebviewMessage {
     type: 'importData';
 }
 
+export interface ClearAllDataMessage extends BaseWebviewMessage {
+    type: 'clearAllData';
+}
+
 export type WebviewMessage =
     | AddTaskMessage
     | UpdateStatusMessage
@@ -152,7 +156,8 @@ export type WebviewMessage =
     | ConfigReadyMessage
     | UpdateConfigMessage
     | ExportDataMessage
-    | ImportDataMessage;
+    | ImportDataMessage
+    | ClearAllDataMessage;
 
 export interface WebviewResponse {
     type: 'updateTasks';
