@@ -24,7 +24,9 @@ This extension uses the proven MoSCoW technique to help you categorize tasks eff
 - 📈 **StatusBar Statistics**: Real-time task statistics displayed in VS Code's status bar with detailed tooltip on hover.
 - ✅ **Subtasks Support**: Break down complex tasks into manageable subtasks with progress tracking.
 - 🔔 **Smart Reminders**: Integrated VS Code notifications for upcoming deadlines.
-- 🧹 **Zero Clutter**: Data is stored securely in VS Code's internal storage.
+- ⚙️ **Configuration Panel**: Comprehensive settings management with sections for preferences, statistics, notifications, and data management.
+- 💾 **Import/Export Data**: Export all workspace data to JSON format (compatible with coding tools and AI agents) or import previously exported data.
+- 🧹 **Data Management**: Clear all tasks with safety confirmation, or backup/restore your entire workspace.
 - 🌓 **Native Integration**: Fully supports VS Code themes and Codicons for a seamless experience.
 - ⚡ **Auto-Activation**: Extension activates automatically when VS Code starts, no manual setup required.
 
@@ -85,7 +87,19 @@ Whether you prefer Dark or Light themes, ToDo4VCode adapts beautifully to your w
 
 6. **Full Screen Mode**: Click the "Open in full screen" button in the sidebar header for a distraction-free task management experience.
 
-7. **Focus**: See your pending high-priority tasks at a glance in the status bar and sidebar.
+7. **Configuration**: Click the settings icon in the sidebar header to access the configuration panel where you can:
+   - Adjust general preferences (hide completed tasks, default priority)
+   - Configure statistics display
+   - Manage notification settings
+   - Import/Export workspace data
+   - Clear all tasks if needed
+
+8. **Import/Export Data**: 
+   - **Export**: Save all your tasks, settings, and configurations to a JSON file (defaults to Downloads folder)
+   - **Import**: Restore your workspace from a previously exported JSON file
+   - The JSON format is compatible with coding tools and can be used with AI agents for task planning
+
+9. **Focus**: See your pending high-priority tasks at a glance in the status bar and sidebar.
 
 ## ✅ Subtasks
 
