@@ -213,8 +213,10 @@
     font-size: 0.75rem;
     opacity: 0.8;
 
-    i {
-        font-size: 0.85rem;
+    i.codicon-calendar,
+    i.codicon-tasklist,
+    i.codicon-bell {
+        font-size: 0.75rem;
     }
 
     &.date-color-today {
