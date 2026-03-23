@@ -163,6 +163,7 @@ export interface WebviewResponse {
     type: 'updateTasks';
     tasks: TodoItem[];
     settings?: ViewSettings;
+    defaultPriority?: Priority;
 }
 
 export interface ConfigDataResponse {

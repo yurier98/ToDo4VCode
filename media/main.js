@@ -23,6 +23,12 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 const SORT_PRIORITY = ['Must', 'Should', 'Could', "Wont"];
+const VALID_PRIORITIES = new Set(['Must', 'Should', 'Could', 'Wont']);
+
+function normalizePriority(priority) {
+    if (priority === "Won't") return 'Wont';
+    return VALID_PRIORITIES.has(priority) ? priority : 'Should';
+}
 
 // Save state to VS Code
 function saveState() {
@@ -50,7 +56,8 @@ let modalReminders = [];
 
 // Premium States
 let currentPremiumStatus = 'Todo';
-let currentPremiumPriority = 'Wont';
+let configuredDefaultPriority = 'Should';
+let currentPremiumPriority = configuredDefaultPriority;
 let currentPremiumReminders = [];
 let currentPremiumDate = null;
 
@@ -739,18 +746,17 @@ function setPremiumDate(val, isCustom = false) {
 }
 
 function setPremiumPriority(p) {
+    const normalizedPriority = normalizePriority(p);
+
     if (modalTaskId) {
-        vscode.postMessage({ type: 'updatePriority', id: modalTaskId, priority: p === 'Wont' ? "Won't" : p });
-        modalPriority = p;
+        vscode.postMessage({ type: 'updatePriority', id: modalTaskId, priority: normalizedPriority === 'Wont' ? "Won't" : normalizedPriority });
+        modalPriority = normalizedPriority;
         updateModalUI();
         closeAllPopovers();
         return;
     }
-    currentPremiumPriority = p;
-    const label = document.getElementById('priorityLabel');
-    const icon = document.querySelector('#priorityFlagBtn i');
-    if (label) label.innerText = p === 'Wont' ? "Won't" : p;
-    if (icon) icon.style.color = PRIORITY_COLORS[p];
+    currentPremiumPriority = normalizedPriority;
+    syncPremiumPriorityUI();
     closeAllPopovers();
 }
 
@@ -888,16 +894,26 @@ function clearInput() {
     if (d) { d.value = ''; d.style.height = 'auto'; }
     clearDate();
     clearReminder();
-    const pIcon = document.querySelector('#priorityFlagBtn i');
-    if (pIcon) pIcon.style.color = PRIORITY_COLORS[currentPremiumPriority];
+    syncPremiumPriorityUI();
 }
 
 function submitTask(text, priority, status, autoEdit = false) {
     shouldAutoEditNewTask = autoEdit;
+    const effectivePriority = normalizePriority(priority || currentPremiumPriority || configuredDefaultPriority);
     vscode.postMessage({
         type: 'addTask',
-        value: { text, priority: priority || 'Wont', status: status || 'Todo', description: '' }
+        value: { text, priority: effectivePriority, status: status || 'Todo', description: '' }
     });
+}
+
+function syncPremiumPriorityUI() {
+    const normalizedPriority = normalizePriority(currentPremiumPriority);
+    currentPremiumPriority = normalizedPriority;
+
+    const label = document.getElementById('priorityLabel');
+    const icon = document.querySelector('#priorityFlagBtn i');
+    if (label) label.innerText = normalizedPriority === 'Wont' ? "Won't" : normalizedPriority;
+    if (icon) icon.style.color = PRIORITY_COLORS[normalizedPriority];
 }
 
 function setViewMode(mode) {
@@ -1513,8 +1529,7 @@ document.addEventListener('click', (e) => {
 let datePicker, reminderPicker;
 
 document.addEventListener('DOMContentLoaded', () => {
-    const pIcon = document.querySelector('#priorityFlagBtn i');
-    if (pIcon) pIcon.style.color = PRIORITY_COLORS[currentPremiumPriority];
+    syncPremiumPriorityUI();
     const titleInput = document.getElementById('taskTitle');
     if (titleInput) {
         titleInput.addEventListener('keydown', (e) => {
@@ -1556,6 +1571,16 @@ document.addEventListener('DOMContentLoaded', () => {
 window.addEventListener('message', e => {
     if (e.data.type === 'updateTasks') {
         currentTasks = e.data.tasks;
+
+        if (e.data.defaultPriority) {
+            const nextDefaultPriority = normalizePriority(e.data.defaultPriority);
+            const shouldSyncInputPriority = !currentPremiumPriority || currentPremiumPriority === configuredDefaultPriority;
+            configuredDefaultPriority = nextDefaultPriority;
+            if (shouldSyncInputPriority) {
+                currentPremiumPriority = nextDefaultPriority;
+                syncPremiumPriorityUI();
+            }
+        }
 
         if (e.data.settings) {
             const s = e.data.settings;

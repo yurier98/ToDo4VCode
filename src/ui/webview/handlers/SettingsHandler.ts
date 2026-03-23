@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { TaskService } from '../../../core/services/TaskService';
+import { ConfigService } from '../../../core/services/ConfigService';
 import { UpdateSettingsMessage, ReadyMessage, WebviewMessage, WebviewResponse } from '../../../core/models/webview-messages';
 import { BaseHandler } from './BaseHandler';
 import { Logger } from '../../../utils/logger';
@@ -23,7 +24,8 @@ export class SettingsHandler extends BaseHandler {
                 const readyViewType = readyMessage.viewType || 'sidebar';
                 const tasks = await this._taskService.getTasks();
                 const settings = await this._taskService.getSettings(readyViewType);
-                const response: WebviewResponse = { type: 'updateTasks', tasks, settings };
+                const defaultPriority = ConfigService.getExtensionConfig().defaultPriority;
+                const response: WebviewResponse = { type: 'updateTasks', tasks, settings, defaultPriority };
                 targetWebview.postMessage(response);
                 break;
             default:

@@ -51,6 +51,8 @@ export function activate(context: vscode.ExtensionContext): void {
             if (ConfigService.affectsStatisticsConfig(e)) {
                 await updateStatusBar();
             }
+            await provider.refresh();
+            await fullScreenPanel.refreshIfVisible();
         })
     );
 

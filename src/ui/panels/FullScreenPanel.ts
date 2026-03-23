@@ -5,6 +5,7 @@ import { TaskWebview } from '../webview/TaskWebview';
 import { WebviewMessageRouter } from '../webview/WebviewMessageRouter';
 import { Logger } from '../../utils/logger';
 import { MEDIA_PATHS } from '../../core/constants/media-paths';
+import { ConfigService } from '../../core/services/ConfigService';
 
 export class FullScreenPanel implements vscode.Disposable {
     private _panel: vscode.WebviewPanel | undefined;
@@ -68,7 +69,8 @@ export class FullScreenPanel implements vscode.Disposable {
                 if (this._panel) {
                     try {
                         const settings = await this._taskService.getSettings('full');
-                        this._panel.webview.postMessage({ type: 'updateTasks', tasks, settings });
+                        const defaultPriority = ConfigService.getExtensionConfig().defaultPriority;
+                        this._panel.webview.postMessage({ type: 'updateTasks', tasks, settings, defaultPriority });
                     } catch (error) {
                         Logger.error('Error updating full screen panel on task change', error);
                     }
@@ -79,7 +81,8 @@ export class FullScreenPanel implements vscode.Disposable {
                 if (this._panel && data.viewType === 'full') {
                     try {
                         const tasks = await this._taskService.getTasks();
-                        this._panel.webview.postMessage({ type: 'updateTasks', tasks, settings: data.settings });
+                        const defaultPriority = ConfigService.getExtensionConfig().defaultPriority;
+                        this._panel.webview.postMessage({ type: 'updateTasks', tasks, settings: data.settings, defaultPriority });
                     } catch (error) {
                         Logger.error('Error updating full screen panel on settings change', error);
                     }
@@ -113,5 +116,20 @@ export class FullScreenPanel implements vscode.Disposable {
         this._settingsChangeSubscription?.dispose();
         this._panel?.dispose();
         this._panel = undefined;
+    }
+
+    public async refreshIfVisible(): Promise<void> {
+        if (!this._panel) {
+            return;
+        }
+
+        try {
+            const tasks = await this._taskService.getTasks();
+            const settings = await this._taskService.getSettings('full');
+            const defaultPriority = ConfigService.getExtensionConfig().defaultPriority;
+            this._panel.webview.postMessage({ type: 'updateTasks', tasks, settings, defaultPriority });
+        } catch (error) {
+            Logger.error('Error refreshing full screen panel', error);
+        }
     }
 }

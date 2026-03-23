@@ -84,7 +84,8 @@ export class TaskViewProvider implements vscode.WebviewViewProvider {
             try {
                 const tasks = await this._taskService.getTasks();
                 const settings = await this._taskService.getSettings('sidebar');
-                this._view.webview.postMessage({ type: 'updateTasks', tasks, settings });
+                const defaultPriority = ConfigService.getExtensionConfig().defaultPriority;
+                this._view.webview.postMessage({ type: 'updateTasks', tasks, settings, defaultPriority });
             } catch (error) {
                 Logger.error('Error refreshing webview', error);
             }
@@ -96,7 +97,8 @@ export class TaskViewProvider implements vscode.WebviewViewProvider {
             this._taskService
                 .getSettings('sidebar')
                 .then((settings) => {
-                    this._view!.webview.postMessage({ type: 'updateTasks', tasks, settings });
+                    const defaultPriority = ConfigService.getExtensionConfig().defaultPriority;
+                    this._view!.webview.postMessage({ type: 'updateTasks', tasks, settings, defaultPriority });
                 })
                 .catch((error) => {
                     Logger.error('Error updating webview', error);
@@ -109,7 +111,8 @@ export class TaskViewProvider implements vscode.WebviewViewProvider {
             this._taskService
                 .getTasks()
                 .then((tasks) => {
-                    this._view!.webview.postMessage({ type: 'updateTasks', tasks, settings });
+                    const defaultPriority = ConfigService.getExtensionConfig().defaultPriority;
+                    this._view!.webview.postMessage({ type: 'updateTasks', tasks, settings, defaultPriority });
                 })
                 .catch((error) => {
                     Logger.error('Error updating webview with settings', error);
