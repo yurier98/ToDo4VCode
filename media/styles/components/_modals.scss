@@ -322,6 +322,18 @@
             text-overflow: ellipsis;
         }
 
+        .modal-tag-chip-link {
+            cursor: pointer;
+            border-color: color-mix(in srgb, var(--vscode-focusBorder), transparent 40%);
+            opacity: 0.95;
+
+            &:hover {
+                background: color-mix(in srgb, var(--vscode-focusBorder), transparent 80%);
+                border-color: var(--vscode-focusBorder);
+                opacity: 1;
+            }
+        }
+
         .modal-tag-empty {
             opacity: 0.7;
         }
@@ -461,6 +473,72 @@
         
         i { font-size: 14px; }
         span { letter-spacing: 0.5px; }
+    }
+
+    .modal-code-refs {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin: 8px 0 10px 0;
+        padding: 8px;
+        border: 1px solid color-mix(in srgb, var(--vscode-panel-border), transparent 15%);
+        border-radius: $radius-lg;
+        background: color-mix(in srgb, var(--vscode-editor-background), transparent 35%);
+    }
+
+    .modal-code-refs-header {
+        display: flex;
+        align-items: flex-start;
+        gap: 6px;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.4px;
+        text-transform: uppercase;
+        opacity: 0.75;
+
+        i {
+            font-size: 12px;
+            margin-top: 1px;
+        }
+    }
+
+    .modal-code-ref-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .modal-code-ref-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        max-width: 100%;
+        border: 1px solid color-mix(in srgb, var(--vscode-focusBorder), transparent 35%);
+        background: color-mix(in srgb, var(--vscode-focusBorder), transparent 85%);
+        color: var(--vscode-foreground);
+        border-radius: 10px;
+        padding: 1px 7px;
+        font-size: 11px;
+        line-height: 1.2;
+        cursor: pointer;
+        transition: all 0.15s ease;
+
+        i {
+            font-size: 10px;
+            opacity: 0.9;
+        }
+
+        span {
+            max-width: 240px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        &:hover {
+            background: color-mix(in srgb, var(--vscode-focusBorder), transparent 75%);
+            border-color: var(--vscode-focusBorder);
+        }
     }
 }
 

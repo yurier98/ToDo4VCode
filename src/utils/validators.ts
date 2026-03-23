@@ -47,6 +47,8 @@ export class MessageValidator {
             case 'sendToChat':
             case 'openTaskModal':
                 return true;
+            case 'openCodeLink':
+                return this._validateOpenCodeLink(msg);
             default:
                 Logger.warn(`Unknown message type: ${msg.type}`);
                 return false;
@@ -138,6 +140,10 @@ export class MessageValidator {
 
     private static _validateUpdateSettings(msg: { type: string; [key: string]: unknown }): boolean {
         return typeof msg.settings === 'object' && msg.settings !== null;
+    }
+
+    private static _validateOpenCodeLink(msg: { type: string; [key: string]: unknown }): boolean {
+        return typeof msg.value === 'string';
     }
 
     private static _isValidPriority(priority: unknown): priority is Priority {

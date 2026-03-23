@@ -452,13 +452,14 @@ export class TaskService implements vscode.Disposable {
             };
             const sourceKey = TaskService._buildCommentSourceKey(source.file, source.line, source.marker);
             const description = `[${marker}] ${relativeFile}:${source.line}`;
+            const scanTags = TaskService._buildCommentScanTags(source.file, source.line, marker);
 
             entries.push({
                 sourceKey,
                 source,
                 text,
                 description,
-                tags: [marker.toLowerCase()]
+                tags: scanTags
             });
         });
 
@@ -475,6 +476,12 @@ export class TaskService implements vscode.Disposable {
 
         if (task.description !== entry.description) {
             task.description = entry.description;
+            changed = true;
+        }
+
+        const mergedTags = TaskService._mergeCommentTags(task.tags, entry.tags, entry.source);
+        if (JSON.stringify(mergedTags) !== JSON.stringify(task.tags)) {
+            task.tags = mergedTags;
             changed = true;
         }
 
@@ -508,6 +515,36 @@ export class TaskService implements vscode.Disposable {
 
     private static _buildCommentSourceKey(file: string, line: number, marker: CommentMarker): string {
         return `${file}:${line}:${marker}`;
+    }
+
+    private static _buildCommentScanTags(file: string, line: number, marker: CommentMarker): string[] {
+        return [marker.toLowerCase(), file, `${file}:${line}`];
+    }
+
+    private static _mergeCommentTags(
+        existingTags: string[] | undefined,
+        requiredTags: string[],
+        source: CommentScanSource
+    ): string[] | undefined {
+        const normalizedExisting = TaskService._normalizeTags(existingTags) || [];
+        const requiredTagSet = new Set((TaskService._normalizeTags(requiredTags) || []).map((tag) => tag.toLowerCase()));
+        const markerTag = source.marker.toLowerCase();
+        const legacySourceTag = `${source.file}:${source.line}`.toLowerCase();
+
+        const customTags = normalizedExisting.filter((tag) => {
+            const lowerTag = tag.toLowerCase();
+            if (requiredTagSet.has(lowerTag)) {
+                return false;
+            }
+
+            if (lowerTag === markerTag) {
+                return false;
+            }
+
+            return lowerTag !== legacySourceTag;
+        });
+
+        return TaskService._normalizeTags([...requiredTags, ...customTags]);
     }
 
     private static _createCommentTaskId(sourceKey: string): string {

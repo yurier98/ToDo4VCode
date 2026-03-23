@@ -32,8 +32,8 @@
     border-radius: $radius-xl;
     padding: 12px;
     display: flex;
-    align-items: flex-start;
-    gap: 10px;
+    flex-direction: column;
+    gap: 6px;
     box-shadow: $shadow-sm;
     cursor: pointer;
     transition: transform 0.1s, box-shadow 0.1s, border-color 0.1s;
@@ -62,9 +62,19 @@
         transform: scale(0.98);
     }
 
-    .priority-indicator,
-    .card-more {
-        margin-top: 2px;
+    .card-header-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        width: 100%;
+        min-width: 0;
+    }
+
+    .card-body {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
     }
 
     .card-content {
@@ -77,6 +87,8 @@
     }
 
     .card-title {
+        flex: 1;
+        min-width: 0;
         font-size: 0.85rem;
         font-weight: 500;
         display: -webkit-box;
@@ -112,12 +124,17 @@
         }
     }
 
+    .priority-indicator {
+        margin-top: 2px;
+    }
+
     .card-more {
         flex-shrink: 0;
         cursor: pointer;
         opacity: 0.6;
         transition: opacity 0.2s;
-        margin-left: auto; // Empuja el botón a la derecha
+        margin-top: 2px;
+        margin-left: auto;
         padding: 2px;
 
         &:hover {

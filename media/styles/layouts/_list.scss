@@ -93,8 +93,9 @@
 
 .list-task-row {
     display: flex;
-    align-items: flex-start;
-    gap: 12px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
     padding: 10px 12px;
     border-radius: $radius-lg;
     margin-bottom: 2px;
@@ -109,8 +110,23 @@
         transform: scale(0.98);
     }
 
+    .card-header-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        width: 100%;
+        min-width: 0;
+    }
+
+    .card-body {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
     .priority-indicator {
-        margin-top: 4px;
+        margin-top: 2px;
         width: 16px;
         height: 16px;
         opacity: 0.7;
@@ -125,6 +141,8 @@
     }
 
     .card-title {
+        flex: 1;
+        min-width: 0;
         font-size: 0.85rem;
         font-weight: 500;
         color: $fg-main;
@@ -157,6 +175,7 @@
     .card-more {
         margin-top: 2px;
         flex-shrink: 0;
+        margin-left: auto;
         cursor: pointer;
         opacity: 0.6;
         transition: opacity 0.2s;
@@ -262,6 +281,23 @@
         i {
             font-size: 0.55rem;
             opacity: 0.8;
+        }
+
+        &.link-tag-badge {
+            cursor: pointer;
+            opacity: 0.92;
+            border-color: color-mix(in srgb, var(--vscode-focusBorder), transparent 40%);
+
+            &:hover {
+                background: color-mix(in srgb, var(--vscode-focusBorder), transparent 80%);
+                border-color: var(--vscode-focusBorder);
+                opacity: 1;
+            }
+
+            i {
+                font-size: 0.62rem;
+                opacity: 0.95;
+            }
         }
     }
 }

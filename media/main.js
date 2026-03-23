@@ -3,19 +3,42 @@ let currentTasks = [];
 
 // Restore state from VS Code state
 const previousState = vscode.getState();
-let viewMode = previousState?.viewMode || 'list';
-let groupBy = previousState?.groupBy || 'status';
+const KNOWN_CODE_FILE_TAGS = new Set(['Dockerfile', 'Makefile', 'Procfile']);
+const VALID_VIEW_MODES = new Set(['list', 'kanban']);
+const VALID_GROUP_MODES = new Set(['status', 'priority', 'none']);
+const VALID_SORT_MODES = new Set(['priority', 'dueDate', 'title', 'custom']);
+
+function normalizeViewMode(mode) {
+    const normalized = typeof mode === 'string' ? mode.trim() : '';
+    return VALID_VIEW_MODES.has(normalized) ? normalized : 'list';
+}
+
+function normalizeGroupBy(mode) {
+    const normalized = typeof mode === 'string' ? mode.trim() : '';
+    return VALID_GROUP_MODES.has(normalized) ? normalized : 'status';
+}
+
+function normalizeSortBy(mode) {
+    if (typeof mode !== 'string') return 'priority';
+    const normalized = mode.trim();
+    if (normalized === 'date') return 'dueDate';
+    if (normalized === 'status') return 'priority';
+    return VALID_SORT_MODES.has(normalized) ? normalized : 'priority';
+}
+
+let viewMode = normalizeViewMode(previousState?.viewMode);
+let groupBy = normalizeGroupBy(previousState?.groupBy);
 let hideCompleted = previousState?.hideCompleted || false;
-let sortBy = previousState?.sortBy || 'priority';
+let sortBy = normalizeSortBy(previousState?.sortBy);
 let searchQuery = typeof previousState?.searchQuery === 'string' ? previousState.searchQuery : '';
-let activeTagFilters = normalizeTags(previousState?.activeTagFilters || []);
+let activeTagFilters = normalizeTags(previousState?.activeTagFilters || []).filter((tag) => isTagFilterCandidate(tag));
 
 let hideCompletedSubtasksState = previousState?.hideCompletedSubtasksState || false;
 
 let activeTaskId = null;
 let editingTaskId = null;
 let modalTaskId = null;
-let collapsedSections = new Set(previousState?.collapsedSections || []);
+let collapsedSections = new Set(Array.isArray(previousState?.collapsedSections) ? previousState.collapsedSections : []);
 let shouldAutoEditNewTask = false;
 
 // Initialize UI from previous state
@@ -64,6 +87,133 @@ function escapeHtml(text) {
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
+}
+
+function asTaskArray(value) {
+    return Array.isArray(value) ? value : [];
+}
+
+function asText(value) {
+    if (typeof value === 'string') return value;
+    if (value === null || value === undefined) return '';
+    return String(value);
+}
+
+function getTaskSubtasks(task) {
+    return Array.isArray(task?.subtasks) ? task.subtasks : [];
+}
+
+function getTaskReminders(task) {
+    return Array.isArray(task?.reminders) ? task.reminders : [];
+}
+
+function getTaskTags(task) {
+    return normalizeTags(Array.isArray(task?.tags) ? task.tags : []);
+}
+
+function splitTagsByType(tags) {
+    const normalized = normalizeTags(tags);
+    const categoryTags = [];
+    const codeReferenceTags = [];
+
+    for (const tag of normalized) {
+        if (parseCodeReferenceTag(tag)) {
+            codeReferenceTags.push(tag);
+        } else {
+            categoryTags.push(tag);
+        }
+    }
+
+    return { categoryTags, codeReferenceTags };
+}
+
+function parseCodeReferenceTag(tag) {
+    if (typeof tag !== 'string') return null;
+    let raw = tag.trim();
+    if (!raw) return null;
+
+    if (
+        (raw.startsWith('`') && raw.endsWith('`')) ||
+        (raw.startsWith('"') && raw.endsWith('"')) ||
+        (raw.startsWith('\'') && raw.endsWith('\''))
+    ) {
+        raw = raw.slice(1, -1).trim();
+    }
+
+    if (!raw) return null;
+
+    let targetPath = raw;
+    let line = null;
+    let column = null;
+    const locationMatch = raw.match(/:(\d+)(?::(\d+))?$/);
+
+    if (locationMatch && typeof locationMatch.index === 'number') {
+        const candidatePath = raw.slice(0, locationMatch.index);
+        if (candidatePath && !candidatePath.endsWith(':')) {
+            targetPath = candidatePath;
+            line = Number.parseInt(locationMatch[1], 10);
+            if (locationMatch[2]) {
+                column = Number.parseInt(locationMatch[2], 10);
+            }
+        }
+    }
+
+    const isFolderHint = /[\\/]$/.test(targetPath);
+    targetPath = targetPath.replace(/[\\/]+$/, '').replace(/^\.\//, '').trim();
+    if (!targetPath) return null;
+
+    const hasPathSeparator = /[\\/]/.test(targetPath);
+    const hasFileExtension = /\.[A-Za-z0-9_-]{1,16}$/.test(targetPath);
+    const isAbsolute = targetPath.startsWith('/') || /^[A-Za-z]:[\\/]/.test(targetPath);
+    const fileName = targetPath.split(/[\\/]/).pop() || '';
+    if (!hasPathSeparator && !hasFileExtension && !isAbsolute && !KNOWN_CODE_FILE_TAGS.has(fileName)) {
+        return null;
+    }
+
+    return { raw, path: targetPath, line, column, isFolderHint };
+}
+
+function getCodeReferenceDisplayLabel(tag) {
+    const parsed = parseCodeReferenceTag(tag);
+    if (!parsed) return typeof tag === 'string' ? tag : '';
+
+    const normalizedPath = parsed.path.replace(/\\/g, '/');
+    const segments = normalizedPath.split('/').filter(Boolean);
+    let label = segments[segments.length - 1] || normalizedPath;
+
+    if (parsed.isFolderHint && label && !label.endsWith('/')) {
+        label = `${label}/`;
+    }
+
+    if (parsed.line && parsed.line > 0) {
+        label += `:${parsed.line}`;
+        if (parsed.column && parsed.column > 0) {
+            label += `:${parsed.column}`;
+        }
+    }
+
+    return label;
+}
+
+function openCodeTagFromBadge(e, encodedTag) {
+    if (e) e.stopPropagation();
+    let decodedTag = '';
+    try {
+        decodedTag = decodeURIComponent(encodedTag || '');
+    } catch {
+        decodedTag = encodedTag || '';
+    }
+
+    const parsed = parseCodeReferenceTag(decodedTag);
+    if (!parsed) return;
+    vscode.postMessage({ type: 'openCodeLink', value: parsed.raw });
+}
+
+function isTagFilterCandidate(tag) {
+    if (typeof tag !== 'string') return false;
+    const normalized = normalizeTags([tag])[0];
+    if (!normalized) return false;
+    return !parseCodeReferenceTag(normalized);
 }
 
 // Save state to VS Code
@@ -340,6 +490,8 @@ function updateModalUI() {
     const reminderVal = document.getElementById('modalReminderValue');
     const priorityVal = document.getElementById('modalPriorityValue');
     const tagsVal = document.getElementById('modalTagsValue');
+    const codeRefsContainer = document.getElementById('modalCodeRefsContainer');
+    const codeRefChips = document.getElementById('modalCodeRefChips');
     const statusVal = document.getElementById('modalStatusValue');
     const statusLabel = document.getElementById('modalStatusLabel');
     const taskCheckbox = document.getElementById('modalTaskCheckbox');
@@ -407,23 +559,86 @@ function updateModalUI() {
     // Tags
     if (tagsVal) {
         const tagsChips = document.getElementById('modalTagsChips');
+        const regularTags = [];
+        const codeReferenceTags = [];
+
+        for (const tag of modalTags) {
+            if (parseCodeReferenceTag(tag)) {
+                codeReferenceTags.push(tag);
+            } else {
+                regularTags.push(tag);
+            }
+        }
+
         if (tagsChips) {
             tagsChips.innerHTML = '';
 
-            if (modalTags.length === 0) {
+            if (regularTags.length === 0) {
                 const emptyLabel = document.createElement('span');
                 emptyLabel.className = 'modal-tag-empty';
                 emptyLabel.innerText = 'No tags';
                 tagsChips.appendChild(emptyLabel);
             } else {
                 const fragment = document.createDocumentFragment();
-                modalTags.forEach(tag => {
+                regularTags.forEach(tag => {
                     const chip = document.createElement('span');
                     chip.className = 'modal-tag-chip';
                     chip.innerText = tag;
                     fragment.appendChild(chip);
                 });
                 tagsChips.appendChild(fragment);
+            }
+        }
+
+        if (codeRefsContainer && codeRefChips) {
+            codeRefChips.innerHTML = '';
+            const normalizeCodePath = (value) => asText(value).replace(/\\/g, '/').toLowerCase();
+            const parsedCodeRefs = codeReferenceTags
+                .map((tag) => ({ tag, parsed: parseCodeReferenceTag(tag) }))
+                .filter((entry) => entry.parsed);
+            const pathsWithLineReference = new Set(
+                parsedCodeRefs
+                    .filter((entry) => entry.parsed.line && entry.parsed.line > 0)
+                    .map((entry) => normalizeCodePath(entry.parsed.path))
+            );
+            const dedupedCodeReferenceTags = [];
+            const seenCodeRefKeys = new Set();
+
+            for (const entry of parsedCodeRefs) {
+                const normalizedPath = normalizeCodePath(entry.parsed.path);
+                const hasLine = Boolean(entry.parsed.line && entry.parsed.line > 0);
+                if (!hasLine && pathsWithLineReference.has(normalizedPath)) {
+                    continue;
+                }
+
+                const codeKey = `${normalizedPath}:${entry.parsed.line || 0}:${entry.parsed.column || 0}`;
+                if (seenCodeRefKeys.has(codeKey)) {
+                    continue;
+                }
+                seenCodeRefKeys.add(codeKey);
+                dedupedCodeReferenceTags.push(entry.tag);
+            }
+
+            if (dedupedCodeReferenceTags.length === 0) {
+                codeRefsContainer.classList.add('hidden');
+            } else {
+                const fragment = document.createDocumentFragment();
+                dedupedCodeReferenceTags.forEach((tag) => {
+                    const chip = document.createElement('button');
+                    chip.type = 'button';
+                    chip.className = 'modal-code-ref-chip';
+                    chip.title = `Open ${tag}`;
+                    chip.innerHTML = `
+                        <i class="codicon codicon-go-to-file"></i>
+                        <span>${escapeHtml(getCodeReferenceDisplayLabel(tag))}</span>
+                    `;
+                    chip.addEventListener('click', (event) => {
+                        openCodeTagFromBadge(event, encodeURIComponent(tag));
+                    });
+                    fragment.appendChild(chip);
+                });
+                codeRefChips.appendChild(fragment);
+                codeRefsContainer.classList.remove('hidden');
             }
         }
     }
@@ -561,28 +776,31 @@ function toggleConfigPopover(e) {
     closeAllPopovers();
     if (!isShow) {
         popover.classList.add('show');
-        const toggle = document.getElementById('completedToggle');
-        if (toggle) {
-            toggle.parentElement.classList.toggle('active', !hideCompleted);
+        try {
+            const toggle = document.getElementById('completedToggle');
+            if (toggle?.parentElement) {
+                toggle.parentElement.classList.toggle('active', !hideCompleted);
+            }
+            const popoverBtnList = document.getElementById('popoverBtnList');
+            const popoverBtnKanban = document.getElementById('popoverBtnKanban');
+            if (popoverBtnList) popoverBtnList.classList.toggle('active', viewMode === 'list');
+            if (popoverBtnKanban) popoverBtnKanban.classList.toggle('active', viewMode === 'kanban');
+
+            const sortPriorityCheck = document.getElementById('sortPriorityCheck');
+            const sortDueDateCheck = document.getElementById('sortDueDateCheck');
+            const sortTitleCheck = document.getElementById('sortTitleCheck');
+            const sortCustomCheck = document.getElementById('sortCustomCheck');
+            if (sortPriorityCheck) sortPriorityCheck.classList.toggle('hidden', sortBy !== 'priority');
+            if (sortDueDateCheck) sortDueDateCheck.classList.toggle('hidden', sortBy !== 'dueDate');
+            if (sortTitleCheck) sortTitleCheck.classList.toggle('hidden', sortBy !== 'title');
+            if (sortCustomCheck) sortCustomCheck.classList.toggle('hidden', sortBy !== 'custom');
+
+            const searchInput = document.getElementById('searchFilterInput');
+            if (searchInput) searchInput.value = searchQuery || '';
+            renderTagFiltersInPopover();
+        } catch (error) {
+            console.error('Error opening format popover', error);
         }
-        const popoverBtnList = document.getElementById('popoverBtnList');
-        const popoverBtnKanban = document.getElementById('popoverBtnKanban');
-        if (popoverBtnList) popoverBtnList.classList.toggle('active', viewMode === 'list');
-        if (popoverBtnKanban) popoverBtnKanban.classList.toggle('active', viewMode === 'kanban');
-
-        // Update Sort Chks
-        const sortPriorityCheck = document.getElementById('sortPriorityCheck');
-        const sortDueDateCheck = document.getElementById('sortDueDateCheck');
-        const sortTitleCheck = document.getElementById('sortTitleCheck');
-        const sortCustomCheck = document.getElementById('sortCustomCheck');
-        if (sortPriorityCheck) sortPriorityCheck.classList.toggle('hidden', sortBy !== 'priority');
-        if (sortDueDateCheck) sortDueDateCheck.classList.toggle('hidden', sortBy !== 'dueDate');
-        if (sortTitleCheck) sortTitleCheck.classList.toggle('hidden', sortBy !== 'title');
-        if (sortCustomCheck) sortCustomCheck.classList.toggle('hidden', sortBy !== 'custom');
-
-        const searchInput = document.getElementById('searchFilterInput');
-        if (searchInput) searchInput.value = searchQuery || '';
-        renderTagFiltersInPopover();
     }
 }
 
@@ -688,24 +906,25 @@ function toggleReminderPicker(e, fromModal = false) {
 function syncPremiumTagsUI() {
     const normalized = normalizeTags(currentPremiumTags);
     currentPremiumTags = normalized;
+    const { categoryTags } = splitTagsByType(normalized);
 
     const btn = document.getElementById('tagsBtn');
     const label = document.getElementById('tagsLabel');
     if (!btn || !label) return;
 
-    if (normalized.length === 0) {
+    if (categoryTags.length === 0) {
         btn.classList.remove('has-value');
         label.innerText = 'Tags';
         return;
     }
 
     btn.classList.add('has-value');
-    label.innerText = normalized.length === 1 ? normalized[0] : `${normalized.length} tags`;
+    label.innerText = categoryTags.length === 1 ? categoryTags[0] : `${categoryTags.length} tags`;
 }
 
 function getActiveTagsForEditor() {
-    if (modalTaskId) return normalizeTags(modalTags);
-    return normalizeTags(currentPremiumTags);
+    if (modalTaskId) return splitTagsByType(modalTags).categoryTags;
+    return splitTagsByType(currentPremiumTags).categoryTags;
 }
 
 function toggleTagsPicker(e, fromModal = false) {
@@ -755,11 +974,13 @@ function applyTagsFromInput() {
     const tags = parseTagsInput(tagsInput.value);
 
     if (modalTaskId) {
-        modalTags = tags;
+        const { codeReferenceTags } = splitTagsByType(modalTags);
+        modalTags = normalizeTags([...tags, ...codeReferenceTags]);
         vscode.postMessage({ type: 'updateTags', id: modalTaskId, tags: modalTags });
         updateModalUI();
     } else {
-        currentPremiumTags = tags;
+        const { codeReferenceTags } = splitTagsByType(currentPremiumTags);
+        currentPremiumTags = normalizeTags([...tags, ...codeReferenceTags]);
         syncPremiumTagsUI();
     }
 
@@ -771,11 +992,13 @@ function clearTagsFromInput() {
     if (tagsInput) tagsInput.value = '';
 
     if (modalTaskId) {
-        modalTags = [];
-        vscode.postMessage({ type: 'updateTags', id: modalTaskId, tags: [] });
+        const { codeReferenceTags } = splitTagsByType(modalTags);
+        modalTags = normalizeTags(codeReferenceTags);
+        vscode.postMessage({ type: 'updateTags', id: modalTaskId, tags: modalTags });
         updateModalUI();
     } else {
-        currentPremiumTags = [];
+        const { codeReferenceTags } = splitTagsByType(currentPremiumTags);
+        currentPremiumTags = normalizeTags(codeReferenceTags);
         syncPremiumTagsUI();
     }
 
@@ -1089,7 +1312,7 @@ function syncPremiumPriorityUI() {
 }
 
 function setViewMode(mode) {
-    viewMode = mode;
+    viewMode = normalizeViewMode(mode);
     saveState();
     updateViewModeUI();
     render();
@@ -1107,7 +1330,7 @@ function updateViewModeUI() {
 }
 
 function setGroupBy(mode) {
-    groupBy = mode;
+    groupBy = normalizeGroupBy(mode);
     saveState();
     updateGroupByUI();
     closeAllPopovers();
@@ -1124,14 +1347,14 @@ function updateGroupByUI() {
 }
 
 function setSortBy(val) {
-    sortBy = val;
+    sortBy = normalizeSortBy(val);
     closeAllPopovers();
     saveState();
     render();
 }
 
 function sortTasks(tasks) {
-    return [...tasks].sort((a, b) => {
+    return [...asTaskArray(tasks)].sort((a, b) => {
         if (sortBy === 'custom') {
             const oA = a.order || 0;
             const oB = b.order || 0;
@@ -1150,7 +1373,7 @@ function sortTasks(tasks) {
                 if (a.dueDate !== b.dueDate) return a.dueDate - b.dueDate;
             }
         } else if (sortBy === 'title') {
-            const res = a.text.localeCompare(b.text);
+            const res = asText(a?.text).localeCompare(asText(b?.text));
             if (res !== 0) return res;
         }
         // Fallback to order or createdAt
@@ -1161,10 +1384,37 @@ function sortTasks(tasks) {
     });
 }
 
+function renderListFallback(tasks) {
+    const container = document.getElementById('listTasks');
+    if (!container) return;
+
+    const safeTasks = asTaskArray(tasks);
+    container.innerHTML = `
+        <div class="list-section">
+            <div class="list-section-content">
+                ${safeTasks.map((task) => `
+                    <div class="list-task-row" data-id="${escapeHtml(asText(task?.id))}">
+                        <div class="card-content">
+                            <div class="card-title">${escapeHtml(asText(task?.text) || 'Untitled task')}</div>
+                            ${asText(task?.description)
+                                ? `<div class="card-desc">${escapeHtml(asText(task?.description))}</div>`
+                                : `<div class="card-desc empty-desc">Add description...</div>`}
+                        </div>
+                    </div>
+                `).join('')}
+                <div class="list-add-row" data-status="Todo" data-priority="null" data-autoedit="true" onclick="handleAddTaskClick(this)">
+                    <i class="codicon codicon-add"></i>
+                    <span>Add task</span>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
 function getTagUsageMap(tasks) {
     const usage = new Map();
-    for (const task of tasks) {
-        const tags = normalizeTags(task.tags || []);
+    for (const task of asTaskArray(tasks)) {
+        const tags = getTaskTags(task).filter((tag) => isTagFilterCandidate(tag));
         for (const tag of tags) {
             usage.set(tag, (usage.get(tag) || 0) + 1);
         }
@@ -1176,6 +1426,7 @@ function renderTagFiltersInPopover() {
     const container = document.getElementById('tagFiltersContainer');
     if (!container) return;
 
+    activeTagFilters = normalizeTags(activeTagFilters).filter((tag) => isTagFilterCandidate(tag));
     const usage = getTagUsageMap(currentTasks);
     const allTags = Array.from(new Set([...usage.keys(), ...activeTagFilters])).sort((a, b) => a.localeCompare(b));
 
@@ -1198,7 +1449,7 @@ function renderTagFiltersInPopover() {
 
 function toggleTagFilter(tag) {
     const normalizedTag = normalizeTags([tag])[0];
-    if (!normalizedTag) return;
+    if (!normalizedTag || !isTagFilterCandidate(normalizedTag)) return;
 
     if (activeTagFilters.includes(normalizedTag)) {
         activeTagFilters = activeTagFilters.filter((item) => item !== normalizedTag);
@@ -1231,14 +1482,16 @@ function clearAdvancedFilters() {
 
 function applyAdvancedFilters(tasks) {
     const normalizedSearch = (searchQuery || '').trim().toLowerCase();
-    const normalizedTagFilters = normalizeTags(activeTagFilters).map((tag) => tag.toLowerCase());
+    const normalizedTagFilters = normalizeTags(activeTagFilters)
+        .filter((tag) => isTagFilterCandidate(tag))
+        .map((tag) => tag.toLowerCase());
 
-    return tasks.filter((task) => {
+    return asTaskArray(tasks).filter((task) => {
         if (normalizedSearch) {
-            const taskText = String(task.text || '').toLowerCase();
-            const taskDescription = String(task.description || '').toLowerCase();
-            const taskTagsText = normalizeTags(task.tags || []).join(' ').toLowerCase();
-            const subtaskText = (task.subtasks || []).map((subtask) => subtask.text || '').join(' ').toLowerCase();
+            const taskText = asText(task?.text).toLowerCase();
+            const taskDescription = asText(task?.description).toLowerCase();
+            const taskTagsText = getTaskTags(task).join(' ').toLowerCase();
+            const subtaskText = getTaskSubtasks(task).map((subtask) => asText(subtask?.text)).join(' ').toLowerCase();
             const matchesSearch =
                 taskText.includes(normalizedSearch) ||
                 taskDescription.includes(normalizedSearch) ||
@@ -1249,7 +1502,7 @@ function applyAdvancedFilters(tasks) {
         }
 
         if (normalizedTagFilters.length > 0) {
-            const taskTagSet = new Set(normalizeTags(task.tags || []).map((tag) => tag.toLowerCase()));
+            const taskTagSet = new Set(getTaskTags(task).map((tag) => tag.toLowerCase()));
             const matchesAnyTag = normalizedTagFilters.some((tag) => taskTagSet.has(tag));
             if (!matchesAnyTag) return false;
         }
@@ -1531,8 +1784,9 @@ function getPriorityIndicatorHtml(t) {
 function getTaskBadgesHtml(t) {
     let html = '';
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    if (t.dueDate) {
+    if (t?.dueDate !== undefined && t?.dueDate !== null) {
         const date = new Date(t.dueDate);
+        if (!Number.isNaN(date.getTime())) {
         date.setHours(0, 0, 0, 0);
         const now = new Date();
         now.setHours(0, 0, 0, 0);
@@ -1546,14 +1800,18 @@ function getTaskBadgesHtml(t) {
         else if (date.getTime() === tomorrow.getTime()) { label = 'Tomorrow'; colorClass = 'date-color-tomorrow'; }
         else if (date.getTime() > tomorrow.getTime() && date.getTime() <= in3Days.getTime()) colorClass = 'date-color-soon';
         html += `<div class="task-badge ${colorClass}"><i class="codicon codicon-calendar"></i><span>${label}</span></div>`;
+        }
     }
-    if (t.subtasks && t.subtasks.length > 0) {
-        const completedCount = t.subtasks.filter(s => s.completed).length;
-        const totalCount = t.subtasks.length;
+    const subtasks = getTaskSubtasks(t);
+    if (subtasks.length > 0) {
+        const completedCount = subtasks.filter((s) => Boolean(s?.completed)).length;
+        const totalCount = subtasks.length;
         html += `<div class="task-badge subtasks-badge"><i class="codicon codicon-tasklist"></i><span>${completedCount}/${totalCount}</span></div>`;
     }
-    if (t.reminders && t.reminders.length > 0) {
-        const d = new Date(t.reminders[0]);
+    const reminders = getTaskReminders(t);
+    if (reminders.length > 0) {
+        const d = new Date(reminders[0]);
+        if (!Number.isNaN(d.getTime())) {
         const now = new Date();
         const isToday = d.toDateString() === now.toDateString();
         const h = d.getHours().toString().padStart(2, '0');
@@ -1565,11 +1823,47 @@ function getTaskBadgesHtml(t) {
             label = `${d.getDate()} ${months[d.getMonth()]}, ${h}:${m}`;
         }
         html += `<div class="task-badge reminder-badge"><i class="codicon codicon-bell"></i><span>${label}</span></div>`;
+        }
     }
-    const tags = normalizeTags(t.tags || []);
+    const tags = getTaskTags(t);
     if (tags.length > 0) {
+        const normalizeCodePath = (value) => asText(value).replace(/\\/g, '/').toLowerCase();
+        const pathsWithLineReference = new Set(
+            tags
+                .map((tag) => parseCodeReferenceTag(tag))
+                .filter((parsed) => parsed && parsed.line && parsed.line > 0)
+                .map((parsed) => normalizeCodePath(parsed.path))
+        );
+        const renderedBadgeKeys = new Set();
+
         for (const tag of tags) {
-            html += `<div class="task-badge tag-badge"><i class="codicon codicon-tag"></i><span>${escapeHtml(tag)}</span></div>`;
+            const codeRef = parseCodeReferenceTag(tag);
+            if (codeRef) {
+                const normalizedPath = normalizeCodePath(codeRef.path);
+                const hasLine = Boolean(codeRef.line && codeRef.line > 0);
+
+                // If we have both "file" and "file:line", show only the line reference.
+                if (!hasLine && pathsWithLineReference.has(normalizedPath)) {
+                    continue;
+                }
+
+                const codeKey = `code:${normalizedPath}:${codeRef.line || 0}:${codeRef.column || 0}`;
+                if (renderedBadgeKeys.has(codeKey)) {
+                    continue;
+                }
+                renderedBadgeKeys.add(codeKey);
+
+                const encodedTag = encodeURIComponent(tag);
+                const displayLabel = getCodeReferenceDisplayLabel(tag);
+                html += `<div class="task-badge tag-badge link-tag-badge" onclick="openCodeTagFromBadge(event, '${encodedTag}')" title="Open ${escapeHtml(tag)}"><i class="codicon codicon-go-to-file"></i><span>${escapeHtml(displayLabel)}</span></div>`;
+            } else {
+                const tagKey = `tag:${tag.toLowerCase()}`;
+                if (renderedBadgeKeys.has(tagKey)) {
+                    continue;
+                }
+                renderedBadgeKeys.add(tagKey);
+                html += `<div class="task-badge tag-badge"><i class="codicon codicon-tag"></i><span>${escapeHtml(tag)}</span></div>`;
+            }
         }
     }
     return html ? `<div class="task-badges">${html}</div>` : '';
@@ -1581,7 +1875,7 @@ function renderList(tasks) {
     container.innerHTML = '';
 
     // Always sort internally first
-    const internalSorted = sortTasks(tasks);
+    const internalSorted = sortTasks(asTaskArray(tasks));
 
     if (groupBy === 'none') {
         container.innerHTML = `
@@ -1589,24 +1883,33 @@ function renderList(tasks) {
                 <div class="list-section-content" 
                      ondragover="handleDragOver(event)" 
                      ondrop="handleTaskDrop(event)">
-                    ${internalSorted.map(t => `
+                    ${internalSorted.map(t => {
+                        const taskText = escapeHtml(asText(t?.text));
+                        const taskDescription = asText(t?.description);
+                        const descriptionHtml = taskDescription
+                            ? `<div class="card-desc">${escapeHtml(taskDescription)}</div>`
+                            : `<div class="card-desc empty-desc">Add description...</div>`;
+                        return `
                         <div class="list-task-row ${t.status === 'Done' ? 'task-is-done' : ''}" 
                              data-id="${t.id}" 
                              draggable="true" 
                              ondragstart="event.dataTransfer.setData('text/plain', '${t.id}'); this.classList.add('dragging')" 
                              ondragend="cleanupDragState()"
                              onclick="openTaskModal('${t.id}')">
-                             ${getPriorityIndicatorHtml(t)}
-                             <div class="card-content">
-                                <div class="card-title" ondblclick="makeEditable(this, '${t.id}')">${t.text}</div>
-                                ${t.description ? `<div class="card-desc">${t.description}</div>` : `<div class="card-desc empty-desc">Add description...</div>`}
+                            <div class="card-header-row">
+                                ${getPriorityIndicatorHtml(t)}
+                                <div class="card-title" ondblclick="makeEditable(this, '${t.id}')">${taskText}</div>
+                                <div class="card-more" onclick="showContextMenu(event, '${t.id}')">
+                                    <i class="codicon codicon-more"></i>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                ${descriptionHtml}
                                 ${getTaskBadgesHtml(t)}
                             </div>
-                            <div class="card-more" onclick="showContextMenu(event, '${t.id}')">
-                                <i class="codicon codicon-more"></i>
-                            </div>
                         </div>
-                    `).join('')}
+                        `;
+                    }).join('')}
                     <div class="list-add-row" data-status="Todo" data-priority="null" data-autoedit="true" onclick="handleAddTaskClick(this)">
                         <i class="codicon codicon-add"></i>
                         <span>Add task</span>
@@ -1618,6 +1921,7 @@ function renderList(tasks) {
     }
     const groups = groupBy === 'status' ? ['Todo', 'Ready', 'In Progress', 'Testing', 'Done'] : ['Must', 'Should', 'Could', 'Wont'];
 
+    let renderedGroups = 0;
     groups.forEach(group => {
         const sTasks = internalSorted.filter(t => {
             const val = groupBy === 'status' ? t.status : (t.priority === "Won't" ? 'Wont' : t.priority);
@@ -1639,24 +1943,33 @@ function renderList(tasks) {
             <div class="list-section-content" 
                  ondragover="handleDragOver(event)" 
                  ondrop="handleTaskDrop(event, '${sVal}', '${group === "Wont" ? "Wont" : group}')">
-                ${sTasks.map(t => `
+                ${sTasks.map(t => {
+                    const taskText = escapeHtml(asText(t?.text));
+                    const taskDescription = asText(t?.description);
+                    const descriptionHtml = taskDescription
+                        ? `<div class="card-desc">${escapeHtml(taskDescription)}</div>`
+                        : `<div class="card-desc empty-desc">Add description...</div>`;
+                    return `
                     <div class="list-task-row ${t.status === 'Done' ? 'task-is-done' : ''}" 
                          data-id="${t.id}" 
                          draggable="true" 
                          ondragstart="event.dataTransfer.setData('text/plain', '${t.id}'); this.classList.add('dragging')" 
                          ondragend="cleanupDragState()"
                          onclick="openTaskModal('${t.id}')">
-                        ${getPriorityIndicatorHtml(t)}
-                        <div class="card-content">
-                            <div class="card-title" ondblclick="makeEditable(this, '${t.id}')">${t.text}</div>
-                            ${t.description ? `<div class="card-desc">${t.description}</div>` : `<div class="card-desc empty-desc">Add description...</div>`}
+                        <div class="card-header-row">
+                            ${getPriorityIndicatorHtml(t)}
+                            <div class="card-title" ondblclick="makeEditable(this, '${t.id}')">${taskText}</div>
+                            <div class="card-more" onclick="showContextMenu(event, '${t.id}')">
+                                <i class="codicon codicon-more"></i>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            ${descriptionHtml}
                             ${getTaskBadgesHtml(t)}
                         </div>
-                        <div class="card-more" onclick="showContextMenu(event, '${t.id}')">
-                            <i class="codicon codicon-more"></i>
-                        </div>
                     </div>
-                `).join('')}
+                    `;
+                }).join('')}
                 <div class="list-add-row" data-status="${sVal}" data-priority="${pVal}" data-autoedit="true" onclick="handleAddTaskClick(this)">
                     <i class="codicon codicon-add"></i>
                     <span>Add task</span>
@@ -1664,7 +1977,21 @@ function renderList(tasks) {
             </div>
         `;
         container.appendChild(div);
+        renderedGroups += 1;
     });
+
+    if (renderedGroups === 0) {
+        container.innerHTML = `
+            <div class="list-section">
+                <div class="list-section-content" ondragover="handleDragOver(event)" ondrop="handleTaskDrop(event)">
+                    <div class="list-add-row" data-status="Todo" data-priority="null" data-autoedit="true" onclick="handleAddTaskClick(this)">
+                        <i class="codicon codicon-add"></i>
+                        <span>Add task</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
 }
 
 function renderKanban(tasks) {
@@ -1672,7 +1999,7 @@ function renderKanban(tasks) {
     if (!board) return;
     board.innerHTML = '';
 
-    const internalSorted = sortTasks(tasks);
+    const internalSorted = sortTasks(asTaskArray(tasks));
 
     const cols = groupBy === 'none' ? ['Tareas'] : (groupBy === 'status' ? ['Todo', 'Ready', 'In Progress', 'Testing', 'Done'] : ['Must', 'Should', 'Could', 'Wont']);
     cols.forEach(col => {
@@ -1702,24 +2029,33 @@ function renderKanban(tasks) {
                 <span class="col-count">${cTasks.length}</span>
             </div>
             <div class="tasks-scroll" ondragover="handleDragOver(event)">
-                ${cTasks.map(t => `
+                ${cTasks.map(t => {
+                    const taskText = escapeHtml(asText(t?.text));
+                    const taskDescription = asText(t?.description);
+                    const descriptionHtml = taskDescription
+                        ? `<div class="card-desc">${escapeHtml(taskDescription)}</div>`
+                        : `<div class="card-desc empty-desc">Add description...</div>`;
+                    return `
                     <div class="task-card ${t.status === 'Done' ? 'task-is-done' : ''}" 
                          data-id="${t.id}" 
                          draggable="true" 
                          ondragstart="event.dataTransfer.setData('text/plain', '${t.id}'); this.classList.add('dragging')" 
                          ondragend="cleanupDragState()"
                          onclick="openTaskModal('${t.id}')">
-                        ${getPriorityIndicatorHtml(t)}
-                        <div class="card-content">
-                            <div class="card-title" ondblclick="makeEditable(this, '${t.id}')">${t.text}</div>
-                            ${t.description ? `<div class="card-desc">${t.description}</div>` : `<div class="card-desc empty-desc">Add description...</div>`}
+                        <div class="card-header-row">
+                            ${getPriorityIndicatorHtml(t)}
+                            <div class="card-title" ondblclick="makeEditable(this, '${t.id}')">${taskText}</div>
+                            <div class="card-more" onclick="showContextMenu(event, '${t.id}')">
+                                <i class="codicon codicon-more"></i>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            ${descriptionHtml}
                             ${getTaskBadgesHtml(t)}
                         </div>
-                        <div class="card-more" onclick="showContextMenu(event, '${t.id}')">
-                            <i class="codicon codicon-more"></i>
-                        </div>
                     </div>
-                `).join('')}
+                    `;
+                }).join('')}
             </div>
             <button class="col-add-task" data-priority="${pVal}" data-status="${sVal}" data-autoedit="true" onclick="handleAddTaskClick(this)">
                 <i class="codicon codicon-add"></i>
@@ -1731,16 +2067,22 @@ function renderKanban(tasks) {
 }
 
 function render() {
-    const baseTasks = hideCompleted ? currentTasks.filter(t => t.status !== 'Done') : currentTasks;
+    const tasksPool = asTaskArray(currentTasks);
+    const baseTasks = hideCompleted ? tasksPool.filter((t) => t.status !== 'Done') : tasksPool;
     const tasks = applyAdvancedFilters(baseTasks);
-    if (viewMode === 'list') {
-        const kanbanPanel = document.getElementById('kanbanView');
-        if (kanbanPanel) kanbanPanel.innerHTML = '';
-        renderList(tasks);
-    } else {
-        const listPanel = document.getElementById('listTasks');
-        if (listPanel) listPanel.innerHTML = '';
-        renderKanban(tasks);
+    try {
+        if (viewMode === 'list') {
+            const kanbanPanel = document.getElementById('kanbanView');
+            if (kanbanPanel) kanbanPanel.innerHTML = '';
+            renderList(tasks);
+        } else {
+            const listPanel = document.getElementById('listTasks');
+            if (listPanel) listPanel.innerHTML = '';
+            renderKanban(tasks);
+        }
+    } catch (error) {
+        console.error('Render error, using list fallback', error);
+        renderListFallback(tasksPool);
     }
     if (shouldAutoEditNewTask && baseTasks.length > 0) {
         shouldAutoEditNewTask = false;
@@ -1847,7 +2189,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 window.addEventListener('message', e => {
     if (e.data.type === 'updateTasks') {
-        currentTasks = e.data.tasks;
+        currentTasks = asTaskArray(e.data.tasks);
 
         if (e.data.defaultPriority) {
             const nextDefaultPriority = normalizePriority(e.data.defaultPriority);
@@ -1861,17 +2203,17 @@ window.addEventListener('message', e => {
 
         if (e.data.settings) {
             const s = e.data.settings;
-            viewMode = s.viewMode || viewMode;
-            groupBy = s.groupBy || groupBy;
+            viewMode = normalizeViewMode(s.viewMode || viewMode);
+            groupBy = normalizeGroupBy(s.groupBy || groupBy);
             hideCompleted = s.hideCompleted !== undefined ? s.hideCompleted : hideCompleted;
-            sortBy = s.sortBy || sortBy;
+            sortBy = normalizeSortBy(s.sortBy || sortBy);
             if (typeof s.searchQuery === 'string') {
                 searchQuery = s.searchQuery;
             }
             if (Array.isArray(s.activeTagFilters)) {
-                activeTagFilters = normalizeTags(s.activeTagFilters);
+                activeTagFilters = normalizeTags(s.activeTagFilters).filter((tag) => isTagFilterCandidate(tag));
             }
-            if (s.collapsedSections) {
+            if (Array.isArray(s.collapsedSections)) {
                 collapsedSections = new Set(s.collapsedSections);
             }
             
@@ -1942,6 +2284,7 @@ window.clearAdvancedFilters = clearAdvancedFilters;
 window.toggleTagFilter = toggleTagFilter;
 window.clearDate = clearDate;
 window.clearReminder = clearReminder;
+window.openCodeTagFromBadge = openCodeTagFromBadge;
 window.openTaskModal = openTaskModal;
 window.closeTaskModal = closeTaskModal;
 window.saveTaskModal = saveTaskModal;

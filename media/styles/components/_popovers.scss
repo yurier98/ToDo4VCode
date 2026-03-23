@@ -218,8 +218,22 @@
 .tag-filters-container {
     display: flex;
     flex-wrap: wrap;
+    align-content: flex-start;
     gap: 6px;
     margin: 2px 8px 8px;
+    max-height: 140px;
+    overflow-y: auto;
+    padding-right: 2px;
+    scrollbar-width: thin;
+
+    &::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: color-mix(in srgb, $border-color, transparent 30%);
+        border-radius: 8px;
+    }
 }
 
 .tag-filter-chip {

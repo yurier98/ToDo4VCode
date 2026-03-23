@@ -119,6 +119,11 @@ export interface OpenTaskModalMessage extends BaseWebviewMessage {
     taskId: string;
 }
 
+export interface OpenCodeLinkMessage extends BaseWebviewMessage {
+    type: 'openCodeLink';
+    value: string;
+}
+
 export interface ConfigReadyMessage extends BaseWebviewMessage {
     type: 'configReady';
 }
@@ -161,6 +166,7 @@ export type WebviewMessage =
     | OpenFullMessage
     | SendToChatMessage
     | OpenTaskModalMessage
+    | OpenCodeLinkMessage
     | ConfigReadyMessage
     | UpdateConfigMessage
     | ExportDataMessage

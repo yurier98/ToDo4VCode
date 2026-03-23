@@ -198,6 +198,13 @@ export class TaskWebview {
                                             <i class="codicon codicon-menu"></i>
                                             <span>${UI.DESCRIPTION}</span>
                                         </div>
+                                        <div id="modalCodeRefsContainer" class="modal-code-refs hidden">
+                                            <div class="modal-code-refs-header">
+                                                <i class="codicon codicon-go-to-file"></i>
+                                                <span>Code links</span>
+                                            </div>
+                                            <div id="modalCodeRefChips" class="modal-code-ref-chips"></div>
+                                        </div>
                                         <textarea id="modalTaskDesc" class="modal-desc-input" placeholder="${UI.DESCRIPTION_PLACEHOLDER}" rows="3"></textarea>
                                     </div>
 
@@ -253,6 +260,14 @@ export class TaskWebview {
                                                 <i class="codicon codicon-close clear-date-btn hidden" onclick="event.stopPropagation(); clearDate()"></i>
                                             </div>
                                         </div>
+                                        <div class="modal-grid-item" onclick="toggleReminderPicker(event, true)">
+                                            <div class="grid-item-label">${UI.REMINDER}</div>
+                                            <div id="modalReminderValue" class="grid-item-value">
+                                                <i class="codicon codicon-bell"></i>
+                                                <span>No reminder</span>
+                                                <i class="codicon codicon-close clear-date-btn hidden" onclick="event.stopPropagation(); clearReminder()"></i>
+                                            </div>
+                                        </div>
                                         <div class="modal-grid-item" onclick="toggleTagsPicker(event, true)">
                                             <div class="grid-item-label">${UI.TAGS}</div>
                                             <div id="modalTagsValue" class="grid-item-value tags-grid-value">
@@ -260,14 +275,6 @@ export class TaskWebview {
                                                 <div id="modalTagsChips" class="modal-tags-chips">
                                                     <span class="modal-tag-empty">No tags</span>
                                                 </div>
-                                            </div>
-                                        </div>
-                                        <div class="modal-grid-item" onclick="toggleReminderPicker(event, true)">
-                                            <div class="grid-item-label">${UI.REMINDER}</div>
-                                            <div id="modalReminderValue" class="grid-item-value">
-                                                <i class="codicon codicon-bell"></i>
-                                                <span>No reminder</span>
-                                                <i class="codicon codicon-close clear-date-btn hidden" onclick="event.stopPropagation(); clearReminder()"></i>
                                             </div>
                                         </div>
                                     </div>
