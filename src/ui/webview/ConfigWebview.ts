@@ -187,12 +187,12 @@ export class ConfigWebview {
                                     <div class="config-item">
                                         <div class="config-item-info">
                                             <div class="config-item-title">Clear All Data</div>
-                                            <div class="config-item-desc">Delete all tasks and reset the workspace. This action cannot be undone.</div>
+                                            <div class="config-item-desc warning-text">Delete all tasks and reset the workspace. This action cannot be undone.</div>
                                         </div>
                                         <div class="config-item-action">
                                             <button class="action-btn clear-btn" onclick="clearAllData()">
                                                 <i class="codicon codicon-trash"></i>
-                                                <span>Clear</span>
+                                                <span>Clear All Data</span>
                                             </button>
                                         </div>
                                     </div>

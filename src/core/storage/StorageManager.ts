@@ -28,4 +28,10 @@ export class StorageManager {
         const state = this.context.storageUri ? this.context.workspaceState : this.context.globalState;
         await state.update(key, settings);
     }
+
+    public async clearAllSettings(): Promise<void> {
+        const state = this.context.storageUri ? this.context.workspaceState : this.context.globalState;
+        await state.update(StorageManager.SETTINGS_KEY, undefined);
+        await state.update(`${StorageManager.SETTINGS_KEY}-full`, undefined);
+    }
 }

@@ -1,3 +1,4 @@
+@use 'sass:color';
 @use '../base/variables' as *;
 
 .config-container {
@@ -111,17 +112,6 @@
     }
 }
 
-@media (max-width: 400px) {
-    .config-item {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 12px;
-    }
-    
-.config-item-action {
-    align-self: flex-end; 
-}
-
 .export-btn, .import-btn {
     background: var(--vscode-button-secondaryBackground);
     color: var(--vscode-button-secondaryForeground);
@@ -158,14 +148,14 @@
     }
 }
 
-.config-section-items .config-item-action .action-btn.clear-btn {
-    background: #FF3B30 !important;
+.clear-btn {
+    background: $color-error !important;
     color: #ffffff !important;
     opacity: 1 !important;
     border: none !important;
 
     &:hover {
-        background: #E6342A !important;
+        background: color.adjust($color-error, $lightness: -5%) !important;
         color: #ffffff !important;
         opacity: 1 !important;
     }
@@ -178,5 +168,22 @@
     span {
         color: #ffffff !important;
     }
+}
+
+.warning-text {
+    color: $color-error !important;
+    opacity: 1 !important;
+    font-weight: 500;
+}
+
+@media (max-width: 400px) {
+    .config-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    
+.config-item-action {
+    align-self: flex-end; 
 }
 }

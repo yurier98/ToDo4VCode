@@ -92,4 +92,22 @@ export class ConfigService {
         await config.update('playSound', value, vscode.ConfigurationTarget.Global);
         Logger.debug('Updated reminder sound enabled', { value });
     }
+
+    public static async resetToDefaults(): Promise<void> {
+        const config = vscode.workspace.getConfiguration(ConfigService.CONFIG_SECTION);
+        await config.update('hideCompleted', undefined, vscode.ConfigurationTarget.Global);
+        await config.update('defaultPriority', undefined, vscode.ConfigurationTarget.Global);
+        
+        const statsConfig = vscode.workspace.getConfiguration(`${ConfigService.CONFIG_SECTION}.stats`);
+        await statsConfig.update('showTotal', undefined, vscode.ConfigurationTarget.Global);
+        await statsConfig.update('showDone', undefined, vscode.ConfigurationTarget.Global);
+        await statsConfig.update('showMust', undefined, vscode.ConfigurationTarget.Global);
+        await statsConfig.update('showInProgress', undefined, vscode.ConfigurationTarget.Global);
+        await statsConfig.update('showOverdue', undefined, vscode.ConfigurationTarget.Global);
+        
+        const remindersConfig = vscode.workspace.getConfiguration(`${ConfigService.CONFIG_SECTION}.reminders`);
+        await remindersConfig.update('playSound', undefined, vscode.ConfigurationTarget.Global);
+        
+        Logger.info('Configuration reset to defaults');
+    }
 }

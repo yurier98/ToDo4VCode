@@ -174,7 +174,7 @@ export class ImportExportService {
 
     public async clearAllData(): Promise<void> {
         try {
-            const confirmMessage = 'This will permanently delete all tasks. This action cannot be undone. Continue?';
+            const confirmMessage = 'Delete all tasks and reset the workspace. This action cannot be undone. Continue?';
             const action = await vscode.window.showWarningMessage(
                 confirmMessage,
                 { modal: true },
@@ -187,8 +187,11 @@ export class ImportExportService {
             }
 
             await this.taskService.clearAllTasks();
-            vscode.window.showInformationMessage('All tasks have been deleted');
-            Logger.info('All data cleared by user');
+            await this.storageManager.clearAllSettings();
+            await ConfigService.resetToDefaults();
+            
+            vscode.window.showInformationMessage('All tasks and settings have been cleared');
+            Logger.info('All data and settings cleared by user');
         } catch (error) {
             Logger.error('Error clearing all data', error);
             vscode.window.showErrorMessage(`Failed to clear all data: ${error instanceof Error ? error.message : 'Unknown error'}`);
