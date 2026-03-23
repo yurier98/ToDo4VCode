@@ -48,7 +48,9 @@ export class ConfigService {
             groupBy: 'status',
             hideCompleted: false,
             sortBy: 'priority',
-            collapsedSections: []
+            collapsedSections: [],
+            searchQuery: '',
+            activeTagFilters: []
         };
     }
 

@@ -6,6 +6,8 @@ export interface ViewSettings {
     hideCompleted: boolean;
     sortBy: 'custom' | 'priority' | 'dueDate' | 'title';
     collapsedSections: string[];
+    searchQuery?: string;
+    activeTagFilters?: string[];
 }
 
 export type ViewType = 'sidebar' | 'full';

@@ -49,6 +49,12 @@ export class TaskService implements vscode.Disposable {
                     t.order = (i + 1) * 1000;
                     changed = true;
                 }
+                const normalizedTags = TaskService._normalizeTags(t.tags);
+                const currentTags = Array.isArray(t.tags) ? t.tags : undefined;
+                if (JSON.stringify(normalizedTags) !== JSON.stringify(currentTags)) {
+                    t.tags = normalizedTags;
+                    changed = true;
+                }
             });
             if (changed) {
                 await this._storageManager.saveTasks(tasks);
@@ -70,6 +76,7 @@ export class TaskService implements vscode.Disposable {
         priority: Priority;
         status?: Status;
         description?: string;
+        tags?: string[];
         dueDate?: number;
         reminders?: number[];
     }): Promise<TodoItem[]> {
@@ -79,6 +86,7 @@ export class TaskService implements vscode.Disposable {
                 id: Math.random().toString(36).substring(2, 11),
                 text: taskData.text,
                 description: taskData.description,
+                tags: TaskService._normalizeTags(taskData.tags),
                 priority: taskData.priority,
                 status: taskData.status || 'Todo',
                 dueDate: taskData.dueDate,
@@ -145,6 +153,12 @@ export class TaskService implements vscode.Disposable {
     public async updateDescription(id: string, description: string): Promise<TodoItem[]> {
         return this._updateTask(id, task => {
             task.description = description;
+        });
+    }
+
+    public async updateTags(id: string, tags: string[]): Promise<TodoItem[]> {
+        return this._updateTask(id, task => {
+            task.tags = TaskService._normalizeTags(tags);
         });
     }
 
@@ -248,5 +262,35 @@ export class TaskService implements vscode.Disposable {
         await this._saveTasks(tasks);
         this._onTasksChanged.fire(tasks);
         this._reminderService.scheduleNextReminder();
+    }
+
+    private static _normalizeTags(tags: string[] | undefined): string[] | undefined {
+        if (!Array.isArray(tags)) {
+            return undefined;
+        }
+
+        const seen = new Set<string>();
+        const normalized: string[] = [];
+
+        for (const tag of tags) {
+            if (typeof tag !== 'string') {
+                continue;
+            }
+
+            const cleaned = tag.trim().replace(/^#+/, '').replace(/\s+/g, ' ');
+            if (!cleaned) {
+                continue;
+            }
+
+            const dedupeKey = cleaned.toLowerCase();
+            if (seen.has(dedupeKey)) {
+                continue;
+            }
+
+            seen.add(dedupeKey);
+            normalized.push(cleaned);
+        }
+
+        return normalized.length > 0 ? normalized : undefined;
     }
 }

@@ -35,11 +35,18 @@ export const UI = {
     HIDE_COMPLETED_SUBTASKS: 'Hide completed',
     SHOW_COMPLETED_SUBTASKS: 'Show completed',
     DATE: 'Date',
+    TAGS: 'Tags',
+    TAGS_PLACEHOLDER: 'Add tags (comma separated)',
     REMINDER: 'Reminder',
+    ADVANCED_FILTERS: 'Advanced Filters',
+    SEARCH_TASKS: 'Search tasks...',
+    CLEAR_FILTERS: 'Clear filters',
+    NO_TAGS_AVAILABLE: 'No tags available',
     ADD_TASK: 'Add Task',
     EDIT_TASK: 'Edit Task',
     DELETE: 'Delete',
     SAVE: 'Save',
+    CLEAR: 'Clear',
     CANCEL: 'Cancel',
 };
 

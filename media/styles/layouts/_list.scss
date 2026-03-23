@@ -248,6 +248,22 @@
         color: var(--vscode-descriptionForeground);
         opacity: 0.9;
     }
+
+    &.tag-badge {
+        color: var(--vscode-foreground);
+        opacity: 0.75;
+        font-size: 0.66rem;
+        background: color-mix(in srgb, var(--vscode-badge-background), transparent 35%);
+        border: 1px solid color-mix(in srgb, var(--vscode-panel-border), transparent 35%);
+        padding: 0 5px;
+        border-radius: 10px;
+        gap: 2px;
+
+        i {
+            font-size: 0.55rem;
+            opacity: 0.8;
+        }
+    }
 }
 
 .priority-indicator {

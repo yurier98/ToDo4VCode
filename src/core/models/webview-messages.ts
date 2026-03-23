@@ -13,6 +13,7 @@ export interface AddTaskMessage extends BaseWebviewMessage {
         priority: Priority;
         status?: Status;
         description?: string;
+        tags?: string[];
         dueDate?: number;
         reminders?: number[];
     };
@@ -40,6 +41,12 @@ export interface UpdateDescriptionMessage extends BaseWebviewMessage {
     type: 'updateDescription';
     id: string;
     description: string;
+}
+
+export interface UpdateTagsMessage extends BaseWebviewMessage {
+    type: 'updateTags';
+    id: string;
+    tags: string[];
 }
 
 export interface UpdateDueDateMessage extends BaseWebviewMessage {
@@ -140,6 +147,7 @@ export type WebviewMessage =
     | UpdatePriorityMessage
     | UpdateTaskTextMessage
     | UpdateDescriptionMessage
+    | UpdateTagsMessage
     | UpdateDueDateMessage
     | UpdateRemindersMessage
     | UpdateOrdersMessage

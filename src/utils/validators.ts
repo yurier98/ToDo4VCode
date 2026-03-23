@@ -22,6 +22,8 @@ export class MessageValidator {
                 return this._validateUpdateTaskText(msg);
             case 'updateDescription':
                 return this._validateUpdateDescription(msg);
+            case 'updateTags':
+                return this._validateUpdateTags(msg);
             case 'updateDueDate':
                 return this._validateUpdateDueDate(msg);
             case 'updateReminders':
@@ -61,6 +63,7 @@ export class MessageValidator {
             this._isValidPriority(value.priority) &&
             (value.status === undefined || this._isValidStatus(value.status)) &&
             (value.description === undefined || typeof value.description === 'string') &&
+            (value.tags === undefined || this._isValidTagsArray(value.tags)) &&
             (value.dueDate === undefined || value.dueDate === null || typeof value.dueDate === 'number') &&
             (value.reminders === undefined || Array.isArray(value.reminders))
         );
@@ -80,6 +83,10 @@ export class MessageValidator {
 
     private static _validateUpdateDescription(msg: { type: string; [key: string]: unknown }): boolean {
         return typeof msg.id === 'string' && typeof msg.description === 'string';
+    }
+
+    private static _validateUpdateTags(msg: { type: string; [key: string]: unknown }): boolean {
+        return typeof msg.id === 'string' && this._isValidTagsArray(msg.tags);
     }
 
     private static _validateUpdateDueDate(msg: { type: string; [key: string]: unknown }): boolean {
@@ -145,5 +152,9 @@ export class MessageValidator {
             status === 'Testing' ||
             status === 'Done'
         );
+    }
+
+    private static _isValidTagsArray(tags: unknown): tags is string[] {
+        return Array.isArray(tags) && tags.every((tag) => typeof tag === 'string');
     }
 }

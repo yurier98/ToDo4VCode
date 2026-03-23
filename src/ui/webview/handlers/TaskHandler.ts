@@ -6,6 +6,7 @@ import {
     UpdatePriorityMessage,
     UpdateTaskTextMessage,
     UpdateDescriptionMessage,
+    UpdateTagsMessage,
     UpdateDueDateMessage,
     UpdateRemindersMessage,
     UpdateOrdersMessage,
@@ -42,6 +43,9 @@ export class TaskHandler extends BaseHandler {
                 break;
             case 'updateDescription':
                 await this._taskService.updateDescription((message as UpdateDescriptionMessage).id, (message as UpdateDescriptionMessage).description);
+                break;
+            case 'updateTags':
+                await this._taskService.updateTags((message as UpdateTagsMessage).id, (message as UpdateTagsMessage).tags);
                 break;
             case 'updateDueDate':
                 await this._taskService.updateDueDate((message as UpdateDueDateMessage).id, (message as UpdateDueDateMessage).dueDate);

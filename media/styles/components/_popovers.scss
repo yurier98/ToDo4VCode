@@ -185,6 +185,109 @@
 .row-label { flex: 1; }
 .check-mark { font-size: 0.9rem; opacity: 0.8; }
 
+.popover-search-box {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 4px 8px 8px;
+    padding: 6px 8px;
+    border-radius: $radius-md;
+    background: color-mix(in srgb, $bg-editor, transparent 20%);
+    border: 1px solid color-mix(in srgb, $border-color, transparent 30%);
+
+    i {
+        font-size: 0.85rem;
+        opacity: 0.7;
+    }
+
+    input {
+        border: none;
+        background: transparent;
+        color: $fg-main;
+        width: 100%;
+        font-size: 0.75rem;
+        outline: none;
+
+        &::placeholder {
+            color: $fg-desc;
+            opacity: 0.7;
+        }
+    }
+}
+
+.tag-filters-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 2px 8px 8px;
+}
+
+.tag-filter-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    border: 1px solid color-mix(in srgb, $border-color, transparent 20%);
+    background: color-mix(in srgb, $bg-editor, transparent 35%);
+    color: $fg-main;
+    border-radius: $radius-pill;
+    padding: 3px 8px;
+    cursor: pointer;
+    font-size: 0.7rem;
+    transition: all 0.15s ease;
+
+    &:hover {
+        background: var(--vscode-list-hoverBackground);
+        border-color: color-mix(in srgb, $focus-border, transparent 30%);
+    }
+
+    &.active {
+        background: color-mix(in srgb, $focus-border, transparent 70%);
+        border-color: $focus-border;
+        color: $fg-main;
+    }
+
+    .tag-filter-count {
+        opacity: 0.7;
+        font-size: 0.65rem;
+    }
+}
+
+.popover-empty {
+    margin: 2px 8px 8px;
+    font-size: 0.72rem;
+    opacity: 0.6;
+}
+
+.popover-tags-editor {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 4px 8px 8px;
+    padding: 6px 8px;
+    border-radius: $radius-md;
+    background: color-mix(in srgb, $bg-editor, transparent 20%);
+    border: 1px solid color-mix(in srgb, $border-color, transparent 30%);
+
+    i {
+        font-size: 0.85rem;
+        opacity: 0.7;
+    }
+
+    input {
+        border: none;
+        background: transparent;
+        color: $fg-main;
+        width: 100%;
+        font-size: 0.75rem;
+        outline: none;
+
+        &::placeholder {
+            color: $fg-desc;
+            opacity: 0.7;
+        }
+    }
+}
+
 .popover-divider, .ctx-divider {
     height: 1px;
     background: $border-color;

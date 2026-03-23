@@ -289,6 +289,42 @@
                 i { color: inherit; opacity: 0.8; }
             }
         }
+
+        .tags-grid-value {
+            align-items: flex-start;
+
+            > i {
+                margin-top: 2px;
+            }
+        }
+
+        .modal-tags-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            min-width: 0;
+            width: 100%;
+        }
+
+        .modal-tag-chip {
+            display: inline-flex;
+            align-items: center;
+            max-width: 100%;
+            padding: 1px 6px;
+            border-radius: 10px;
+            border: 1px solid color-mix(in srgb, var(--vscode-panel-border), transparent 20%);
+            background: color-mix(in srgb, var(--vscode-badge-background), transparent 35%);
+            color: var(--vscode-badge-foreground);
+            font-size: 11px;
+            line-height: 1.25;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .modal-tag-empty {
+            opacity: 0.7;
+        }
     }
 
     .sidebar-footer {

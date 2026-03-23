@@ -104,6 +104,19 @@ export class TaskWebview {
                                             <span class="row-label">${UI.CUSTOM}</span>
                                             <i id="sortCustomCheck" class="codicon codicon-check check-mark hidden"></i>
                                         </div>
+
+                                        <div class="popover-divider"></div>
+
+                                        <div class="popover-section-title">${UI.ADVANCED_FILTERS}</div>
+                                        <div class="popover-search-box">
+                                            <i class="codicon codicon-search"></i>
+                                            <input id="searchFilterInput" type="text" placeholder="${UI.SEARCH_TASKS}" oninput="setSearchQuery(this.value)">
+                                        </div>
+                                        <div id="tagFiltersContainer" class="tag-filters-container"></div>
+                                        <div class="popover-row" onclick="clearAdvancedFilters()">
+                                            <i class="codicon codicon-clear-all"></i>
+                                            <span class="row-label">${UI.CLEAR_FILTERS}</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -131,6 +144,13 @@ export class TaskWebview {
                                             <button class="action-btn" id="priorityFlagBtn" onclick="togglePriorityPicker(event)">
                                                 <i class="codicon codicon-flag"></i>
                                                 <span id="priorityLabel">${PRIORITIES.WONT}</span>
+                                            </button>
+                                        </div>
+
+                                        <div class="popover-wrapper">
+                                            <button class="action-btn" id="tagsBtn" title="${UI.TAGS}" onclick="toggleTagsPicker(event)">
+                                                <i class="codicon codicon-tag"></i>
+                                                <span id="tagsLabel">${UI.TAGS}</span>
                                             </button>
                                         </div>
 
@@ -233,6 +253,15 @@ export class TaskWebview {
                                                 <i class="codicon codicon-close clear-date-btn hidden" onclick="event.stopPropagation(); clearDate()"></i>
                                             </div>
                                         </div>
+                                        <div class="modal-grid-item" onclick="toggleTagsPicker(event, true)">
+                                            <div class="grid-item-label">${UI.TAGS}</div>
+                                            <div id="modalTagsValue" class="grid-item-value tags-grid-value">
+                                                <i class="codicon codicon-tag"></i>
+                                                <div id="modalTagsChips" class="modal-tags-chips">
+                                                    <span class="modal-tag-empty">No tags</span>
+                                                </div>
+                                            </div>
+                                        </div>
                                         <div class="modal-grid-item" onclick="toggleReminderPicker(event, true)">
                                             <div class="grid-item-label">${UI.REMINDER}</div>
                                             <div id="modalReminderValue" class="grid-item-value">
@@ -287,6 +316,22 @@ export class TaskWebview {
                     <div class="popover-item" onclick="setPremiumPriority('Should')"><i class="codicon codicon-flag" style="color: #FF9500"></i> ${PRIORITIES.SHOULD}</div>
                     <div class="popover-item" onclick="setPremiumPriority('Could')"><i class="codicon codicon-flag" style="color: #007AFF"></i> ${PRIORITIES.COULD}</div>
                     <div class="popover-item" onclick="setPremiumPriority('Wont')"><i class="codicon codicon-flag" style="color: #8E8E93"></i> ${PRIORITIES.WONT}</div>
+                </div>
+
+                <div id="tagsPopover" class="premium-popover">
+                    <div class="popover-section-title">${UI.TAGS}</div>
+                    <div class="popover-tags-editor">
+                        <i class="codicon codicon-tag"></i>
+                        <input type="text" id="taskTagsInput" placeholder="${UI.TAGS_PLACEHOLDER}" onkeydown="if(event.key === 'Enter') applyTagsFromInput()">
+                    </div>
+                    <div class="popover-row" onclick="applyTagsFromInput()">
+                        <i class="codicon codicon-check"></i>
+                        <span class="row-label">${UI.SAVE}</span>
+                    </div>
+                    <div class="popover-row" onclick="clearTagsFromInput()">
+                        <i class="codicon codicon-clear-all"></i>
+                        <span class="row-label">${UI.CLEAR}</span>
+                    </div>
                 </div>
 
                 <div id="reminderPopover" class="premium-popover">

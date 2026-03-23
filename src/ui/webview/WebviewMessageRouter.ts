@@ -57,6 +57,7 @@ export class WebviewMessageRouter {
                 case 'updatePriority':
                 case 'updateTaskText':
                 case 'updateDescription':
+                case 'updateTags':
                 case 'updateDueDate':
                 case 'updateReminders':
                 case 'updateOrders':

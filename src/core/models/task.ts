@@ -11,6 +11,7 @@ export interface TodoItem {
     id: string;
     text: string;
     description?: string;
+    tags?: string[];
     priority: Priority;
     status: Status;
     dueDate?: number;

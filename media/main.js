@@ -7,6 +7,8 @@ let viewMode = previousState?.viewMode || 'list';
 let groupBy = previousState?.groupBy || 'status';
 let hideCompleted = previousState?.hideCompleted || false;
 let sortBy = previousState?.sortBy || 'priority';
+let searchQuery = typeof previousState?.searchQuery === 'string' ? previousState.searchQuery : '';
+let activeTagFilters = normalizeTags(previousState?.activeTagFilters || []);
 
 let hideCompletedSubtasksState = previousState?.hideCompletedSubtasksState || false;
 
@@ -30,6 +32,40 @@ function normalizePriority(priority) {
     return VALID_PRIORITIES.has(priority) ? priority : 'Should';
 }
 
+function normalizeTags(tags) {
+    if (!Array.isArray(tags)) return [];
+
+    const seen = new Set();
+    const normalized = [];
+
+    for (const tag of tags) {
+        if (typeof tag !== 'string') continue;
+        const cleaned = tag.trim().replace(/^#+/, '').replace(/\s+/g, ' ');
+        if (!cleaned) continue;
+        const dedupeKey = cleaned.toLowerCase();
+        if (seen.has(dedupeKey)) continue;
+        seen.add(dedupeKey);
+        normalized.push(cleaned);
+    }
+
+    return normalized;
+}
+
+function parseTagsInput(rawInput) {
+    if (typeof rawInput !== 'string') return [];
+    return normalizeTags(rawInput.split(','));
+}
+
+function escapeHtml(text) {
+    if (typeof text !== 'string') return '';
+    return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 // Save state to VS Code
 function saveState() {
     const state = {
@@ -38,7 +74,9 @@ function saveState() {
         hideCompleted,
         hideCompletedSubtasksState,
         sortBy,
-        collapsedSections: Array.from(collapsedSections)
+        collapsedSections: Array.from(collapsedSections),
+        searchQuery,
+        activeTagFilters
     };
     vscode.setState(state);
     vscode.postMessage({ 
@@ -51,6 +89,7 @@ function saveState() {
 // Modal States
 let modalStatus = 'Todo';
 let modalPriority = 'Wont';
+let modalTags = [];
 let modalDueDate = null;
 let modalReminders = [];
 
@@ -58,6 +97,7 @@ let modalReminders = [];
 let currentPremiumStatus = 'Todo';
 let configuredDefaultPriority = 'Should';
 let currentPremiumPriority = configuredDefaultPriority;
+let currentPremiumTags = [];
 let currentPremiumReminders = [];
 let currentPremiumDate = null;
 
@@ -85,6 +125,7 @@ function openTaskModal(taskId) {
     modalTaskId = taskId;
     modalStatus = task.status;
     modalPriority = task.priority === "Won't" ? 'Wont' : task.priority;
+    modalTags = normalizeTags(task.tags || []);
     modalDueDate = task.dueDate;
     modalReminders = task.reminders || [];
 
@@ -298,6 +339,7 @@ function updateModalUI() {
     const dateVal = document.getElementById('modalDateValue');
     const reminderVal = document.getElementById('modalReminderValue');
     const priorityVal = document.getElementById('modalPriorityValue');
+    const tagsVal = document.getElementById('modalTagsValue');
     const statusVal = document.getElementById('modalStatusValue');
     const statusLabel = document.getElementById('modalStatusLabel');
     const taskCheckbox = document.getElementById('modalTaskCheckbox');
@@ -361,6 +403,30 @@ function updateModalUI() {
         priorityVal.querySelector('span').innerText = modalPriority === 'Wont' ? "Won't" : modalPriority;
         priorityVal.querySelector('i').style.color = PRIORITY_COLORS[modalPriority];
     }
+
+    // Tags
+    if (tagsVal) {
+        const tagsChips = document.getElementById('modalTagsChips');
+        if (tagsChips) {
+            tagsChips.innerHTML = '';
+
+            if (modalTags.length === 0) {
+                const emptyLabel = document.createElement('span');
+                emptyLabel.className = 'modal-tag-empty';
+                emptyLabel.innerText = 'No tags';
+                tagsChips.appendChild(emptyLabel);
+            } else {
+                const fragment = document.createDocumentFragment();
+                modalTags.forEach(tag => {
+                    const chip = document.createElement('span');
+                    chip.className = 'modal-tag-chip';
+                    chip.innerText = tag;
+                    fragment.appendChild(chip);
+                });
+                tagsChips.appendChild(fragment);
+            }
+        }
+    }
     if (taskCheckbox) {
         taskCheckbox.style.color = PRIORITY_COLORS[modalPriority] || '#8e8e93';
         const cleanStatus = modalStatus.toLowerCase().replace(' ', '-');
@@ -421,6 +487,7 @@ async function saveTaskModal() {
         
         vscode.postMessage({ type: 'updateTaskText', id: modalTaskId, text: title });
         vscode.postMessage({ type: 'updateDescription', id: modalTaskId, description: description });
+        vscode.postMessage({ type: 'updateTags', id: modalTaskId, tags: modalTags });
         closeTaskModal();
     } catch (error) {
         console.error('Error saving task:', error);
@@ -512,6 +579,10 @@ function toggleConfigPopover(e) {
         if (sortDueDateCheck) sortDueDateCheck.classList.toggle('hidden', sortBy !== 'dueDate');
         if (sortTitleCheck) sortTitleCheck.classList.toggle('hidden', sortBy !== 'title');
         if (sortCustomCheck) sortCustomCheck.classList.toggle('hidden', sortBy !== 'custom');
+
+        const searchInput = document.getElementById('searchFilterInput');
+        if (searchInput) searchInput.value = searchQuery || '';
+        renderTagFiltersInPopover();
     }
 }
 
@@ -612,6 +683,103 @@ function toggleReminderPicker(e, fromModal = false) {
             pop.style.bottom = 'auto';
         }
     }
+}
+
+function syncPremiumTagsUI() {
+    const normalized = normalizeTags(currentPremiumTags);
+    currentPremiumTags = normalized;
+
+    const btn = document.getElementById('tagsBtn');
+    const label = document.getElementById('tagsLabel');
+    if (!btn || !label) return;
+
+    if (normalized.length === 0) {
+        btn.classList.remove('has-value');
+        label.innerText = 'Tags';
+        return;
+    }
+
+    btn.classList.add('has-value');
+    label.innerText = normalized.length === 1 ? normalized[0] : `${normalized.length} tags`;
+}
+
+function getActiveTagsForEditor() {
+    if (modalTaskId) return normalizeTags(modalTags);
+    return normalizeTags(currentPremiumTags);
+}
+
+function toggleTagsPicker(e, fromModal = false) {
+    if (e) e.stopPropagation();
+    const pop = document.getElementById('tagsPopover');
+    if (!pop) return;
+
+    const isShow = pop.classList.contains('show');
+    closeAllPopovers(!!modalTaskId);
+
+    if (!isShow) {
+        pop.classList.add('show');
+        const rect = e.currentTarget.getBoundingClientRect();
+        const popRect = pop.getBoundingClientRect();
+
+        pop.style.position = 'fixed';
+
+        let left = rect.left;
+        if (left + popRect.width > window.innerWidth) {
+            left = window.innerWidth - popRect.width - 10;
+        }
+        if (left < 10) left = 10;
+        pop.style.left = `${left}px`;
+        pop.style.right = 'auto';
+
+        if (rect.bottom + popRect.height > window.innerHeight) {
+            pop.style.top = 'auto';
+            pop.style.bottom = `${window.innerHeight - rect.top + 5}px`;
+        } else {
+            pop.style.top = `${rect.bottom + 5}px`;
+            pop.style.bottom = 'auto';
+        }
+
+        const tagsInput = document.getElementById('taskTagsInput');
+        if (tagsInput) {
+            tagsInput.value = getActiveTagsForEditor().join(', ');
+            tagsInput.focus();
+            tagsInput.select();
+        }
+    }
+}
+
+function applyTagsFromInput() {
+    const tagsInput = document.getElementById('taskTagsInput');
+    if (!tagsInput) return;
+
+    const tags = parseTagsInput(tagsInput.value);
+
+    if (modalTaskId) {
+        modalTags = tags;
+        vscode.postMessage({ type: 'updateTags', id: modalTaskId, tags: modalTags });
+        updateModalUI();
+    } else {
+        currentPremiumTags = tags;
+        syncPremiumTagsUI();
+    }
+
+    closeAllPopovers();
+}
+
+function clearTagsFromInput() {
+    const tagsInput = document.getElementById('taskTagsInput');
+    if (tagsInput) tagsInput.value = '';
+
+    if (modalTaskId) {
+        modalTags = [];
+        vscode.postMessage({ type: 'updateTags', id: modalTaskId, tags: [] });
+        updateModalUI();
+    } else {
+        currentPremiumTags = [];
+        syncPremiumTagsUI();
+    }
+
+    closeAllPopovers();
 }
 
 function clearDate() {
@@ -872,6 +1040,7 @@ function submitPremiumTask() {
             description: descEl ? descEl.value.trim() : '',
             priority: currentPremiumPriority,
             status: currentPremiumStatus,
+            tags: currentPremiumTags.length > 0 ? currentPremiumTags : undefined,
             reminders: currentPremiumReminders.length > 0 ? currentPremiumReminders : undefined
         };
         
@@ -894,15 +1063,18 @@ function clearInput() {
     if (d) { d.value = ''; d.style.height = 'auto'; }
     clearDate();
     clearReminder();
+    currentPremiumTags = [];
+    syncPremiumTagsUI();
     syncPremiumPriorityUI();
 }
 
 function submitTask(text, priority, status, autoEdit = false) {
     shouldAutoEditNewTask = autoEdit;
     const effectivePriority = normalizePriority(priority || currentPremiumPriority || configuredDefaultPriority);
+    const effectiveTags = activeTagFilters.length > 0 ? normalizeTags(activeTagFilters) : undefined;
     vscode.postMessage({
         type: 'addTask',
-        value: { text, priority: effectivePriority, status: status || 'Todo', description: '' }
+        value: { text, priority: effectivePriority, status: status || 'Todo', description: '', tags: effectiveTags }
     });
 }
 
@@ -986,6 +1158,103 @@ function sortTasks(tasks) {
         const oB = b.order || 0;
         if (oA !== oB) return oA - oB;
         return b.createdAt - a.createdAt;
+    });
+}
+
+function getTagUsageMap(tasks) {
+    const usage = new Map();
+    for (const task of tasks) {
+        const tags = normalizeTags(task.tags || []);
+        for (const tag of tags) {
+            usage.set(tag, (usage.get(tag) || 0) + 1);
+        }
+    }
+    return usage;
+}
+
+function renderTagFiltersInPopover() {
+    const container = document.getElementById('tagFiltersContainer');
+    if (!container) return;
+
+    const usage = getTagUsageMap(currentTasks);
+    const allTags = Array.from(new Set([...usage.keys(), ...activeTagFilters])).sort((a, b) => a.localeCompare(b));
+
+    if (allTags.length === 0) {
+        container.innerHTML = `<div class="popover-empty">No tags available</div>`;
+        return;
+    }
+
+    container.innerHTML = allTags.map((tag) => {
+        const isActive = activeTagFilters.includes(tag);
+        const count = usage.get(tag) || 0;
+        return `
+            <button class="tag-filter-chip ${isActive ? 'active' : ''}" onclick='event.stopPropagation(); toggleTagFilter(${JSON.stringify(tag)})'>
+                <span>${escapeHtml(tag)}</span>
+                <span class="tag-filter-count">${count}</span>
+            </button>
+        `;
+    }).join('');
+}
+
+function toggleTagFilter(tag) {
+    const normalizedTag = normalizeTags([tag])[0];
+    if (!normalizedTag) return;
+
+    if (activeTagFilters.includes(normalizedTag)) {
+        activeTagFilters = activeTagFilters.filter((item) => item !== normalizedTag);
+    } else {
+        activeTagFilters = normalizeTags([...activeTagFilters, normalizedTag]);
+    }
+
+    renderTagFiltersInPopover();
+    saveState();
+    render();
+}
+
+function setSearchQuery(value) {
+    searchQuery = typeof value === 'string' ? value : '';
+    saveState();
+    render();
+}
+
+function clearAdvancedFilters() {
+    searchQuery = '';
+    activeTagFilters = [];
+
+    const searchInput = document.getElementById('searchFilterInput');
+    if (searchInput) searchInput.value = '';
+
+    renderTagFiltersInPopover();
+    saveState();
+    render();
+}
+
+function applyAdvancedFilters(tasks) {
+    const normalizedSearch = (searchQuery || '').trim().toLowerCase();
+    const normalizedTagFilters = normalizeTags(activeTagFilters).map((tag) => tag.toLowerCase());
+
+    return tasks.filter((task) => {
+        if (normalizedSearch) {
+            const taskText = String(task.text || '').toLowerCase();
+            const taskDescription = String(task.description || '').toLowerCase();
+            const taskTagsText = normalizeTags(task.tags || []).join(' ').toLowerCase();
+            const subtaskText = (task.subtasks || []).map((subtask) => subtask.text || '').join(' ').toLowerCase();
+            const matchesSearch =
+                taskText.includes(normalizedSearch) ||
+                taskDescription.includes(normalizedSearch) ||
+                taskTagsText.includes(normalizedSearch) ||
+                subtaskText.includes(normalizedSearch);
+
+            if (!matchesSearch) return false;
+        }
+
+        if (normalizedTagFilters.length > 0) {
+            const taskTagSet = new Set(normalizeTags(task.tags || []).map((tag) => tag.toLowerCase()));
+            const matchesAnyTag = normalizedTagFilters.some((tag) => taskTagSet.has(tag));
+            if (!matchesAnyTag) return false;
+        }
+
+        return true;
     });
 }
 
@@ -1278,6 +1547,11 @@ function getTaskBadgesHtml(t) {
         else if (date.getTime() > tomorrow.getTime() && date.getTime() <= in3Days.getTime()) colorClass = 'date-color-soon';
         html += `<div class="task-badge ${colorClass}"><i class="codicon codicon-calendar"></i><span>${label}</span></div>`;
     }
+    if (t.subtasks && t.subtasks.length > 0) {
+        const completedCount = t.subtasks.filter(s => s.completed).length;
+        const totalCount = t.subtasks.length;
+        html += `<div class="task-badge subtasks-badge"><i class="codicon codicon-tasklist"></i><span>${completedCount}/${totalCount}</span></div>`;
+    }
     if (t.reminders && t.reminders.length > 0) {
         const d = new Date(t.reminders[0]);
         const now = new Date();
@@ -1292,10 +1566,11 @@ function getTaskBadgesHtml(t) {
         }
         html += `<div class="task-badge reminder-badge"><i class="codicon codicon-bell"></i><span>${label}</span></div>`;
     }
-    if (t.subtasks && t.subtasks.length > 0) {
-        const completedCount = t.subtasks.filter(s => s.completed).length;
-        const totalCount = t.subtasks.length;
-        html += `<div class="task-badge subtasks-badge"><i class="codicon codicon-tasklist"></i><span>${completedCount}/${totalCount}</span></div>`;
+    const tags = normalizeTags(t.tags || []);
+    if (tags.length > 0) {
+        for (const tag of tags) {
+            html += `<div class="task-badge tag-badge"><i class="codicon codicon-tag"></i><span>${escapeHtml(tag)}</span></div>`;
+        }
     }
     return html ? `<div class="task-badges">${html}</div>` : '';
 }
@@ -1456,7 +1731,8 @@ function renderKanban(tasks) {
 }
 
 function render() {
-    const tasks = hideCompleted ? currentTasks.filter(t => t.status !== 'Done') : currentTasks;
+    const baseTasks = hideCompleted ? currentTasks.filter(t => t.status !== 'Done') : currentTasks;
+    const tasks = applyAdvancedFilters(baseTasks);
     if (viewMode === 'list') {
         const kanbanPanel = document.getElementById('kanbanView');
         if (kanbanPanel) kanbanPanel.innerHTML = '';
@@ -1466,9 +1742,9 @@ function render() {
         if (listPanel) listPanel.innerHTML = '';
         renderKanban(tasks);
     }
-    if (shouldAutoEditNewTask && tasks.length > 0) {
+    if (shouldAutoEditNewTask && baseTasks.length > 0) {
         shouldAutoEditNewTask = false;
-        const newestTask = [...tasks].sort((a, b) => b.createdAt - a.createdAt)[0];
+        const newestTask = [...baseTasks].sort((a, b) => b.createdAt - a.createdAt)[0];
         if (newestTask && newestTask.text === 'New task...') {
             setTimeout(() => {
                 const titleEl = document.querySelector(`[data-id="${newestTask.id}"] .card-title`);
@@ -1530,6 +1806,7 @@ let datePicker, reminderPicker;
 
 document.addEventListener('DOMContentLoaded', () => {
     syncPremiumPriorityUI();
+    syncPremiumTagsUI();
     const titleInput = document.getElementById('taskTitle');
     if (titleInput) {
         titleInput.addEventListener('keydown', (e) => {
@@ -1588,6 +1865,12 @@ window.addEventListener('message', e => {
             groupBy = s.groupBy || groupBy;
             hideCompleted = s.hideCompleted !== undefined ? s.hideCompleted : hideCompleted;
             sortBy = s.sortBy || sortBy;
+            if (typeof s.searchQuery === 'string') {
+                searchQuery = s.searchQuery;
+            }
+            if (Array.isArray(s.activeTagFilters)) {
+                activeTagFilters = normalizeTags(s.activeTagFilters);
+            }
             if (s.collapsedSections) {
                 collapsedSections = new Set(s.collapsedSections);
             }
@@ -1602,12 +1885,20 @@ window.addEventListener('message', e => {
             vscode.setState(s);
         }
 
+        const configPopover = document.getElementById('configPopover');
+        if (configPopover && configPopover.classList.contains('show')) {
+            renderTagFiltersInPopover();
+            const searchInput = document.getElementById('searchFilterInput');
+            if (searchInput) searchInput.value = searchQuery || '';
+        }
+
         render();
         if (modalTaskId) {
             const task = currentTasks.find(t => t.id === modalTaskId);
             if (task) {
                 modalStatus = task.status;
                 modalPriority = task.priority === "Won't" ? 'Wont' : task.priority;
+                modalTags = normalizeTags(task.tags || []);
                 modalDueDate = task.dueDate;
                 modalReminders = task.reminders || [];
                 updateModalUI();
@@ -1632,6 +1923,9 @@ window.toggleDatePicker = toggleDatePicker;
 window.setPremiumDate = setPremiumDate;
 window.togglePriorityPicker = togglePriorityPicker;
 window.setPremiumPriority = setPremiumPriority;
+window.toggleTagsPicker = toggleTagsPicker;
+window.applyTagsFromInput = applyTagsFromInput;
+window.clearTagsFromInput = clearTagsFromInput;
 window.toggleReminderPicker = toggleReminderPicker;
 window.setPremiumReminder = setPremiumReminder;
 window.submitPremiumTask = submitPremiumTask;
@@ -1643,6 +1937,9 @@ window.showContextMenu = showContextMenu;
 window.toggleSection = toggleSection;
 window.makeEditable = makeEditable;
 window.submitTask = submitTask;
+window.setSearchQuery = setSearchQuery;
+window.clearAdvancedFilters = clearAdvancedFilters;
+window.toggleTagFilter = toggleTagFilter;
 window.clearDate = clearDate;
 window.clearReminder = clearReminder;
 window.openTaskModal = openTaskModal;
