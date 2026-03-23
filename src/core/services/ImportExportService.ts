@@ -186,9 +186,11 @@ export class ImportExportService {
                 return;
             }
 
-            await this.taskService.clearAllTasks();
-            await this.storageManager.clearAllSettings();
-            await ConfigService.resetToDefaults();
+            await this.taskService.runWithCommentScanSuspended(async () => {
+                await this.taskService.clearAllTasks();
+                await this.storageManager.clearAllSettings();
+                await ConfigService.resetToDefaults();
+            });
             
             vscode.window.showInformationMessage('All tasks and settings have been cleared');
             Logger.info('All data and settings cleared by user');

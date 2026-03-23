@@ -141,6 +141,11 @@
                     "type": "boolean",
                     "default": true,
                     "description": "Play a sound when a task reminder is triggered."
+                },
+                "todo4vcode.commentScan.enabled": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Automatically scan workspace files for // TODO, // FIXME and // NOTE comments and import them as tasks."
                 }
             }
         }

@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { ViewSettings, StatisticsConfig, ExtensionConfig } from '../models/settings';
+import { ViewSettings, StatisticsConfig, ExtensionConfig, CommentScanConfig } from '../models/settings';
 import { Priority } from '../models/task';
 import { Logger } from '../../utils/logger';
 
@@ -13,7 +13,8 @@ export class ConfigService {
             hideCompleted: config.get<boolean>('hideCompleted', false),
             defaultPriority: config.get<Priority>('defaultPriority', 'Should'),
             stats: ConfigService.getStatisticsConfig(),
-            reminders: ConfigService.getRemindersConfig()
+            reminders: ConfigService.getRemindersConfig(),
+            commentScan: ConfigService.getCommentScanConfig()
         };
     }
 
@@ -28,6 +29,18 @@ export class ConfigService {
     public static getReminderSoundEnabled(): boolean {
         const config = vscode.workspace.getConfiguration(`${ConfigService.CONFIG_SECTION}.reminders`);
         return config.get<boolean>('playSound', true);
+    }
+
+    public static getCommentScanConfig(): CommentScanConfig {
+        const config = vscode.workspace.getConfiguration(`${ConfigService.CONFIG_SECTION}.commentScan`);
+        return {
+            enabled: config.get<boolean>('enabled', true)
+        };
+    }
+
+    public static isCommentScanEnabled(): boolean {
+        const config = vscode.workspace.getConfiguration(`${ConfigService.CONFIG_SECTION}.commentScan`);
+        return config.get<boolean>('enabled', true);
     }
 
     public static getStatisticsConfig(): StatisticsConfig {
@@ -69,6 +82,10 @@ export class ConfigService {
         return e.affectsConfiguration(`${ConfigService.CONFIG_SECTION}.stats`);
     }
 
+    public static affectsCommentScanConfig(e: vscode.ConfigurationChangeEvent): boolean {
+        return e.affectsConfiguration(`${ConfigService.CONFIG_SECTION}.commentScan`);
+    }
+
     public static async updateHideCompleted(value: boolean): Promise<void> {
         const config = vscode.workspace.getConfiguration(ConfigService.CONFIG_SECTION);
         await config.update('hideCompleted', value, vscode.ConfigurationTarget.Global);
@@ -95,6 +112,12 @@ export class ConfigService {
         Logger.debug('Updated reminder sound enabled', { value });
     }
 
+    public static async updateCommentScanEnabled(value: boolean): Promise<void> {
+        const config = vscode.workspace.getConfiguration(`${ConfigService.CONFIG_SECTION}.commentScan`);
+        await config.update('enabled', value, vscode.ConfigurationTarget.Global);
+        Logger.debug('Updated comment scan enabled', { value });
+    }
+
     public static async resetToDefaults(): Promise<void> {
         const config = vscode.workspace.getConfiguration(ConfigService.CONFIG_SECTION);
         await config.update('hideCompleted', undefined, vscode.ConfigurationTarget.Global);
@@ -109,6 +132,9 @@ export class ConfigService {
         
         const remindersConfig = vscode.workspace.getConfiguration(`${ConfigService.CONFIG_SECTION}.reminders`);
         await remindersConfig.update('playSound', undefined, vscode.ConfigurationTarget.Global);
+
+        const commentScanConfig = vscode.workspace.getConfiguration(`${ConfigService.CONFIG_SECTION}.commentScan`);
+        await commentScanConfig.update('enabled', undefined, vscode.ConfigurationTarget.Global);
         
         Logger.info('Configuration reset to defaults');
     }

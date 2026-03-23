@@ -58,6 +58,18 @@ export class ConfigWebview {
                                             </div>
                                         </div>
                                     </div>
+
+                                    <div class="config-item">
+                                        <div class="config-item-info">
+                                            <div class="config-item-title">Comment Scan</div>
+                                            <div class="config-item-desc">Auto-import // TODO, // FIXME and // NOTE comments as tasks</div>
+                                        </div>
+                                        <div class="config-item-action">
+                                            <div class="toggle-switch" id="commentScan.enabled">
+                                                <div class="toggle-slider"></div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -306,6 +318,12 @@ export class ConfigWebview {
                         if (config.reminders) {
                             toggleSwitch('reminders.playSound', config.reminders.playSound !== false);
                         }
+
+                        if (config.commentScan) {
+                            toggleSwitch('commentScan.enabled', config.commentScan.enabled !== false);
+                        } else {
+                            toggleSwitch('commentScan.enabled', true);
+                        }
                     }
                     
                     document.addEventListener('DOMContentLoaded', () => {
@@ -357,6 +375,12 @@ export class ConfigWebview {
                             const newState = !getToggleState('reminders.playSound');
                             toggleSwitch('reminders.playSound', newState);
                             updateConfig('reminders.playSound', newState);
+                        });
+
+                        document.getElementById('commentScan.enabled').addEventListener('click', () => {
+                            const newState = !getToggleState('commentScan.enabled');
+                            toggleSwitch('commentScan.enabled', newState);
+                            updateConfig('commentScan.enabled', newState);
                         });
                     });
                     

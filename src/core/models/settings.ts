@@ -24,9 +24,14 @@ export interface RemindersConfig {
     playSound: boolean;
 }
 
+export interface CommentScanConfig {
+    enabled: boolean;
+}
+
 export interface ExtensionConfig {
     hideCompleted: boolean;
     defaultPriority: Priority;
     stats: StatisticsConfig;
     reminders: RemindersConfig;
+    commentScan: CommentScanConfig;
 }

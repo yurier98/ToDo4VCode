@@ -12,6 +12,7 @@ export class ConfigPanel implements vscode.Disposable {
     private readonly _configHandler: ConfigHandler;
     private readonly _importExportService: ImportExportService;
 
+    // TODO: Consider using a factory or dependency injection for better testability and separation of concerns
     constructor(
         private readonly _extensionUri: vscode.Uri,
         private readonly _taskService: TaskService,

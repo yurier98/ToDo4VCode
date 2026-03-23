@@ -76,6 +76,8 @@ export class ConfigHandler extends BaseHandler {
                 await ConfigService.updateStatisticsConfig({ [statsKey]: value as boolean });
             } else if (key === 'reminders.playSound') {
                 await ConfigService.updateReminderSoundEnabled(value as boolean);
+            } else if (key === 'commentScan.enabled') {
+                await ConfigService.updateCommentScanEnabled(value as boolean);
             } else {
                 Logger.warn(`Unknown config key: ${key}`);
             }

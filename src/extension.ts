@@ -36,6 +36,9 @@ export function activate(context: vscode.ExtensionContext): void {
     };
 
     setImmediate(async () => {
+        if (ConfigService.isCommentScanEnabled()) {
+            await taskService.importCommentTasksFromWorkspace();
+        }
         await updateStatusBar();
     });
 
@@ -48,11 +51,24 @@ export function activate(context: vscode.ExtensionContext): void {
 
     context.subscriptions.push(
         ConfigService.onConfigurationChanged(async (e) => {
+            if (ConfigService.affectsCommentScanConfig(e) && ConfigService.isCommentScanEnabled()) {
+                await taskService.importCommentTasksFromWorkspace();
+            }
             if (ConfigService.affectsStatisticsConfig(e)) {
                 await updateStatusBar();
             }
             await provider.refresh();
             await fullScreenPanel.refreshIfVisible();
+        })
+    );
+
+    context.subscriptions.push(
+        vscode.workspace.onDidSaveTextDocument(async (document) => {
+            if (!ConfigService.isCommentScanEnabled()) {
+                return;
+            }
+
+            await taskService.importCommentTasksFromDocument(document);
         })
     );
 
@@ -75,7 +91,7 @@ export function activate(context: vscode.ExtensionContext): void {
         vscode.window.registerWebviewViewProvider(TaskViewProvider.viewType, provider)
     );
 
-    registerRefreshCommand(context, provider);
+    registerRefreshCommand(context, provider, taskService);
     registerOpenFullCommand(context, fullScreenPanel);
     registerOpenTaskModalCommand(context, fullScreenPanel);
     registerOpenConfigCommand(context, configPanel);
