@@ -48,27 +48,27 @@ The statistics update in real-time as you manage your tasks. You can customize w
 
 ### 1. Main Interface (Hero Shot)
 The extension integrates perfectly into your VS Code sidebar, providing a clean and professional look.
-![ToDo4VCode - Main Interface](./media/preview/preview-1-hero-shot.png)
+![ToDo4VCode - Main Interface](./media/preview/preview-1-hero-shot.webp)
 
 ### 2. Organized List View
 Manage your tasks with clear priorities and due dates. The UI highlights urgent tasks so you never miss a deadline.
-![ToDo4VCode - List View](./media/preview/preview-2-list-view.png)
+![ToDo4VCode - List View](./media/preview/preview-2-list-view.webp)
 
 ### 3. Productive Kanban Board
 Visualize your workflow and move tasks between states with our intuitive Kanban board.
-![ToDo4VCode - Kanban View](./media/preview/preview-3-kanban-view.png)
+![ToDo4VCode - Kanban View](./media/preview/preview-3-kanban-view.webp)
 
 ### 4. Smart Calendar & Reminders
 Set due dates with a clean, integrated calendar. Get notified when tasks are due.
-![ToDo4VCode - Calendar & Reminders](./media/preview/preview-4-calendar-reminders.png)
+![ToDo4VCode - Calendar & Reminders](./media/preview/preview-4-calendar-reminders.webp)
 
 ### 5. Detailed Task Management
 Edit every detail of your tasks, including descriptions and specific priorities, in a focused modal.
-![ToDo4VCode - Task Details](./media/preview/preview-5-modal-details.png)
+![ToDo4VCode - Task Details](./media/preview/preview-5-modal-details.webp)
 
 ### 6. Full Theme Support
 Whether you prefer Dark or Light themes, ToDo4VCode adapts beautifully to your workspace.
-![ToDo4VCode - Light Theme Support](./media/preview/preview-6-light-theme.png)
+![ToDo4VCode - Light Theme Support](./media/preview/preview-6-light-theme.webp)
 
 ## 🛠 How to Use
 
