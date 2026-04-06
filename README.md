@@ -157,5 +157,9 @@ Contributions are welcome! Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for d
 - Code style guidelines
 - Pull request process
 
+## Credits
+
+This extension uses [flatpickr](https://flatpickr.js.org/) for date picker functionality.
+
 ---
 *Built with ❤️ for developers who value their time.*
