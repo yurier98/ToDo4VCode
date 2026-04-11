@@ -20,7 +20,9 @@ export class StatisticsService {
             must: tasks.filter(t => t.priority === 'Must').length,
             inProgress: tasks.filter(t => t.status === 'In Progress').length,
             overdue: tasks.filter(t => {
-                if (!t.dueDate || t.status === 'Done') return false;
+                if (!t.dueDate || t.status === 'Done') {
+                    return false;
+                }
                 const dueDate = new Date(t.dueDate);
                 dueDate.setHours(0, 0, 0, 0);
                 return dueDate.getTime() < todayTimestamp;

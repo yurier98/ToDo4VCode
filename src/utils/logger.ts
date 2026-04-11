@@ -1,15 +1,15 @@
 import * as vscode from 'vscode';
 
 export enum LogLevel {
-    Debug = 0,
-    Info = 1,
-    Warn = 2,
-    Error = 3
+    debug = 0,
+    info = 1,
+    warn = 2,
+    error = 3
 }
 
 export class Logger {
     private static outputChannel: vscode.OutputChannel | undefined;
-    private static logLevel: LogLevel = LogLevel.Info;
+    private static logLevel: LogLevel = LogLevel.info;
 
     public static initialize(channelName: string = 'ToDo4VCode'): void {
         if (!Logger.outputChannel) {
@@ -22,25 +22,25 @@ export class Logger {
     }
 
     public static debug(message: string, ...args: unknown[]): void {
-        if (Logger.logLevel <= LogLevel.Debug) {
+        if (Logger.logLevel <= LogLevel.debug) {
             Logger.log('DEBUG', message, ...args);
         }
     }
 
     public static info(message: string, ...args: unknown[]): void {
-        if (Logger.logLevel <= LogLevel.Info) {
+        if (Logger.logLevel <= LogLevel.info) {
             Logger.log('INFO', message, ...args);
         }
     }
 
     public static warn(message: string, ...args: unknown[]): void {
-        if (Logger.logLevel <= LogLevel.Warn) {
+        if (Logger.logLevel <= LogLevel.warn) {
             Logger.log('WARN', message, ...args);
         }
     }
 
     public static error(message: string, error?: Error | unknown, ...args: unknown[]): void {
-        if (Logger.logLevel <= LogLevel.Error) {
+        if (Logger.logLevel <= LogLevel.error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
             const stack = error instanceof Error ? error.stack : undefined;
             Logger.log('ERROR', message, errorMessage, stack, ...args);

@@ -54,6 +54,12 @@ export class ImportExportService {
 
             const jsonContent = JSON.stringify(exportData, null, 2);
             const fileName = `todo4vcode-export-${new Date().toISOString().split('T')[0]}.json`;
+            const fileDialogFilters = {
+                // eslint-disable-next-line @typescript-eslint/naming-convention
+                'JSON Files': ['json'],
+                // eslint-disable-next-line @typescript-eslint/naming-convention
+                'All Files': ['*']
+            };
             
             const downloadsPath = path.join(os.homedir(), 'Downloads');
             const defaultFilePath = path.join(downloadsPath, fileName);
@@ -61,10 +67,7 @@ export class ImportExportService {
 
             const uri = await vscode.window.showSaveDialog({
                 defaultUri: defaultUri,
-                filters: {
-                    'JSON Files': ['json'],
-                    'All Files': ['*']
-                },
+                filters: fileDialogFilters,
                 saveLabel: 'Export'
             });
 
@@ -82,14 +85,18 @@ export class ImportExportService {
 
     public async importWorkspaceData(): Promise<void> {
         try {
+            const fileDialogFilters = {
+                // eslint-disable-next-line @typescript-eslint/naming-convention
+                'JSON Files': ['json'],
+                // eslint-disable-next-line @typescript-eslint/naming-convention
+                'All Files': ['*']
+            };
+
             const uris = await vscode.window.showOpenDialog({
                 canSelectFiles: true,
                 canSelectFolders: false,
                 canSelectMany: false,
-                filters: {
-                    'JSON Files': ['json'],
-                    'All Files': ['*']
-                },
+                filters: fileDialogFilters,
                 openLabel: 'Import'
             });
 
