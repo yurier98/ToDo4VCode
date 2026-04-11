@@ -212,5 +212,10 @@ export class ImportExportService {
         if (config.reminders) {
             await ConfigService.updateReminderSoundEnabled(config.reminders.playSound);
         }
+
+        if (config.sharedTasks) {
+            await ConfigService.updateSharedTasksEnabled(config.sharedTasks.enabled);
+            await ConfigService.updateSharedTasksPath(config.sharedTasks.path);
+        }
     }
 }

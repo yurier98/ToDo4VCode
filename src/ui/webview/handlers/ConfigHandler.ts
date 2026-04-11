@@ -1,10 +1,11 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
 import { ConfigService } from '../../../core/services/ConfigService';
 import { ImportExportService } from '../../../core/services/ImportExportService';
 import { TaskService } from '../../../core/services/TaskService';
 import { Priority } from '../../../core/models/task';
 import { StatisticsConfig } from '../../../core/models/settings';
-import { ConfigReadyMessage, UpdateConfigMessage, ExportDataMessage, ImportDataMessage, ClearAllDataMessage } from '../../../core/models/webview-messages';
+import { ConfigReadyMessage, UpdateConfigMessage, ExportDataMessage, ImportDataMessage, ClearAllDataMessage, PromptSharedTasksPathMessage } from '../../../core/models/webview-messages';
 import { BaseHandler } from './BaseHandler';
 import { Logger } from '../../../utils/logger';
 
@@ -41,17 +42,28 @@ export class ConfigHandler extends BaseHandler {
             case 'clearAllData':
                 await this._importExportService.clearAllData();
                 break;
+            case 'promptSharedTasksPath':
+                await this._promptSharedTasksPath();
+                await this._sendConfigData(targetWebview);
+                break;
             default:
-                Logger.warn(`ConfigHandler received unhandled message type: ${(message as ConfigReadyMessage | UpdateConfigMessage | ExportDataMessage | ImportDataMessage | ClearAllDataMessage).type}`);
+                Logger.warn(`ConfigHandler received unhandled message type: ${(message as ConfigReadyMessage | UpdateConfigMessage | ExportDataMessage | ImportDataMessage | ClearAllDataMessage | PromptSharedTasksPathMessage).type}`);
         }
     }
 
-    private _isConfigMessage(message: unknown): message is ConfigReadyMessage | UpdateConfigMessage | ExportDataMessage | ImportDataMessage | ClearAllDataMessage {
+    private _isConfigMessage(message: unknown): message is ConfigReadyMessage | UpdateConfigMessage | ExportDataMessage | ImportDataMessage | ClearAllDataMessage | PromptSharedTasksPathMessage {
         return (
             typeof message === 'object' &&
             message !== null &&
             'type' in message &&
-            (message.type === 'configReady' || message.type === 'updateConfig' || message.type === 'exportData' || message.type === 'importData' || message.type === 'clearAllData')
+            (
+                message.type === 'configReady' ||
+                message.type === 'updateConfig' ||
+                message.type === 'exportData' ||
+                message.type === 'importData' ||
+                message.type === 'clearAllData' ||
+                message.type === 'promptSharedTasksPath'
+            )
         );
     }
 
@@ -78,6 +90,17 @@ export class ConfigHandler extends BaseHandler {
                 await ConfigService.updateReminderSoundEnabled(value as boolean);
             } else if (key === 'commentScan.enabled') {
                 await ConfigService.updateCommentScanEnabled(value as boolean);
+            } else if (key === 'sharedTasks.enabled') {
+                await ConfigService.updateSharedTasksEnabled(value as boolean);
+            } else if (key === 'sharedTasks.path') {
+                const normalizedPath = this._normalizeSharedTasksPath(value);
+                if (!normalizedPath) {
+                    vscode.window.showErrorMessage(
+                        'Shared tasks path must be a non-empty relative path inside the workspace, e.g. .todo4vcode/shared-tasks.json'
+                    );
+                    return;
+                }
+                await ConfigService.updateSharedTasksPath(normalizedPath);
             } else {
                 Logger.warn(`Unknown config key: ${key}`);
             }
@@ -100,5 +123,48 @@ export class ConfigHandler extends BaseHandler {
         } catch (error) {
             Logger.error('Error syncing hideCompleted to views', error);
         }
+    }
+
+    private _normalizeSharedTasksPath(value: boolean | string): string | undefined {
+        if (typeof value !== 'string') {
+            return undefined;
+        }
+
+        const normalizedPath = value.trim().replace(/\\/g, '/');
+        if (
+            !normalizedPath ||
+            path.isAbsolute(normalizedPath) ||
+            normalizedPath.startsWith('../') ||
+            normalizedPath.includes('/../') ||
+            normalizedPath.endsWith('/..')
+        ) {
+            return undefined;
+        }
+
+        return normalizedPath;
+    }
+
+    private async _promptSharedTasksPath(): Promise<void> {
+        const currentPath = ConfigService.getSharedTasksConfig().path || '.todo4vcode/shared-tasks.json';
+        const inputPath = await vscode.window.showInputBox({
+            title: 'Shared Tasks Path',
+            prompt: 'Enter a relative path inside the workspace',
+            value: currentPath,
+            ignoreFocusOut: true
+        });
+
+        if (inputPath === undefined) {
+            return;
+        }
+
+        const normalizedPath = this._normalizeSharedTasksPath(inputPath);
+        if (!normalizedPath) {
+            vscode.window.showErrorMessage(
+                'Shared tasks path must be a non-empty relative path inside the workspace, e.g. .todo4vcode/shared-tasks.json'
+            );
+            return;
+        }
+
+        await ConfigService.updateSharedTasksPath(normalizedPath);
     }
 }

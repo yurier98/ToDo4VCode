@@ -28,6 +28,7 @@ export function activate(context: vscode.ExtensionContext): void {
     const provider = new TaskViewProvider(context.extensionUri, taskService, storageManager);
 
     context.subscriptions.push(taskService);
+    context.subscriptions.push(storageManager);
     context.subscriptions.push(statusBarManager);
     context.subscriptions.push(fullScreenPanel);
     context.subscriptions.push(configPanel);
@@ -61,7 +62,7 @@ export function activate(context: vscode.ExtensionContext): void {
             if (ConfigService.affectsCommentScanConfig(e) && ConfigService.isCommentScanEnabled()) {
                 await taskService.importCommentTasksFromWorkspace();
             }
-            if (ConfigService.affectsStatisticsConfig(e)) {
+            if (ConfigService.affectsStatisticsConfig(e) || ConfigService.affectsSharedTasksConfig(e)) {
                 await updateStatusBar();
             }
             await provider.refresh();

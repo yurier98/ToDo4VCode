@@ -146,6 +146,10 @@ export interface ClearAllDataMessage extends BaseWebviewMessage {
     type: 'clearAllData';
 }
 
+export interface PromptSharedTasksPathMessage extends BaseWebviewMessage {
+    type: 'promptSharedTasksPath';
+}
+
 export type WebviewMessage =
     | AddTaskMessage
     | UpdateStatusMessage
@@ -171,7 +175,8 @@ export type WebviewMessage =
     | UpdateConfigMessage
     | ExportDataMessage
     | ImportDataMessage
-    | ClearAllDataMessage;
+    | ClearAllDataMessage
+    | PromptSharedTasksPathMessage;
 
 export interface WebviewResponse {
     type: 'updateTasks';

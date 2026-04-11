@@ -1,10 +1,11 @@
 import * as vscode from 'vscode';
-import { ViewSettings, StatisticsConfig, ExtensionConfig, CommentScanConfig } from '../models/settings';
+import { ViewSettings, StatisticsConfig, ExtensionConfig, CommentScanConfig, SharedTasksConfig } from '../models/settings';
 import { Priority } from '../models/task';
 import { Logger } from '../../utils/logger';
 
 export class ConfigService {
     private static readonly CONFIG_SECTION = 'todo4vcode';
+    private static readonly DEFAULT_SHARED_TASKS_PATH = '.todo4vcode/shared-tasks.json';
 
     public static getExtensionConfig(): ExtensionConfig {
         const config = vscode.workspace.getConfiguration(ConfigService.CONFIG_SECTION);
@@ -14,7 +15,8 @@ export class ConfigService {
             defaultPriority: config.get<Priority>('defaultPriority', 'Should'),
             stats: ConfigService.getStatisticsConfig(),
             reminders: ConfigService.getRemindersConfig(),
-            commentScan: ConfigService.getCommentScanConfig()
+            commentScan: ConfigService.getCommentScanConfig(),
+            sharedTasks: ConfigService.getSharedTasksConfig()
         };
     }
 
@@ -35,6 +37,14 @@ export class ConfigService {
         const config = vscode.workspace.getConfiguration(`${ConfigService.CONFIG_SECTION}.commentScan`);
         return {
             enabled: config.get<boolean>('enabled', true)
+        };
+    }
+
+    public static getSharedTasksConfig(): SharedTasksConfig {
+        const config = vscode.workspace.getConfiguration(`${ConfigService.CONFIG_SECTION}.sharedTasks`);
+        return {
+            enabled: config.get<boolean>('enabled', false),
+            path: config.get<string>('path', ConfigService.DEFAULT_SHARED_TASKS_PATH)
         };
     }
 
@@ -86,6 +96,10 @@ export class ConfigService {
         return e.affectsConfiguration(`${ConfigService.CONFIG_SECTION}.commentScan`);
     }
 
+    public static affectsSharedTasksConfig(e: vscode.ConfigurationChangeEvent): boolean {
+        return e.affectsConfiguration(`${ConfigService.CONFIG_SECTION}.sharedTasks`);
+    }
+
     public static async updateHideCompleted(value: boolean): Promise<void> {
         const config = vscode.workspace.getConfiguration(ConfigService.CONFIG_SECTION);
         await config.update('hideCompleted', value, vscode.ConfigurationTarget.Global);
@@ -118,6 +132,18 @@ export class ConfigService {
         Logger.debug('Updated comment scan enabled', { value });
     }
 
+    public static async updateSharedTasksEnabled(value: boolean): Promise<void> {
+        const config = vscode.workspace.getConfiguration(`${ConfigService.CONFIG_SECTION}.sharedTasks`);
+        await config.update('enabled', value, vscode.ConfigurationTarget.Workspace);
+        Logger.debug('Updated shared tasks enabled', { value });
+    }
+
+    public static async updateSharedTasksPath(value: string): Promise<void> {
+        const config = vscode.workspace.getConfiguration(`${ConfigService.CONFIG_SECTION}.sharedTasks`);
+        await config.update('path', value, vscode.ConfigurationTarget.Workspace);
+        Logger.debug('Updated shared tasks path', { value });
+    }
+
     public static async resetToDefaults(): Promise<void> {
         const config = vscode.workspace.getConfiguration(ConfigService.CONFIG_SECTION);
         await config.update('hideCompleted', undefined, vscode.ConfigurationTarget.Global);
@@ -135,6 +161,10 @@ export class ConfigService {
 
         const commentScanConfig = vscode.workspace.getConfiguration(`${ConfigService.CONFIG_SECTION}.commentScan`);
         await commentScanConfig.update('enabled', undefined, vscode.ConfigurationTarget.Global);
+
+        const sharedTasksConfig = vscode.workspace.getConfiguration(`${ConfigService.CONFIG_SECTION}.sharedTasks`);
+        await sharedTasksConfig.update('enabled', undefined, vscode.ConfigurationTarget.Workspace);
+        await sharedTasksConfig.update('path', undefined, vscode.ConfigurationTarget.Workspace);
         
         Logger.info('Configuration reset to defaults');
     }

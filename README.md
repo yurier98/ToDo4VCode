@@ -125,6 +125,8 @@ You can customize the extension behavior in your VS Code settings:
 ### Task Management
 - `todo4vcode.hideCompleted`: Toggle to hide or show completed tasks in your list.
 - `todo4vcode.defaultPriority`: Set the default priority for newly created tasks (Must, Should, Could, Wont).
+- `todo4vcode.sharedTasks.enabled`: Store tasks in a shared workspace file for collaboration via Git.
+- `todo4vcode.sharedTasks.path`: Relative path to the shared tasks file (default: `.todo4vcode/shared-tasks.json`).
 
 ### Statistics Display
 Configure which statistics appear in the StatusBar tooltip:

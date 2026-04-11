@@ -44,6 +44,7 @@ export class TaskService implements vscode.Disposable {
     public readonly onSettingsChanged = this._onSettingsChanged.event;
 
     private readonly _reminderService: ReminderService;
+    private readonly _sharedTasksChangedSubscription: vscode.Disposable;
     private _commentScanQueue: Promise<void> = Promise.resolve();
     private _isCommentScanSuspended = false;
 
@@ -52,6 +53,20 @@ export class TaskService implements vscode.Disposable {
             () => this.getTasks(),
             (tasks) => this._saveTasks(tasks)
         );
+
+        this._sharedTasksChangedSubscription = this._storageManager.onSharedTasksChanged(async (event) => {
+            try {
+                const tasks = await this.getTasks();
+                this._onTasksChanged.fire(tasks);
+                this._reminderService.scheduleNextReminder();
+
+                if (event.reason === 'external') {
+                    vscode.window.showInformationMessage('Shared tasks updated from project file.');
+                }
+            } catch (error) {
+                Logger.error('Error reloading tasks after shared file change', error);
+            }
+        });
     }
 
     public get onReminder() {
@@ -61,6 +76,7 @@ export class TaskService implements vscode.Disposable {
     public dispose(): void {
         this._onTasksChanged.dispose();
         this._onSettingsChanged.dispose();
+        this._sharedTasksChangedSubscription.dispose();
         this._reminderService.dispose();
     }
 

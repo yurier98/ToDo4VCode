@@ -28,10 +28,16 @@ export interface CommentScanConfig {
     enabled: boolean;
 }
 
+export interface SharedTasksConfig {
+    enabled: boolean;
+    path: string;
+}
+
 export interface ExtensionConfig {
     hideCompleted: boolean;
     defaultPriority: Priority;
     stats: StatisticsConfig;
     reminders: RemindersConfig;
     commentScan: CommentScanConfig;
+    sharedTasks: SharedTasksConfig;
 }

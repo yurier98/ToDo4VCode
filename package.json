@@ -166,6 +166,18 @@
                     "type": "boolean",
                     "default": true,
                     "description": "Automatically scan workspace files for // TODO, // FIXME and // NOTE comments and import them as tasks."
+                },
+                "todo4vcode.sharedTasks.enabled": {
+                    "type": "boolean",
+                    "default": false,
+                    "scope": "resource",
+                    "description": "Store tasks in a workspace file so they can be shared and versioned with Git."
+                },
+                "todo4vcode.sharedTasks.path": {
+                    "type": "string",
+                    "default": ".todo4vcode/shared-tasks.json",
+                    "scope": "resource",
+                    "description": "Relative path from workspace root for the shared tasks file."
                 }
             }
         }

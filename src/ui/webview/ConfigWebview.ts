@@ -70,6 +70,31 @@ export class ConfigWebview {
                                             </div>
                                         </div>
                                     </div>
+
+                                    <div class="config-item">
+                                        <div class="config-item-info">
+                                            <div class="config-item-title">Shared Tasks</div>
+                                            <div class="config-item-desc">Store tasks in a project file so your team can share them via Git</div>
+                                        </div>
+                                        <div class="config-item-action">
+                                            <div class="toggle-switch" id="sharedTasks.enabled">
+                                                <div class="toggle-slider"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="config-item">
+                                        <div class="config-item-info">
+                                            <div class="config-item-title">Shared Tasks Path</div>
+                                            <div class="config-item-desc">Default: <code>.todo4vcode/shared-tasks.json</code></div>
+                                        </div>
+                                        <div class="config-item-action">
+                                            <button class="action-btn" onclick="setSharedTasksPath()">
+                                                <i class="codicon codicon-file-code"></i>
+                                                <span id="sharedTasksPathLabel">Set path</span>
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -295,6 +320,10 @@ export class ConfigWebview {
                         updateConfig('defaultPriority', priority);
                         closeConfigPopovers();
                     }
+
+                    function setSharedTasksPath() {
+                        vscode.postMessage({ type: 'promptSharedTasksPath' });
+                    }
                     
                     function loadConfig(config) {
                         currentConfig = config;
@@ -323,6 +352,16 @@ export class ConfigWebview {
                             toggleSwitch('commentScan.enabled', config.commentScan.enabled !== false);
                         } else {
                             toggleSwitch('commentScan.enabled', true);
+                        }
+
+                        const sharedTasks = config.sharedTasks || {};
+                        const sharedTasksEnabled = sharedTasks.enabled === true;
+                        toggleSwitch('sharedTasks.enabled', sharedTasksEnabled);
+
+                        const sharedTasksPath = (sharedTasks.path || '.todo4vcode/shared-tasks.json').trim();
+                        const sharedTasksPathLabel = document.getElementById('sharedTasksPathLabel');
+                        if (sharedTasksPathLabel) {
+                            sharedTasksPathLabel.innerText = sharedTasksPath;
                         }
                     }
                     
@@ -382,6 +421,12 @@ export class ConfigWebview {
                             toggleSwitch('commentScan.enabled', newState);
                             updateConfig('commentScan.enabled', newState);
                         });
+
+                        document.getElementById('sharedTasks.enabled').addEventListener('click', () => {
+                            const newState = !getToggleState('sharedTasks.enabled');
+                            toggleSwitch('sharedTasks.enabled', newState);
+                            updateConfig('sharedTasks.enabled', newState);
+                        });
                     });
                     
                     function exportWorkspaceData() {
@@ -395,6 +440,8 @@ export class ConfigWebview {
                     function clearAllData() {
                         vscode.postMessage({ type: 'clearAllData' });
                     }
+
+                    window.setSharedTasksPath = setSharedTasksPath;
                     
                     window.addEventListener('message', event => {
                         const message = event.data;
