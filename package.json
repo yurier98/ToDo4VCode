@@ -77,6 +77,14 @@
                 "command": "todo4vcode.openConfig",
                 "title": "Open Settings",
                 "icon": "$(settings-gear)"
+            },
+            {
+                "command": "todo4vcode.addSelectionAsTask",
+                "title": "ToDo4VCode: Add Selection as New Task"
+            },
+            {
+                "command": "todo4vcode.attachSelectionToTask",
+                "title": "ToDo4VCode: Attach Selection to Existing Task"
             }
         ],
         "menus": {
@@ -90,6 +98,18 @@
                     "command": "todo4vcode.openConfig",
                     "when": "view == todo4vcode-view",
                     "group": "navigation"
+                }
+            ],
+            "editor/context": [
+                {
+                    "command": "todo4vcode.addSelectionAsTask",
+                    "when": "editorTextFocus && editorHasSelection",
+                    "group": "navigation@10"
+                },
+                {
+                    "command": "todo4vcode.attachSelectionToTask",
+                    "when": "editorTextFocus && editorHasSelection",
+                    "group": "navigation@11"
                 }
             ]
         },

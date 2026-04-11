@@ -14,6 +14,16 @@ interface CommentScanEntry {
     tags: string[];
 }
 
+type TaskInput = {
+    text: string;
+    priority: Priority;
+    status?: Status;
+    description?: string;
+    tags?: string[];
+    dueDate?: number;
+    reminders?: number[];
+};
+
 export class TaskService implements vscode.Disposable {
     private static readonly COMMENT_SCAN_INCLUDE_GLOB = '**/*';
     private static readonly COMMENT_SCAN_EXCLUDE_GLOB = '**/{node_modules,.git,.next,.nuxt,dist,build,out,coverage,.vscode-test}/**';
@@ -140,35 +150,28 @@ export class TaskService implements vscode.Disposable {
         }
     }
 
-    public async addTask(taskData: {
-        text: string;
-        priority: Priority;
-        status?: Status;
-        description?: string;
-        tags?: string[];
-        dueDate?: number;
-        reminders?: number[];
-    }): Promise<TodoItem[]> {
+    public async addTask(taskData: TaskInput): Promise<TodoItem[]> {
         try {
             const tasks = await this.getTasks();
-            const newTask: TodoItem = {
-                id: Math.random().toString(36).substring(2, 11),
-                text: taskData.text,
-                description: taskData.description,
-                tags: TaskService._normalizeTags(taskData.tags),
-                priority: taskData.priority,
-                status: taskData.status || 'Todo',
-                dueDate: taskData.dueDate,
-                reminders: taskData.reminders,
-                completed: taskData.status === 'Done',
-                createdAt: Date.now(),
-                order: tasks.length > 0 ? Math.max(...tasks.map(t => t.order || 0)) + 1000 : 1000
-            };
+            const newTask = this._buildTask(taskData, tasks);
             tasks.push(newTask);
             await this._saveAndNotify(tasks);
             return tasks;
         } catch (error) {
             Logger.error('Error adding task', error);
+            throw error;
+        }
+    }
+
+    public async createTask(taskData: TaskInput): Promise<TodoItem> {
+        try {
+            const tasks = await this.getTasks();
+            const newTask = this._buildTask(taskData, tasks);
+            tasks.push(newTask);
+            await this._saveAndNotify(tasks);
+            return newTask;
+        } catch (error) {
+            Logger.error('Error creating task', error);
             throw error;
         }
     }
@@ -317,6 +320,22 @@ export class TaskService implements vscode.Disposable {
             Logger.error('Error updating task', error);
             throw error;
         }
+    }
+
+    private _buildTask(taskData: TaskInput, tasks: TodoItem[]): TodoItem {
+        return {
+            id: Math.random().toString(36).substring(2, 11),
+            text: taskData.text,
+            description: taskData.description,
+            tags: TaskService._normalizeTags(taskData.tags),
+            priority: taskData.priority,
+            status: taskData.status || 'Todo',
+            dueDate: taskData.dueDate,
+            reminders: taskData.reminders,
+            completed: taskData.status === 'Done',
+            createdAt: Date.now(),
+            order: tasks.length > 0 ? Math.max(...tasks.map((task) => task.order || 0)) + 1000 : 1000
+        };
     }
 
     public async saveTasks(tasks: TodoItem[]): Promise<void> {

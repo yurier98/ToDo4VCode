@@ -12,6 +12,8 @@ export class TaskViewProvider implements vscode.WebviewViewProvider {
     public static readonly viewType = 'todo4vcode-view';
 
     private _view?: vscode.WebviewView;
+    private _isWebviewReady = false;
+    private _pendingTaskModalId: string | undefined;
     private readonly _messageRouter: WebviewMessageRouter;
 
     constructor(
@@ -56,6 +58,7 @@ export class TaskViewProvider implements vscode.WebviewViewProvider {
         _token: vscode.CancellationToken
     ): Promise<void> {
         this._view = webviewView;
+        this._isWebviewReady = false;
 
         webviewView.webview.options = {
             enableScripts: true,
@@ -71,12 +74,30 @@ export class TaskViewProvider implements vscode.WebviewViewProvider {
                 'sidebar'
             );
 
-            webviewView.webview.onDidReceiveMessage((data) =>
-                this._messageRouter.handleMessage(data, webviewView)
-            );
+            webviewView.webview.onDidReceiveMessage(async (data) => {
+                const isReadyMessage = this._isReadyMessage(data);
+                if (isReadyMessage) {
+                    this._isWebviewReady = true;
+                }
+
+                await this._messageRouter.handleMessage(data, webviewView);
+
+                if (isReadyMessage) {
+                    this._flushPendingTaskModal();
+                }
+            });
         } catch (error) {
             Logger.error('Error resolving webview view', error);
         }
+    }
+
+    public openTaskModal(taskId: string): void {
+        if (typeof taskId !== 'string' || !taskId.trim()) {
+            return;
+        }
+
+        this._pendingTaskModalId = taskId;
+        this._flushPendingTaskModal();
     }
 
     public async refresh(): Promise<void> {
@@ -118,5 +139,23 @@ export class TaskViewProvider implements vscode.WebviewViewProvider {
                     Logger.error('Error updating webview with settings', error);
                 });
         }
+    }
+
+    private _flushPendingTaskModal(): void {
+        if (!this._view || !this._isWebviewReady || !this._pendingTaskModalId) {
+            return;
+        }
+
+        this._view.webview.postMessage({ type: 'openTaskModal', taskId: this._pendingTaskModalId });
+        this._pendingTaskModalId = undefined;
+    }
+
+    private _isReadyMessage(data: unknown): data is { type: string } {
+        return Boolean(
+            data &&
+            typeof data === 'object' &&
+            'type' in data &&
+            (data as { type?: string }).type === 'ready'
+        );
     }
 }

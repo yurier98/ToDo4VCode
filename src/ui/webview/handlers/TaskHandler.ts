@@ -110,16 +110,33 @@ export class TaskHandler extends BaseHandler {
             return;
         }
 
-        const targetLine = Math.min(Math.max(parsedTarget.line - 1, 0), Math.max(textDoc.lineCount - 1, 0));
-        const desiredColumn = parsedTarget.column && parsedTarget.column > 0 ? parsedTarget.column - 1 : 0;
-        const targetColumn = Math.min(desiredColumn, textDoc.lineAt(targetLine).text.length);
-        const position = new vscode.Position(targetLine, targetColumn);
-        const range = new vscode.Range(position, position);
-        editor.selection = new vscode.Selection(position, position);
+        const startLine = Math.min(Math.max(parsedTarget.line - 1, 0), Math.max(textDoc.lineCount - 1, 0));
+        const desiredStartColumn = parsedTarget.column && parsedTarget.column > 0 ? parsedTarget.column - 1 : 0;
+        const startColumn = Math.min(desiredStartColumn, textDoc.lineAt(startLine).text.length);
+        const startPosition = new vscode.Position(startLine, startColumn);
+
+        let endPosition = startPosition;
+        if (parsedTarget.endLine && parsedTarget.endLine > 0) {
+            const endLine = Math.min(Math.max(parsedTarget.endLine - 1, 0), Math.max(textDoc.lineCount - 1, 0));
+            const desiredEndColumn = parsedTarget.endColumn && parsedTarget.endColumn > 0
+                ? parsedTarget.endColumn - 1
+                : textDoc.lineAt(endLine).text.length;
+            const endColumn = Math.min(Math.max(desiredEndColumn, 0), textDoc.lineAt(endLine).text.length);
+            endPosition = new vscode.Position(endLine, endColumn);
+        }
+
+        if (endPosition.isBefore(startPosition)) {
+            endPosition = startPosition;
+        }
+
+        const range = new vscode.Range(startPosition, endPosition);
+        editor.selection = new vscode.Selection(startPosition, endPosition);
         editor.revealRange(range, vscode.TextEditorRevealType.InCenter);
     }
 
-    private _parseCodeLinkValue(rawValue: string): { path: string; line?: number; column?: number } | undefined {
+    private _parseCodeLinkValue(
+        rawValue: string
+    ): { path: string; line?: number; column?: number; endLine?: number; endColumn?: number } | undefined {
         if (typeof rawValue !== 'string') {
             return undefined;
         }
@@ -144,17 +161,45 @@ export class TaskHandler extends BaseHandler {
         let parsedPath = value;
         let line: number | undefined;
         let column: number | undefined;
-        const locationMatch = value.match(/:(\d+)(?::(\d+))?$/);
+        let endLine: number | undefined;
+        let endColumn: number | undefined;
+        const rangeMatch = value.match(/:(\d+)(?::(\d+))?-(\d+)(?::(\d+))?$/);
 
-        if (locationMatch && typeof locationMatch.index === 'number') {
-            const candidatePath = value.slice(0, locationMatch.index);
+        if (rangeMatch && typeof rangeMatch.index === 'number') {
+            const candidatePath = value.slice(0, rangeMatch.index);
             if (candidatePath && !candidatePath.endsWith(':')) {
                 parsedPath = candidatePath;
-                line = Number.parseInt(locationMatch[1], 10);
-                if (locationMatch[2]) {
-                    column = Number.parseInt(locationMatch[2], 10);
+                line = Number.parseInt(rangeMatch[1], 10);
+                if (rangeMatch[2]) {
+                    column = Number.parseInt(rangeMatch[2], 10);
+                }
+                endLine = Number.parseInt(rangeMatch[3], 10);
+                if (rangeMatch[4]) {
+                    endColumn = Number.parseInt(rangeMatch[4], 10);
                 }
             }
+        } else {
+            const locationMatch = value.match(/:(\d+)(?::(\d+))?$/);
+
+            if (locationMatch && typeof locationMatch.index === 'number') {
+                const candidatePath = value.slice(0, locationMatch.index);
+                if (candidatePath && !candidatePath.endsWith(':')) {
+                    parsedPath = candidatePath;
+                    line = Number.parseInt(locationMatch[1], 10);
+                    if (locationMatch[2]) {
+                        column = Number.parseInt(locationMatch[2], 10);
+                    }
+                }
+            }
+        }
+
+        if (line && endLine && endLine < line) {
+            const tmpLine = line;
+            const tmpColumn = column;
+            line = endLine;
+            column = endColumn;
+            endLine = tmpLine;
+            endColumn = tmpColumn;
         }
 
         parsedPath = parsedPath.replace(/[\\/]+$/, '').replace(/^\.\//, '').trim();
@@ -172,7 +217,7 @@ export class TaskHandler extends BaseHandler {
             return undefined;
         }
 
-        return { path: parsedPath, line, column };
+        return { path: parsedPath, line, column, endLine, endColumn };
     }
 
     private async _resolveCodeLinkTarget(targetPath: string): Promise<{ uri: vscode.Uri; stat: vscode.FileStat } | undefined> {

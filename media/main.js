@@ -38,6 +38,7 @@ let hideCompletedSubtasksState = previousState?.hideCompletedSubtasksState || fa
 let activeTaskId = null;
 let editingTaskId = null;
 let modalTaskId = null;
+let pendingTaskModalId = null;
 let collapsedSections = new Set(Array.isArray(previousState?.collapsedSections) ? previousState.collapsedSections : []);
 let shouldAutoEditNewTask = false;
 
@@ -145,17 +146,44 @@ function parseCodeReferenceTag(tag) {
     let targetPath = raw;
     let line = null;
     let column = null;
-    const locationMatch = raw.match(/:(\d+)(?::(\d+))?$/);
+    let endLine = null;
+    let endColumn = null;
+    const rangeMatch = raw.match(/:(\d+)(?::(\d+))?-(\d+)(?::(\d+))?$/);
 
-    if (locationMatch && typeof locationMatch.index === 'number') {
-        const candidatePath = raw.slice(0, locationMatch.index);
+    if (rangeMatch && typeof rangeMatch.index === 'number') {
+        const candidatePath = raw.slice(0, rangeMatch.index);
         if (candidatePath && !candidatePath.endsWith(':')) {
             targetPath = candidatePath;
-            line = Number.parseInt(locationMatch[1], 10);
-            if (locationMatch[2]) {
-                column = Number.parseInt(locationMatch[2], 10);
+            line = Number.parseInt(rangeMatch[1], 10);
+            if (rangeMatch[2]) {
+                column = Number.parseInt(rangeMatch[2], 10);
+            }
+            endLine = Number.parseInt(rangeMatch[3], 10);
+            if (rangeMatch[4]) {
+                endColumn = Number.parseInt(rangeMatch[4], 10);
             }
         }
+    } else {
+        const locationMatch = raw.match(/:(\d+)(?::(\d+))?$/);
+        if (locationMatch && typeof locationMatch.index === 'number') {
+            const candidatePath = raw.slice(0, locationMatch.index);
+            if (candidatePath && !candidatePath.endsWith(':')) {
+                targetPath = candidatePath;
+                line = Number.parseInt(locationMatch[1], 10);
+                if (locationMatch[2]) {
+                    column = Number.parseInt(locationMatch[2], 10);
+                }
+            }
+        }
+    }
+
+    if (line && endLine && endLine < line) {
+        const tmpLine = line;
+        const tmpColumn = column;
+        line = endLine;
+        column = endColumn;
+        endLine = tmpLine;
+        endColumn = tmpColumn;
     }
 
     const isFolderHint = /[\\/]$/.test(targetPath);
@@ -170,7 +198,7 @@ function parseCodeReferenceTag(tag) {
         return null;
     }
 
-    return { raw, path: targetPath, line, column, isFolderHint };
+    return { raw, path: targetPath, line, column, endLine, endColumn, isFolderHint };
 }
 
 function getCodeReferenceDisplayLabel(tag) {
@@ -189,6 +217,13 @@ function getCodeReferenceDisplayLabel(tag) {
         label += `:${parsed.line}`;
         if (parsed.column && parsed.column > 0) {
             label += `:${parsed.column}`;
+        }
+
+        if (parsed.endLine && parsed.endLine > 0) {
+            label += `-${parsed.endLine}`;
+            if (parsed.endColumn && parsed.endColumn > 0) {
+                label += `:${parsed.endColumn}`;
+            }
         }
     }
 
@@ -611,7 +646,7 @@ function updateModalUI() {
                     continue;
                 }
 
-                const codeKey = `${normalizedPath}:${entry.parsed.line || 0}:${entry.parsed.column || 0}`;
+                const codeKey = `${normalizedPath}:${entry.parsed.line || 0}:${entry.parsed.column || 0}:${entry.parsed.endLine || 0}:${entry.parsed.endColumn || 0}`;
                 if (seenCodeRefKeys.has(codeKey)) {
                     continue;
                 }
@@ -1847,7 +1882,7 @@ function getTaskBadgesHtml(t) {
                     continue;
                 }
 
-                const codeKey = `code:${normalizedPath}:${codeRef.line || 0}:${codeRef.column || 0}`;
+                const codeKey = `code:${normalizedPath}:${codeRef.line || 0}:${codeRef.column || 0}:${codeRef.endLine || 0}:${codeRef.endColumn || 0}`;
                 if (renderedBadgeKeys.has(codeKey)) {
                     continue;
                 }
@@ -2096,6 +2131,19 @@ function render() {
     }
 }
 
+function openTaskModalWhenAvailable(taskId) {
+    if (typeof taskId !== 'string' || !taskId) return;
+
+    const task = currentTasks.find((item) => item.id === taskId);
+    if (!task) {
+        pendingTaskModalId = taskId;
+        return;
+    }
+
+    pendingTaskModalId = null;
+    openTaskModal(taskId);
+}
+
 function makeEditable(el, id, field = 'text') {
     if (el.dataset.editing === 'true') return;
     el.dataset.editing = 'true';
@@ -2235,6 +2283,11 @@ window.addEventListener('message', e => {
         }
 
         render();
+
+        if (pendingTaskModalId) {
+            openTaskModalWhenAvailable(pendingTaskModalId);
+        }
+
         if (modalTaskId) {
             const task = currentTasks.find(t => t.id === modalTaskId);
             if (task) {
@@ -2248,12 +2301,8 @@ window.addEventListener('message', e => {
             } else closeTaskModal();
         }
     } else if (e.data.type === 'openTaskModal') {
-        // Abrir el modal de una tarea específica
-        const taskId = e.data.taskId;
-        const task = currentTasks.find(t => t.id === taskId);
-        if (task) {
-            openTaskModal(taskId);
-        }
+        const taskId = typeof e.data.taskId === 'string' ? e.data.taskId : '';
+        openTaskModalWhenAvailable(taskId);
     }
 });
 

@@ -8,7 +8,14 @@ import { FullScreenPanel } from './ui/panels/FullScreenPanel';
 import { ConfigPanel } from './ui/panels/ConfigPanel';
 import { StatusBarManager } from './ui/statusbar/StatusBarManager';
 import { Logger } from './utils/logger';
-import { registerRefreshCommand, registerOpenFullCommand, registerOpenTaskModalCommand, registerOpenConfigCommand } from './commands';
+import {
+    registerRefreshCommand,
+    registerOpenFullCommand,
+    registerOpenTaskModalCommand,
+    registerOpenConfigCommand,
+    registerAddSelectionAsTaskCommand,
+    registerAttachSelectionToTaskCommand
+} from './commands';
 
 export function activate(context: vscode.ExtensionContext): void {
     Logger.initialize();
@@ -95,6 +102,8 @@ export function activate(context: vscode.ExtensionContext): void {
     registerOpenFullCommand(context, fullScreenPanel);
     registerOpenTaskModalCommand(context, fullScreenPanel);
     registerOpenConfigCommand(context, configPanel);
+    registerAddSelectionAsTaskCommand(context, taskService, provider);
+    registerAttachSelectionToTaskCommand(context, taskService, provider);
 }
 
 export function deactivate(): void {
