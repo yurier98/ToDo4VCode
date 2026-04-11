@@ -5,7 +5,7 @@
 [![Open VSX Version](https://img.shields.io/open-vsx/v/YurierHerrera/todo4vcode?style=flat-square)](https://open-vsx.org/extension/YurierHerrera/todo4vcode)
 [![Open VSX Downloads](https://img.shields.io/open-vsx/dt/YurierHerrera/todo4vcode?style=flat-square)](https://open-vsx.org/extension/YurierHerrera/todo4vcode)
 
-Stop drowning in endless todo lists. **ToDo4VCode** is a professional task management extension for VS Code that helps you organize project tasks by their true impact, ensuring you always focus on what matters most.
+Stop drowning in endless todo lists. **ToDo4VCode** is a professional task management extension for VS Code and VS Code-compatible editors (such as Cursor and other forks) that helps you organize project tasks by their true impact, ensuring you always focus on what matters most.
 
 ## 🚀 Smart Prioritization
 
@@ -23,8 +23,11 @@ This extension uses the proven MoSCoW technique to help you categorize tasks eff
 - 📊 **Multiple Views**: Switch between a clean **List View** and a productive **Kanban Board**, or open tasks in **Full Screen** mode for focused work.
 - 📈 **StatusBar Statistics**: Real-time task statistics displayed in VS Code's status bar with detailed tooltip on hover.
 - ✅ **Subtasks Support**: Break down complex tasks into manageable subtasks with progress tracking.
+- 🧩 **Code-to-Task Linking**: Right-click selected code to create a new task or attach the selection to an existing one.
+- 🔎 **Code Range References**: Store and display single-line or multi-line code ranges in tags (for example, `src/file.ts:10-15`).
 - 🔔 **Smart Reminders**: Integrated VS Code notifications for upcoming deadlines.
 - ⚙️ **Configuration Panel**: Comprehensive settings management with sections for preferences, statistics, notifications, and data management.
+- 🤝 **Shared Tasks for Teams**: Optionally store tasks in a project file (`.todo4vcode/shared-tasks.json`) so they can be versioned with Git.
 - 💾 **Import/Export Data**: Export all workspace data to JSON format (compatible with coding tools and AI agents) or import previously exported data.
 - 🧹 **Data Management**: Clear all tasks with safety confirmation, or backup/restore your entire workspace.
 - 🌓 **Native Integration**: Fully supports VS Code themes and Codicons for a seamless experience.
@@ -85,21 +88,28 @@ Whether you prefer Dark or Light themes, ToDo4VCode adapts beautifully to your w
 
 5. **Subtasks**: Open a task's detail modal to add subtasks. Track progress with the completion counter (X/Y completed).
 
-6. **Full Screen Mode**: Click the "Open in full screen" button in the sidebar header for a distraction-free task management experience.
+6. **Link Code to Tasks**:
+   - Select code in the editor and right-click.
+   - Use **ToDo4VCode: Add Selection as New Task** to create a new task with a code reference tag.
+   - Use **ToDo4VCode: Attach Selection to Existing Task** to pick an existing task from Quick Pick.
+   - The task modal opens automatically in the sidebar, and the tag can represent a line or a range.
 
-7. **Configuration**: Click the settings icon in the sidebar header to access the configuration panel where you can:
+7. **Full Screen Mode**: Click the "Open in full screen" button in the sidebar header for a distraction-free task management experience.
+
+8. **Configuration**: Click the settings icon in the sidebar header to access the configuration panel where you can:
    - Adjust general preferences (hide completed tasks, default priority)
+   - Enable/disable shared tasks and edit the shared file path
    - Configure statistics display
    - Manage notification settings
    - Import/Export workspace data
    - Clear all tasks if needed
 
-8. **Import/Export Data**: 
+9. **Import/Export Data**: 
    - **Export**: Save all your tasks, settings, and configurations to a JSON file (defaults to Downloads folder)
    - **Import**: Restore your workspace from a previously exported JSON file
    - The JSON format is compatible with coding tools and can be used with AI agents for task planning
 
-9. **Focus**: See your pending high-priority tasks at a glance in the status bar and sidebar.
+10. **Focus**: See your pending high-priority tasks at a glance in the status bar and sidebar.
 
 ## ✅ Subtasks
 
@@ -128,6 +138,13 @@ You can customize the extension behavior in your VS Code settings:
 - `todo4vcode.sharedTasks.enabled`: Store tasks in a shared workspace file for collaboration via Git.
 - `todo4vcode.sharedTasks.path`: Relative path to the shared tasks file (default: `.todo4vcode/shared-tasks.json`).
 
+### Code References
+- Code reference tags are stored in `tags` and can include ranges:
+  - Single position: `src/file.ts:12:4`
+  - Multi-line range: `src/file.ts:10-15`
+  - Range with columns: `src/file.ts:10:3-15:20`
+- Clicking a code-reference badge in a task opens the file and reveals the saved position/range.
+
 ### Statistics Display
 Configure which statistics appear in the StatusBar tooltip:
 
@@ -145,6 +162,17 @@ To configure these settings, open VS Code Settings (Cmd/Ctrl + ,) and search for
 1. Clone the repository.
 2. Run `npm install`.
 3. Press `F5` to open the **Extension Development Host**.
+
+### Automated Tests
+1. Run `npm test`.
+2. This command runs:
+   - `npm run compile`
+   - `npm run lint`
+   - Node test runner via `out/test/runTest.js`
+
+Current automated test suites cover:
+- `StorageManager` local state behavior
+- `TaskService` task creation and tag normalization/deduplication
 
 ### Permanent Installation (VSIX)
 1. Install `vsce`: `npm install -g @vscode/vsce`.

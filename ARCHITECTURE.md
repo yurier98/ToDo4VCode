@@ -1,409 +1,324 @@
-# Arquitectura de ToDo4VCode
+# ToDo4VCode Architecture
 
-Este documento describe la arquitectura de la extensión ToDo4VCode y cómo agregar nuevas funcionalidades.
+This document describes how ToDo4VCode is structured today and how to extend it safely.
 
-## Estructura de Carpetas
+## 1. System Overview
 
+ToDo4VCode is a VS Code extension with a layered architecture:
+
+- `src/core`: business logic, models, storage, and services.
+- `src/ui`: VS Code UI integration (sidebar webview, full-screen panel, settings panel, status bar).
+- `src/commands`: command entry points registered in `package.json`.
+- `media`: frontend runtime for webviews (`main.js` + SCSS/CSS + assets).
+
+The extension keeps task behavior in services and uses UI layers as adapters.
+
+## 2. High-Level Runtime Flow
+
+```mermaid
+flowchart LR
+    A["VS Code Events / Commands"] --> B["extension.ts"]
+    B --> C["TaskService"]
+    B --> D["StorageManager"]
+    B --> E["TaskViewProvider / Panels"]
+    E --> F["WebviewMessageRouter"]
+    F --> G["TaskHandler / SettingsHandler / ConfigHandler / ChatHandler"]
+    G --> C
+    C --> D
+    C --> H["ReminderService"]
+    C --> I["StatisticsService"]
+    D --> J["Workspace Memento or Shared JSON File"]
 ```
+
+## 3. Folder Map
+
+```text
 src/
-├── core/                    # Lógica de negocio central
-│   ├── models/              # Tipos e interfaces
-│   │   ├── task.ts          # Modelos de tareas
-│   │   ├── settings.ts      # Modelos de configuración
-│   │   ├── webview-messages.ts  # Tipos de mensajes del webview
-│   │   └── index.ts         # Exportaciones
-│   ├── services/            # Servicios de negocio
-│   │   ├── TaskService.ts   # CRUD de tareas
-│   │   ├── ConfigService.ts # Gestión de configuración
-│   │   ├── ReminderService.ts  # Gestión de recordatorios
-│   │   └── StatisticsService.ts # Cálculo de estadísticas
-│   └── storage/             # Gestión de almacenamiento
-│       └── StorageManager.ts
-├── ui/                      # Componentes de UI
-│   ├── providers/           # Webview providers
-│   │   ├── TaskViewProvider.ts
-│   │   └── ConfigViewProvider.ts (futuro)
-│   ├── panels/              # Paneles full-screen
-│   │   └── FullScreenPanel.ts
-│   ├── statusbar/           # Status bar
-│   │   └── StatusBarManager.ts
-│   └── webview/             # Webview handlers y HTML
-│       ├── handlers/        # Handlers específicos por tipo de mensaje
-│       │   ├── TaskHandler.ts
-│       │   ├── SettingsHandler.ts
-│       │   ├── ChatHandler.ts
-│       │   └── BaseHandler.ts
-│       ├── TaskWebview.ts   # Generación de HTML
-│       └── WebviewMessageRouter.ts
-├── utils/                   # Utilidades
-│   ├── logger.ts            # Sistema de logging
-│   ├── validators.ts        # Validación de mensajes
-│   └── sound-player.ts      # Reproducción de sonidos
-├── commands/                # Comandos de VSCode
+├── commands/
 │   ├── refresh.ts
 │   ├── openFull.ts
+│   ├── openConfig.ts
 │   ├── openTaskModal.ts
+│   ├── codeSelectionTasks.ts
 │   └── index.ts
-└── extension.ts             # Punto de entrada (solo orquestación)
+├── core/
+│   ├── constants/
+│   │   └── media-paths.ts
+│   ├── models/
+│   │   ├── task.ts
+│   │   ├── settings.ts
+│   │   ├── webview-messages.ts
+│   │   └── index.ts
+│   ├── services/
+│   │   ├── TaskService.ts
+│   │   ├── ConfigService.ts
+│   │   ├── ReminderService.ts
+│   │   ├── StatisticsService.ts
+│   │   └── ImportExportService.ts
+│   └── storage/
+│       └── StorageManager.ts
+├── ui/
+│   ├── providers/
+│   │   └── TaskViewProvider.ts
+│   ├── panels/
+│   │   ├── FullScreenPanel.ts
+│   │   └── ConfigPanel.ts
+│   ├── statusbar/
+│   │   └── StatusBarManager.ts
+│   └── webview/
+│       ├── TaskWebview.ts
+│       ├── ConfigWebview.ts
+│       ├── WebviewMessageRouter.ts
+│       └── handlers/
+│           ├── BaseHandler.ts
+│           ├── TaskHandler.ts
+│           ├── SettingsHandler.ts
+│           ├── ConfigHandler.ts
+│           └── ChatHandler.ts
+├── utils/
+│   ├── logger.ts
+│   ├── validators.ts
+│   └── sound-player.ts
+├── test/
+│   ├── runTest.ts
+│   ├── mocks/vscode.ts
+│   └── suite/
+│       ├── testUtils.ts
+│       ├── storageManager.test.ts
+│       └── taskService.test.ts
+└── extension.ts
 
-media/                       # Archivos de media y recursos
-├── icon.svg, icon.png       # Iconos de la extensión
-├── ding-ding-alert.mp3      # Sonido de notificación
-├── main.js                  # JavaScript del webview
-├── flatpickr.*              # Librería de date picker
-├── styles/                  # Estilos SCSS y CSS compilado
-│   ├── main.scss           # Archivo principal SCSS
-│   ├── base/               # Estilos base
-│   ├── components/         # Componentes
-│   ├── layouts/            # Layouts
-│   └── vendors/            # Librerías externas
-└── preview/                 # Imágenes de preview para README
-```
-
-## Principios Arquitectónicos
-
-### Separación de Responsabilidades
-
-- **Core**: Contiene toda la lógica de negocio, independiente de VSCode
-- **UI**: Contiene componentes específicos de UI de VSCode
-- **Utils**: Utilidades reutilizables
-- **Commands**: Comandos de VSCode, cada uno en su propio archivo
-
-### Servicios
-
-Los servicios están organizados por responsabilidad:
-
-- **TaskService**: Operaciones CRUD de tareas
-- **ReminderService**: Gestión de recordatorios
-- **StatisticsService**: Cálculo de estadísticas
-- **ConfigService**: Gestión de configuración de VSCode
-
-### Handlers Modulares
-
-Los mensajes del webview se manejan mediante handlers especializados:
-
-- **TaskHandler**: Operaciones relacionadas con tareas
-- **SettingsHandler**: Configuración de vistas
-- **ChatHandler**: Integración con chat de VSCode
-- **BaseHandler**: Clase base con manejo de errores común
-
-## Cómo Agregar una Nueva Vista de Configuración
-
-Para agregar una nueva vista de configuración (por ejemplo, `ConfigViewProvider`):
-
-### 1. Crear el Provider
-
-Crear `src/ui/providers/ConfigViewProvider.ts`:
-
-```typescript
-import * as vscode from 'vscode';
-import { ConfigService } from '../../core/services/ConfigService';
-import { WebviewMessageRouter } from '../webview/WebviewMessageRouter';
-
-export class ConfigViewProvider implements vscode.WebviewViewProvider {
-    public static readonly viewType = 'todo4vcode-config-view';
-
-    private _view?: vscode.WebviewView;
-    private readonly _messageRouter: WebviewMessageRouter;
-
-    constructor(
-        private readonly _extensionUri: vscode.Uri,
-        private readonly _taskService: TaskService
-    ) {
-        this._messageRouter = new WebviewMessageRouter(_taskService);
-    }
-
-    public async resolveWebviewView(
-        webviewView: vscode.WebviewView,
-        context: vscode.WebviewViewResolveContext,
-        _token: vscode.CancellationToken
-    ): Promise<void> {
-        this._view = webviewView;
-        // Configurar webview y HTML
-    }
-}
-```
-
-### 2. Registrar en package.json
-
-Agregar la vista en `package.json`:
-
-```json
-{
-  "contributes": {
-    "views": {
-      "todo4vcode-explorer": [
-        {
-          "type": "webview",
-          "id": "todo4vcode-config-view",
-          "name": "Configuration",
-          "icon": "./media/icon.svg"
-        }
-      ]
-    }
-  }
-}
-```
-
-### 3. Registrar en extension.ts
-
-```typescript
-const configProvider = new ConfigViewProvider(context.extensionUri, taskService);
-context.subscriptions.push(
-    vscode.window.registerWebviewViewProvider(ConfigViewProvider.viewType, configProvider)
-);
-```
-
-### 4. Crear Handler si es Necesario
-
-Si la nueva vista necesita manejar mensajes específicos, crear un nuevo handler en `src/ui/webview/handlers/` y registrarlo en `WebviewMessageRouter`.
-
-## Cómo Agregar un Nuevo Comando
-
-### 1. Crear el Archivo del Comando
-
-Crear `src/commands/miComando.ts`:
-
-```typescript
-import * as vscode from 'vscode';
-
-export function registerMiComandoCommand(
-    context: vscode.ExtensionContext,
-    // parámetros necesarios
-): void {
-    context.subscriptions.push(
-        vscode.commands.registerCommand('todo4vcode.miComando', () => {
-            // Lógica del comando
-        })
-    );
-}
-```
-
-### 2. Exportar en index.ts
-
-```typescript
-export * from './miComando';
-```
-
-### 3. Registrar en extension.ts
-
-```typescript
-import { registerMiComandoCommand } from './commands';
-
-registerMiComandoCommand(context, /* parámetros */);
-```
-
-### 4. Agregar en package.json
-
-```json
-{
-  "contributes": {
-    "commands": [
-      {
-        "command": "todo4vcode.miComando",
-        "title": "Mi Comando"
-      }
-    ]
-  }
-}
-```
-
-## Flujo de Mensajes del Webview
-
-1. El webview envía un mensaje mediante `postMessage`
-2. `WebviewMessageRouter` recibe el mensaje
-3. `MessageValidator` valida el mensaje
-4. El router enruta el mensaje al handler apropiado
-5. El handler procesa el mensaje y actualiza el estado
-6. Los cambios se propagan mediante eventos
-
-## Logging
-
-Usar `Logger` para logging estructurado:
-
-```typescript
-import { Logger } from '../utils/logger';
-
-Logger.debug('Mensaje de debug');
-Logger.info('Información');
-Logger.warn('Advertencia');
-Logger.error('Error', error);
-```
-
-## Validación de Mensajes
-
-Todos los mensajes del webview deben ser validados usando `MessageValidator`:
-
-```typescript
-import { MessageValidator } from '../utils/validators';
-
-if (MessageValidator.validate(message)) {
-    // Procesar mensaje
-}
-```
-
-## Gestión de Archivos Media
-
-### Constantes Centralizadas (MEDIA_PATHS)
-
-Todas las rutas de archivos de media están centralizadas en `src/core/constants/media-paths.ts`:
-
-```typescript
-import { MEDIA_PATHS } from '../core/constants/media-paths';
-
-// ✅ CORRECTO: Usar constantes
-const iconUri = vscode.Uri.joinPath(extensionUri, MEDIA_PATHS.ICON);
-const soundUri = vscode.Uri.joinPath(extensionUri, MEDIA_PATHS.SOUND_ALERT);
-
-// ❌ INCORRECTO: Rutas hardcodeadas
-const iconUri = vscode.Uri.joinPath(extensionUri, 'media/icon.svg');
-```
-
-### Estructura de Media
-
-```
 media/
-├── icon.svg, icon.png, icon-dark.svg, icon-light.svg  # Iconos
-├── ding-ding-alert.mp3                                 # Sonido de notificación
-├── main.js                                             # JavaScript del webview
-├── flatpickr.min.css, flatpickr_dark.css, flatpickr.min.js  # Date picker
-├── styles/                                             # Estilos SCSS
-│   ├── main.scss (editar este, no main.css)
-│   ├── base/      # Variables y reset
-│   ├── components/ # Botones, cards, modals, popovers
-│   ├── layouts/   # Kanban, list, navigation
-│   └── vendors/    # Librerías externas
-└── preview/        # Imágenes para README
+├── main.js
+├── styles/
+│   ├── main.scss
+│   ├── main.css
+│   ├── base/
+│   ├── components/
+│   ├── layouts/
+│   └── vendors/
+├── flatpickr.*
+├── codicons/
+├── icon.svg
+├── icon.png
+└── ding-ding-alert.mp3
 ```
 
-### Uso de MEDIA_PATHS
+## 4. Core Services and Responsibilities
 
-**Archivos que usan media:**
+### TaskService
 
-1. **TaskWebview.ts**: Carga CSS, JS y recursos del webview
-   ```typescript
-   const styleUri = webview.asWebviewUri(
-       vscode.Uri.joinPath(extensionUri, MEDIA_PATHS.STYLES_MAIN_CSS)
-   );
-   ```
+`TaskService` is the central domain service. It handles:
 
-2. **FullScreenPanel.ts**: Define icono del panel
-   ```typescript
-   iconPath: {
-       light: vscode.Uri.joinPath(extensionUri, MEDIA_PATHS.ICON),
-       dark: vscode.Uri.joinPath(extensionUri, MEDIA_PATHS.ICON)
-   }
-   ```
+- Task CRUD operations.
+- Subtask operations.
+- Task ordering.
+- Tag normalization and deduplication.
+- Reminder scheduling hooks.
+- Statistics computation integration.
+- Comment scan import (`// TODO`, `// FIXME`, `// NOTE`).
+- Shared tasks refresh reactions from `StorageManager`.
 
-3. **SoundPlayer.ts**: Reproduce sonido de notificación
-   ```typescript
-   const soundPath = vscode.Uri.joinPath(extensionUri, MEDIA_PATHS.SOUND_ALERT);
-   ```
+It emits:
 
-### Agregar Nuevos Archivos de Media
+- `onTasksChanged`
+- `onSettingsChanged`
+- `onReminder` (proxied from `ReminderService`)
 
-1. Agregar el archivo en la carpeta `media/` apropiada
-2. Agregar la constante en `src/core/constants/media-paths.ts`:
-   ```typescript
-   export const MEDIA_PATHS = {
-       // ... constantes existentes
-       NUEVO_ARCHIVO: 'media/ruta/al/archivo.ext'
-   } as const;
-   ```
-3. Usar la constante en el código:
-   ```typescript
-   import { MEDIA_PATHS } from '../core/constants/media-paths';
-   const uri = vscode.Uri.joinPath(extensionUri, MEDIA_PATHS.NUEVO_ARCHIVO);
-   ```
+### StorageManager
 
-### Compilación de Estilos
+`StorageManager` abstracts persistence and supports two modes:
 
-Los archivos SCSS se compilan automáticamente:
+1. Local workspace/global memento state.
+2. Shared file mode (`todo4vcode.sharedTasks.enabled`).
+
+In shared mode, tasks are saved in a relative project file (default: `.todo4vcode/shared-tasks.json`) and watched for external changes.
+
+### ConfigService
+
+`ConfigService` is the typed wrapper over VS Code settings. It exposes:
+
+- Read operations (`getExtensionConfig`, `getStatisticsConfig`, etc.).
+- Update operations (`updateHideCompleted`, `updateSharedTasksPath`, etc.).
+- Change filters (`affectsCommentScanConfig`, `affectsSharedTasksConfig`, etc.).
+
+### ReminderService
+
+`ReminderService` schedules and triggers due reminders. It notifies UI through `TaskService.onReminder`.
+
+### StatisticsService
+
+`StatisticsService` computes aggregate counts (`total`, `done`, `must`, `inProgress`, `overdue`) from current tasks.
+
+### ImportExportService
+
+`ImportExportService` exports/imports:
+
+- Tasks
+- View settings (`sidebar`, `full`)
+- Extension configuration (including shared tasks config)
+
+## 5. Persistence Model
+
+### Local Storage
+
+- Tasks key: `todo4vcode-tasks`
+- Settings keys:
+  - `todo4vcode-settings` (sidebar)
+  - `todo4vcode-settings-full` (full screen)
+
+Storage target uses workspace state when possible, otherwise global state.
+
+### Shared File Storage
+
+When shared mode is enabled, the storage file payload is:
+
+```json
+{
+  "format": "todo4vcode-shared-tasks",
+  "version": "1.0.0",
+  "tasks": []
+}
+```
+
+Important behavior:
+
+- Path must be relative to workspace root.
+- Parent directories are created automatically.
+- Invalid JSON keeps the last valid in-memory snapshot and shows a warning.
+- File watcher emits `external` updates to refresh all views.
+
+## 6. Commands
+
+Registered command IDs:
+
+- `todo4vcode.refresh`
+- `todo4vcode.openFull`
+- `todo4vcode.openConfig`
+- `todo4vcode.openTaskModal`
+- `todo4vcode.addSelectionAsTask`
+- `todo4vcode.attachSelectionToTask`
+
+### Editor Context Menu Commands
+
+`todo4vcode.addSelectionAsTask` and `todo4vcode.attachSelectionToTask` are contributed to `editor/context` with:
+
+- `editorTextFocus && editorHasSelection`
+
+Both commands:
+
+1. Read the current code selection.
+2. Build a code reference tag.
+3. Reveal the ToDo4VCode sidebar container.
+4. Open the task modal directly.
+
+## 7. Code Reference Tags
+
+Code tags are stored in `TodoItem.tags` (no schema change).
+
+Supported formats:
+
+- Single position: `path/to/file.ts:12:4`
+- Multi-line range: `path/to/file.ts:10-15`
+- Full range with columns: `path/to/file.ts:10:3-15:20`
+
+`TaskHandler.openCodeLink` parses these formats, resolves the target file, opens the editor, and selects/reveals the matching position or range.
+
+## 8. Webview Architecture
+
+### HTML producers
+
+- `TaskWebview.ts`
+- `ConfigWebview.ts`
+
+### Frontend runtime
+
+- `media/main.js`
+
+`main.js` handles rendering, UI interactions, drag-and-drop ordering, modal behavior, tag parsing, and message dispatch to the extension host.
+
+### Message routing
+
+`WebviewMessageRouter` dispatches messages to specialized handlers:
+
+- `TaskHandler`: task + subtask mutations and code-link navigation.
+- `SettingsHandler`: view settings sync + initial ready handshake.
+- `ConfigHandler`: extension settings updates + import/export + shared path prompt.
+- `ChatHandler`: copy/send task prompt behavior.
+
+### Robust modal opening
+
+`TaskViewProvider.openTaskModal(taskId)` uses a pending queue and waits until webview readiness. The frontend also queues `openTaskModal` requests if tasks are not yet available.
+
+## 9. Activation and Event Orchestration (`extension.ts`)
+
+`activate()` builds and wires all main components:
+
+- Services: `StorageManager`, `TaskService`
+- UI: `TaskViewProvider`, `FullScreenPanel`, `ConfigPanel`, `StatusBarManager`
+- Commands registration
+- Subscriptions for:
+  - Task changes -> refresh views + status bar
+  - Config changes -> re-sync views/status/comment scan
+  - Document save -> incremental comment scan
+
+On startup, comment scan can run immediately if enabled.
+
+## 10. Comment Scan Pipeline
+
+`TaskService.importCommentTasksFromWorkspace()`:
+
+1. Scans project files with include/exclude globs.
+2. Skips large/binary-like files.
+3. Parses line comments for `TODO|FIXME|NOTE` markers.
+4. Builds/upserts tasks with `source: comment-scan` metadata.
+5. Removes stale scanned tasks when source entries disappear.
+
+This workflow is serialized through an internal queue to avoid overlapping scans.
+
+## 11. Testing
+
+Current automated tests run with Node's test runner and a local `vscode` mock:
+
+- `src/test/suite/storageManager.test.ts`
+- `src/test/suite/taskService.test.ts`
+
+Run:
 
 ```bash
-npm run compile:sass  # Compila main.scss → main.css
-npm run compile      # Compila TypeScript + SASS
+npm test
 ```
 
-**Importante**: Nunca editar `main.css` directamente, solo editar `main.scss`.
+`npm test` executes compile + lint in `pretest`, then runs `out/test/runTest.js`.
 
-## Mejores Prácticas
+## 12. Extension Points: How to Add Features Safely
 
-### 1. Separación de Concerns
-- **Core**: Lógica de negocio independiente de VSCode
-- **UI**: Componentes específicos de VSCode
-- **Utils**: Utilidades reutilizables
-- **Commands**: Cada comando en su propio archivo
+### Add a new command
 
-### 2. Type Safety
-- Usar tipos estrictos, evitar `any`
-- Definir interfaces para todos los modelos
-- Usar tipos union para estados y opciones limitadas
-- Validar mensajes del webview con `MessageValidator`
+1. Create a command module under `src/commands/`.
+2. Export it from `src/commands/index.ts`.
+3. Register it in `src/extension.ts`.
+4. Contribute it in `package.json` (`contributes.commands` and optionally menus).
 
-### 3. Manejo de Errores
-- Siempre usar try-catch en operaciones asíncronas
-- Registrar errores con `Logger.error()`
-- No silenciar errores, siempre loguearlos
-- Proporcionar mensajes de error descriptivos
+### Add a new webview message
 
-```typescript
-try {
-    await someAsyncOperation();
-} catch (error) {
-    Logger.error('Error description', error);
-    // Manejar el error apropiadamente
-}
-```
+1. Add message types in `src/core/models/webview-messages.ts`.
+2. Add validation rules in `src/utils/validators.ts` when needed.
+3. Route in `src/ui/webview/WebviewMessageRouter.ts`.
+4. Handle in the corresponding handler.
+5. Wire sender/listener in `media/main.js`.
 
-### 4. Gestión de Recursos
-- **MEDIA_PATHS**: Siempre usar constantes centralizadas, nunca rutas hardcodeadas
-- **Disposables**: Implementar `Disposable` para limpiar recursos (eventos, timeouts, etc.)
-- **Eventos**: Usar eventos para comunicación entre componentes
-- **Subscriptions**: Registrar todas las suscripciones en `context.subscriptions`
+### Add new settings
 
-```typescript
-export class MyService implements vscode.Disposable {
-    private readonly _onChange = new vscode.EventEmitter<string>();
-    public readonly onChange = this._onChange.event;
-    
-    public dispose(): void {
-        this._onChange.dispose();
-    }
-}
-```
+1. Add settings schema in `package.json`.
+2. Extend `settings.ts` models.
+3. Add getters/updaters in `ConfigService`.
+4. Handle updates in `ConfigHandler` and surface in `ConfigWebview`.
 
-### 5. Servicios Testeables
-- Los servicios deben ser independientes de VSCode cuando sea posible
-- Usar inyección de dependencias
-- Separar lógica de negocio de acceso a APIs de VSCode
+## 13. Architectural Guidelines
 
-### 6. Logging Estructurado
-- Usar `Logger` con niveles apropiados:
-  - `Logger.debug()`: Información de debugging
-  - `Logger.info()`: Información general
-  - `Logger.warn()`: Advertencias
-  - `Logger.error()`: Errores con contexto
-
-### 7. Validación de Datos
-- Validar todos los mensajes del webview antes de procesar
-- Usar `MessageValidator.validate()` para validación
-- Rechazar mensajes inválidos con logging apropiado
-
-### 8. Naming Conventions
-- **Clases**: PascalCase (`TaskService`, `StatusBarManager`)
-- **Funciones/Métodos**: camelCase (`getTasks`, `updateStatus`)
-- **Constantes**: UPPER_SNAKE_CASE (`MEDIA_PATHS`, `STORAGE_KEY`)
-- **Variables privadas**: Prefijo `_` (`_taskService`, `_view`)
-
-### 9. Organización de Código
-- Un archivo por clase/función principal
-- Agrupar funcionalidades relacionadas
-- Mantener archivos pequeños y enfocados
-- Usar `index.ts` para exportaciones públicas
-
-### 10. Documentación
-- Documentar funciones públicas complejas
-- Comentar decisiones arquitectónicas importantes
-- Mantener README y ARCHITECTURE.md actualizados
-- Usar nombres descriptivos en lugar de comentarios cuando sea posible
+- Keep business logic in `core/services`, not in webview handlers.
+- Keep handlers thin and focused on message adaptation.
+- Reuse `TaskService` for state transitions to preserve normalization and events.
+- Use `Logger` instead of raw console statements.
+- Prefer non-breaking message contract evolution for webview updates.
