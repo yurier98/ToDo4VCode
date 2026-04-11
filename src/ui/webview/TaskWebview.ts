@@ -226,7 +226,7 @@ export class TaskWebview {
                                             <div id="subtaskList" class="subtask-list-modern"></div>
                                             <div class="add-subtask-minimal" onclick="focusSubtaskInput()">
                                                 <i class="codicon codicon-add"></i>
-                                                <input type="text" id="newSubtaskInput" placeholder="${UI.ADD_SUBTASK_PLACEHOLDER}" onkeydown="if(event.key === 'Enter') addSubtask()">
+                                                <textarea id="newSubtaskInput" rows="1" placeholder="${UI.ADD_SUBTASK_PLACEHOLDER}" onkeydown="handleNewSubtaskKeydown(event)" oninput="autoResizeSubtaskTextarea(this)"></textarea>
                                             </div>
                                         </div>
                                     </div>

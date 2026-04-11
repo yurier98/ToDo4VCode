@@ -641,7 +641,7 @@
 
     .subtask-item {
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         gap: 12px;
         padding: 6px 0;
         border-bottom: 1px solid $border-color;
@@ -694,6 +694,15 @@
             font-size: 12px;
             outline: none;
             flex: 1;
+            resize: none;
+            overflow-y: hidden;
+            min-height: 20px;
+            line-height: 1.4;
+            white-space: pre-wrap;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+            padding: 2px 0;
+            margin: 0;
 
             &.completed {
                 text-decoration: line-through;
@@ -707,6 +716,7 @@
             color: $color-error;
             cursor: pointer;
             padding: 4px;
+            margin-top: 2px;
             opacity: 0;
             transition: all 0.2s;
             display: flex;
@@ -724,7 +734,7 @@
 
 .add-subtask-minimal {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 12px;
     padding: 8px 4px;
     cursor: text;
@@ -736,7 +746,7 @@
             transform: scale(1.2);
         }
         
-        input {
+        textarea {
             color: $fg-main;
             opacity: 1;
         }
@@ -758,7 +768,7 @@
         }
     }
 
-    input {
+    textarea {
         background: transparent;
         border: none;
         color: $fg-desc;
@@ -767,6 +777,15 @@
         flex: 1;
         opacity: 0.6;
         transition: all 0.2s ease;
+        resize: none;
+        overflow-y: hidden;
+        min-height: 20px;
+        line-height: 1.4;
+        white-space: pre-wrap;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+        padding: 2px 0;
+        margin: 0;
 
         &::placeholder { color: $fg-desc; opacity: 0.6; }
     }

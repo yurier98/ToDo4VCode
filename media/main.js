@@ -410,6 +410,15 @@ function renderSubtasks(subtasks) {
             list.appendChild(item);
         });
     }
+
+    list.querySelectorAll('.subtask-text-input').forEach((textarea) => {
+        autoResizeSubtaskTextarea(textarea);
+    });
+
+    const newSubtaskInput = document.getElementById('newSubtaskInput');
+    if (newSubtaskInput) {
+        autoResizeSubtaskTextarea(newSubtaskInput);
+    }
 }
 
 function createSubtaskElement(s) {
@@ -417,15 +426,20 @@ function createSubtaskElement(s) {
     item.className = 'subtask-item';
     item.innerHTML = `
         <div class="subtask-checkbox ${s.completed ? 'completed' : ''}" onclick="toggleSubtask('${s.id}')"></div>
-        <input type="text" class="subtask-text-input ${s.completed ? 'completed' : ''}" 
-            value="${s.text}" 
-            onchange="updateSubtaskText('${s.id}', this.value)"
-            onkeydown="if(event.key === 'Enter') this.blur()">
+        <textarea class="subtask-text-input ${s.completed ? 'completed' : ''}" rows="1"
+            oninput="autoResizeSubtaskTextarea(this)"
+            onblur="updateSubtaskText('${s.id}', this.value)">${escapeHtml(asText(s.text))}</textarea>
         <button class="subtask-delete-btn" onclick="deleteSubtask('${s.id}')">
             <i class="codicon codicon-trash"></i>
         </button>
     `;
     return item;
+}
+
+function autoResizeSubtaskTextarea(textarea) {
+    if (!textarea) return;
+    textarea.style.height = 'auto';
+    textarea.style.height = `${textarea.scrollHeight}px`;
 }
 
 function toggleHideCompletedSubtasks() {
@@ -449,7 +463,17 @@ function toggleSubtasksCollapse() {
 
 function focusSubtaskInput() {
     const input = document.getElementById('newSubtaskInput');
-    if (input) input.focus();
+    if (input) {
+        input.focus();
+        autoResizeSubtaskTextarea(input);
+    }
+}
+
+function handleNewSubtaskKeydown(event) {
+    if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        addSubtask();
+    }
 }
 
 function toggleMainTaskCompletion() {
@@ -468,6 +492,7 @@ function addSubtask() {
 
     vscode.postMessage({ type: 'addSubtask', taskId: modalTaskId, text });
     input.value = '';
+    autoResizeSubtaskTextarea(input);
 
     // Optimistic update
     const task = currentTasks.find(t => t.id === modalTaskId);
@@ -2344,6 +2369,8 @@ window.addSubtask = addSubtask;
 window.toggleSubtask = toggleSubtask;
 window.deleteSubtask = deleteSubtask;
 window.updateSubtaskText = updateSubtaskText;
+window.autoResizeSubtaskTextarea = autoResizeSubtaskTextarea;
+window.handleNewSubtaskKeydown = handleNewSubtaskKeydown;
 
 vscode.postMessage({ 
     type: 'ready',
