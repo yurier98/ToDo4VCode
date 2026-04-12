@@ -5,6 +5,47 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-04-12
+
+### Added
+- **Calendar view across sidebar and full screen**:
+  - Compact monthly calendar in sidebar with month navigation and **Today** action
+  - Selected-day highlight and priority indicator dots (MoSCoW colors)
+  - Full-screen planning workflow with drag-and-drop matrix:
+    - `No date -> day`
+    - `day -> day`
+    - `day -> No date`
+- **No-date planning lane in full calendar**:
+  - Collapsible section (expanded by default)
+  - Counter badge and dedicated scrollable list
+  - Drop zone to clear due dates directly by drag-and-drop
+- **Task filtering and tagging enhancements**:
+  - Search and tag filters integrated into task workflows
+  - Improved tag handling for better planning and grouping
+- **Code-aware tasking features**:
+  - Create a task from selected code
+  - Attach selected code to an existing task
+  - Code reference links with support for single lines and ranges
+- **Shared tasks for team workflows via Git**:
+  - Optional workspace-backed task storage in `.todo4vcode/shared-tasks.json`
+  - Automatic sync/refresh behavior for shared task updates
+- **Automatic comment-scan import**:
+  - Import `TODO`, `FIXME`, and `NOTE` comments as tasks from workspace files
+
+### Improved
+- Webview architecture modularization for better maintainability of rendering, interactions, and styles.
+- Import/export flow with better file dialog behavior and logging consistency.
+- Subtask input UX with textarea auto-resize and improved keyboard handling.
+- UI/visual polish:
+  - Flatpickr calendar styling refresh
+  - Icon sizing consistency in list layout
+  - Optimized preview assets using WEBP images
+- Documentation updates for VS Code-compatible editors and full-calendar planning showcase.
+
+### Fixed
+- Selected-day panel now renders from filtered task sources consistently.
+- Build/test reliability improved by cleaning stale `out/` artifacts before TypeScript compile, preventing outdated test files from affecting release validation.
+
 ## [1.2.0] - 2026-01-25
 
 ### Added
