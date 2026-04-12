@@ -1,7 +1,7 @@
 # ToDo4VCode
 
-[![Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/yurierherrera.todo4vcode?style=flat-square)](https://marketplace.visualstudio.com/items?itemName=yurierherrera.todo4vcode)
-[![Installs](https://img.shields.io/visual-studio-marketplace/i/yurierherrera.todo4vcode?style=flat-square)](https://marketplace.visualstudio.com/items?itemName=yurierherrera.todo4vcode)
+[![VS Marketplace Version](https://vsmarketplacebadges.dev/version-short/YurierHerrera.todo4vcode.svg)](https://marketplace.visualstudio.com/items?itemName=YurierHerrera.todo4vcode)
+[![VS Marketplace Downloads](https://vsmarketplacebadges.dev/installs-short/YurierHerrera.todo4vcode.svg)](https://marketplace.visualstudio.com/items?itemName=YurierHerrera.todo4vcode)
 [![Open VSX Version](https://img.shields.io/open-vsx/v/YurierHerrera/todo4vcode?style=flat-square)](https://open-vsx.org/extension/YurierHerrera/todo4vcode)
 [![Open VSX Downloads](https://img.shields.io/open-vsx/dt/YurierHerrera/todo4vcode?style=flat-square)](https://open-vsx.org/extension/YurierHerrera/todo4vcode)
 
