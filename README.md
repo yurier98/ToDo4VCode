@@ -18,20 +18,21 @@ This extension uses the proven MoSCoW technique to help you categorize tasks eff
 
 ## ✨ Key Features
 
-- 🎯 **Impact-Driven Organization**: Categorize tasks by priority to maintain focus.
-- 📁 **Workspace-Specific Lists**: Keep your project tasks isolated and relevant to your current work.
-- 📊 **Multiple Views**: Switch between a clean **List View** and a productive **Kanban Board**, or open tasks in **Full Screen** mode for focused work.
-- 📈 **StatusBar Statistics**: Real-time task statistics displayed in VS Code's status bar with detailed tooltip on hover.
-- ✅ **Subtasks Support**: Break down complex tasks into manageable subtasks with progress tracking.
-- 🧩 **Code-to-Task Linking**: Right-click selected code to create a new task or attach the selection to an existing one.
-- 🔎 **Code Range References**: Store and display single-line or multi-line code ranges in tags (for example, `src/file.ts:10-15`).
-- 🔔 **Smart Reminders**: Integrated VS Code notifications for upcoming deadlines.
-- ⚙️ **Configuration Panel**: Comprehensive settings management with sections for preferences, statistics, notifications, and data management.
-- 🤝 **Shared Tasks for Teams**: Optionally store tasks in a project file (`.todo4vcode/shared-tasks.json`) so they can be versioned with Git.
-- 💾 **Import/Export Data**: Export all workspace data to JSON format (compatible with coding tools and AI agents) or import previously exported data.
-- 🧹 **Data Management**: Clear all tasks with safety confirmation, or backup/restore your entire workspace.
-- 🌓 **Native Integration**: Fully supports VS Code themes and Codicons for a seamless experience.
-- ⚡ **Auto-Activation**: Extension activates automatically when VS Code starts, no manual setup required.
+- 🎯 **Impact-Driven Organization**: Categorize tasks by MoSCoW priority to keep focus on real impact.
+- 📊 **Three Views, One Workflow**: Switch between **List**, **Kanban**, and **Calendar** views.
+- 📅 **Compact Calendar (Sidebar)**: Navigate months quickly, see priority dots per day, and review selected-day tasks in a scrollable panel.
+- 🧲 **Visual Planning in Full Screen**: Drag tasks across the full calendar planning matrix:
+  - `No date -> Day`
+  - `Day -> Day`
+  - `Day -> No date`
+- 🔎 **Advanced Filtering Everywhere**: Search, tags, and hide-completed filters are applied consistently across calendar indicators and task lists.
+- ✅ **Subtasks Support**: Break down complex tasks with completion tracking.
+- 🧩 **Code-to-Task Linking**: Create tasks directly from editor selections with code references.
+- 🔔 **Smart Reminders**: Receive in-editor reminders for due tasks.
+- ⚙️ **Configuration Panel**: Manage behavior, statistics, reminders, and data options.
+- 🤝 **Shared Tasks for Teams**: Optionally store tasks in `.todo4vcode/shared-tasks.json` for Git collaboration.
+- 💾 **Import/Export Data**: Backup or migrate all workspace task data in JSON format.
+- 🌓 **Native VS Code Integration**: Theme-aware UI, Codicons, and lightweight performance.
 
 ## 📊 StatusBar Statistics
 
@@ -50,28 +51,32 @@ The statistics update in real-time as you manage your tasks. You can customize w
 ## 📸 Features in Action
 
 ### 1. Main Interface (Hero Shot)
-The extension integrates perfectly into your VS Code sidebar, providing a clean and professional look.
+Clean sidebar-first workflow inside VS Code with quick task creation and view switching.
 ![ToDo4VCode - Main Interface](./media/preview/preview-1-hero-shot.webp)
 
-### 2. Organized List View
-Manage your tasks with clear priorities and due dates. The UI highlights urgent tasks so you never miss a deadline.
+### 2. Focused List View
+Prioritize and execute tasks with clear status, priority, and due-date signals.
 ![ToDo4VCode - List View](./media/preview/preview-2-list-view.webp)
 
-### 3. Productive Kanban Board
-Visualize your workflow and move tasks between states with our intuitive Kanban board.
+### 3. Kanban Workflow
+Move tasks across states to track delivery progress visually.
 ![ToDo4VCode - Kanban View](./media/preview/preview-3-kanban-view.webp)
 
-### 4. Smart Calendar & Reminders
-Set due dates with a clean, integrated calendar. Get notified when tasks are due.
-![ToDo4VCode - Calendar & Reminders](./media/preview/preview-4-calendar-reminders.webp)
+### 4. Compact Calendar in Sidebar
+Monthly navigation, selected-day highlight, and MoSCoW priority dots in a compact layout.
+![ToDo4VCode - Compact Calendar](./media/preview/preview-4-calendar-reminders.webp)
 
-### 5. Detailed Task Management
-Edit every detail of your tasks, including descriptions and specific priorities, in a focused modal.
+### 5. Full Calendar Planning (Drag & Drop)
+Plan visually by dragging tasks between **No date** and calendar days in full-screen mode.
+![ToDo4VCode - Full Calendar Planning](./media/preview/preview-7-full-calendar-planning.webp)
+
+### 6. Detailed Task Editor
+Edit title, description, subtasks, reminders, and priority in one focused modal.
 ![ToDo4VCode - Task Details](./media/preview/preview-5-modal-details.webp)
 
-### 6. Full Theme Support
-Whether you prefer Dark or Light themes, ToDo4VCode adapts beautifully to your workspace.
-![ToDo4VCode - Light Theme Support](./media/preview/preview-6-light-theme.webp)
+### 7. Theme Compatibility
+Consistent UI in light and dark themes across all views.
+![ToDo4VCode - Theme Support](./media/preview/preview-6-light-theme.webp)
 
 ## 🛠 How to Use
 
