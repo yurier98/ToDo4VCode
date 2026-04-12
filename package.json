@@ -185,7 +185,7 @@
     "scripts": {
         "vscode:prepublish": "npm run compile",
         "compile": "npm run compile:ts && npm run compile:sass",
-        "compile:ts": "tsc -p ./",
+        "compile:ts": "node -e \"require('fs').rmSync('out', { recursive: true, force: true })\" && tsc -p ./",
         "compile:sass": "sass media/styles/main.scss media/styles/main.css --style=compressed",
         "watch": "tsc -watch -p ./ & sass --watch media/styles/main.scss media/styles/main.css",
         "package": "vsce package",
