@@ -2,7 +2,7 @@
     "name": "todo4vcode",
     "displayName": "ToDo4VCode",
     "description": "TODO extension for VS Code: task manager with List, Kanban, and Calendar planning, priorities, due dates, reminders, and code-linked tasks.",
-    "version": "1.3.0",
+    "version": "1.3.1",
     "publisher": "YurierHerrera",
     "author": "Yurier Herrera",
     "license": "MIT",
