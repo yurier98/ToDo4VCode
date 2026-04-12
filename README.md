@@ -52,31 +52,31 @@ The statistics update in real-time as you manage your tasks. You can customize w
 
 ### 1. Main Interface (Hero Shot)
 Clean sidebar-first workflow inside VS Code with quick task creation and view switching.
-![ToDo4VCode - Main Interface](./media/preview/preview-1-hero-shot.webp)
+![ToDo4VCode - Main Interface](./media/preview/preview-1-hero-shot.png)
 
 ### 2. Focused List View
 Prioritize and execute tasks with clear status, priority, and due-date signals.
-![ToDo4VCode - List View](./media/preview/preview-2-list-view.webp)
+![ToDo4VCode - List View](./media/preview/preview-2-list-view.png)
 
 ### 3. Kanban Workflow
 Move tasks across states to track delivery progress visually.
-![ToDo4VCode - Kanban View](./media/preview/preview-3-kanban-view.webp)
+![ToDo4VCode - Kanban View](./media/preview/preview-3-kanban-view.png)
 
 ### 4. Compact Calendar in Sidebar
 Monthly navigation, selected-day highlight, and MoSCoW priority dots in a compact layout.
-![ToDo4VCode - Compact Calendar](./media/preview/preview-4-calendar-reminders.webp)
+![ToDo4VCode - Compact Calendar](./media/preview/preview-4-calendar-reminders.png)
 
 ### 5. Full Calendar Planning (Drag & Drop)
 Plan visually by dragging tasks between **No date** and calendar days in full-screen mode.
-![ToDo4VCode - Full Calendar Planning](./media/preview/preview-7-full-calendar-planning.webp)
+![ToDo4VCode - Full Calendar Planning](./media/preview/preview-7-full-calendar-planning.png)
 
 ### 6. Detailed Task Editor
 Edit title, description, subtasks, reminders, and priority in one focused modal.
-![ToDo4VCode - Task Details](./media/preview/preview-5-modal-details.webp)
+![ToDo4VCode - Task Details](./media/preview/preview-5-modal-details.png)
 
 ### 7. Theme Compatibility
 Consistent UI in light and dark themes across all views.
-![ToDo4VCode - Theme Support](./media/preview/preview-6-light-theme.webp)
+![ToDo4VCode - Theme Support](./media/preview/preview-6-light-theme.png)
 
 ## 🛠 How to Use
 
