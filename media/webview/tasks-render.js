@@ -352,7 +352,7 @@ function render() {
             const kanbanPanel = document.getElementById('kanbanView');
             if (listPanel) listPanel.innerHTML = '';
             if (kanbanPanel) kanbanPanel.innerHTML = '';
-            renderCalendar(tasks, tasksPool);
+            renderCalendar(tasks);
         }
     } catch (error) {
         console.error('Render error, using list fallback', error);

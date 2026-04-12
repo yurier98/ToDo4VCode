@@ -20,6 +20,89 @@
     opacity: 0.92;
 }
 
+.calendar-no-date-section {
+    border: 1px solid color-mix(in srgb, $border-color, transparent 18%);
+    border-radius: $radius-xl;
+    background: color-mix(in srgb, $bg-editor, transparent 6%);
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex-shrink: 0;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.calendar-no-date-section.is-drop-target {
+    border-color: color-mix(in srgb, $focus-border, transparent 24%);
+    background: color-mix(in srgb, var(--vscode-button-background), transparent 90%);
+}
+
+.calendar-no-date-header {
+    width: 100%;
+    border: none;
+    background: transparent;
+    color: $fg-main;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 0;
+    cursor: pointer;
+}
+
+.calendar-no-date-heading {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.74rem;
+    font-weight: 700;
+}
+
+.calendar-no-date-caret {
+    font-size: 0.84rem;
+    opacity: 0.85;
+}
+
+.calendar-no-date-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 18px;
+    border-radius: $radius-pill;
+    padding: 0 6px;
+    font-size: 0.63rem;
+    font-weight: 700;
+    color: $fg-main;
+    background: color-mix(in srgb, $bg-sidebar, transparent 22%);
+}
+
+.calendar-no-date-hint {
+    font-size: 0.62rem;
+    color: $fg-desc;
+    opacity: 0.78;
+}
+
+.calendar-no-date-list {
+    max-height: min(178px, 31vh);
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-right: 2px;
+    scrollbar-width: thin;
+}
+
+.calendar-no-date-empty {
+    font-size: 0.68rem;
+    color: $fg-desc;
+    opacity: 0.8;
+    padding: 6px 2px;
+}
+
 .calendar-empty-state {
     flex: 1;
     min-height: 0;
@@ -86,7 +169,8 @@
     min-height: 8px;
 }
 
-.calendar-selected-row {
+.calendar-selected-row,
+.calendar-no-date-row {
     width: 100%;
     border: none;
     border-radius: $radius-md;
@@ -98,11 +182,26 @@
     text-align: left;
     padding: 7px 8px;
     cursor: pointer;
-    transition: background 0.15s ease;
+    transition: background 0.15s ease, opacity 0.15s ease;
 
     &:hover {
         background: var(--vscode-list-hoverBackground);
     }
+}
+
+.calendar-selected-row.is-draggable,
+.calendar-no-date-row {
+    cursor: grab;
+}
+
+.calendar-selected-row.is-draggable:active,
+.calendar-no-date-row:active {
+    cursor: grabbing;
+}
+
+.calendar-selected-row.is-dragging,
+.calendar-no-date-row.is-dragging {
+    opacity: 0.55;
 }
 
 .calendar-selected-row-accent {
@@ -113,19 +212,23 @@
     flex-shrink: 0;
 }
 
-.calendar-selected-row.priority-must .calendar-selected-row-accent {
+.calendar-selected-row.priority-must .calendar-selected-row-accent,
+.calendar-no-date-row.priority-must .calendar-selected-row-accent {
     background: map.get($priority-colors, 'Must');
 }
 
-.calendar-selected-row.priority-should .calendar-selected-row-accent {
+.calendar-selected-row.priority-should .calendar-selected-row-accent,
+.calendar-no-date-row.priority-should .calendar-selected-row-accent {
     background: map.get($priority-colors, 'Should');
 }
 
-.calendar-selected-row.priority-could .calendar-selected-row-accent {
+.calendar-selected-row.priority-could .calendar-selected-row-accent,
+.calendar-no-date-row.priority-could .calendar-selected-row-accent {
     background: map.get($priority-colors, 'Could');
 }
 
-.calendar-selected-row.priority-wont .calendar-selected-row-accent {
+.calendar-selected-row.priority-wont .calendar-selected-row-accent,
+.calendar-no-date-row.priority-wont .calendar-selected-row-accent {
     background: map.get($priority-colors, 'Wont');
 }
 

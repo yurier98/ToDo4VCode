@@ -10,6 +10,10 @@ const CALENDAR_WEEKDAY_LABELS = Array.from({ length: 7 }, (_, index) => (
 const CALENDAR_TEXT = {
     today: 'Today',
     allDay: 'All day',
+    noDateLabel: 'No date',
+    noDateTitle: 'No date',
+    noDateEmpty: 'No unplanned tasks.',
+    noDateHint: 'Drag tasks here to clear due date.',
     selectDay: 'No day selected',
     noDaySelected: 'No day selected',
     noDaySelectedDescription: 'Select a day in the calendar to see related tasks.',
@@ -18,6 +22,8 @@ const CALENDAR_TEXT = {
     reminderPrefix: 'Reminder',
     todoStatus: 'Todo'
 };
+let calendarNoDateExpanded = true;
+let calendarDraggedTaskId = null;
 
 function formatCalendarMonthTitle(monthDate) {
     return CALENDAR_MONTH_FORMATTER.format(monthDate);
@@ -49,6 +55,153 @@ function selectCalendarDay(dayKey) {
     if (typeof dayKey !== 'string') return;
     selectedDayKey = dayKey;
     persistLocalState();
+    render();
+}
+
+function isFullCalendarView() {
+    return window.viewType === 'full';
+}
+
+function clearCalendarDropTargets() {
+    document.querySelectorAll('.calendar-day-cell.is-drop-target, .calendar-no-date-section.is-drop-target')
+        .forEach((node) => node.classList.remove('is-drop-target'));
+}
+
+function clearCalendarDragState() {
+    calendarDraggedTaskId = null;
+    clearCalendarDropTargets();
+    document.querySelectorAll('.calendar-selected-row.is-dragging, .calendar-no-date-row.is-dragging')
+        .forEach((node) => node.classList.remove('is-dragging'));
+}
+
+function getDraggedCalendarTaskId(event) {
+    const transferId = event?.dataTransfer?.getData('text/plain');
+    if (typeof transferId === 'string' && transferId) return transferId;
+    return calendarDraggedTaskId;
+}
+
+function updateCalendarTaskDueDateLocal(taskId, dueDate) {
+    const safeTaskId = asText(taskId);
+    if (!safeTaskId) return false;
+    const normalizedDueDate = typeof dueDate === 'number' ? dueDate : null;
+    const task = asTaskArray(currentTasks).find((item) => asText(item?.id) === safeTaskId);
+    if (!task) return false;
+
+    const previousDueDate = getTaskDueTimestamp(task);
+    if (previousDueDate === normalizedDueDate || (previousDueDate === null && normalizedDueDate === null)) {
+        return false;
+    }
+
+    task.dueDate = normalizedDueDate;
+    return true;
+}
+
+function onCalendarTaskDragStart(event, taskId) {
+    if (!isFullCalendarView()) return;
+    if (typeof taskId !== 'string' || !taskId) return;
+    calendarDraggedTaskId = taskId;
+    if (event?.dataTransfer) {
+        event.dataTransfer.setData('text/plain', taskId);
+        event.dataTransfer.dropEffect = 'move';
+        event.dataTransfer.effectAllowed = 'move';
+    }
+
+    const dragSource = event?.currentTarget;
+    if (dragSource instanceof HTMLElement) {
+        dragSource.classList.add('is-dragging');
+        if (event?.dataTransfer) {
+            const preview = dragSource.cloneNode(true);
+            const previewTime = preview.querySelector('.calendar-selected-row-time');
+            if (previewTime) previewTime.remove();
+            preview.style.cssText = 'position:fixed;top:-1000px;left:-1000px;pointer-events:none;width:196px;max-width:196px;box-sizing:border-box;opacity:.96;';
+            document.body.appendChild(preview);
+            event.dataTransfer.setDragImage(preview, 14, 14);
+            requestAnimationFrame(() => preview.remove());
+        }
+    }
+}
+
+function onCalendarTaskDragEnd() {
+    clearCalendarDragState();
+}
+
+function onCalendarDayDragOver(event, dayKey) {
+    if (!isFullCalendarView()) return;
+    if (dayKeyToTimestamp(dayKey) === null) return;
+    event.preventDefault();
+    if (event.dataTransfer) {
+        event.dataTransfer.dropEffect = 'move';
+    }
+    clearCalendarDropTargets();
+    const target = event.currentTarget;
+    if (target instanceof HTMLElement) {
+        target.classList.add('is-drop-target');
+    }
+}
+
+function onCalendarDayDragLeave(event) {
+    if (!isFullCalendarView()) return;
+    const target = event.currentTarget;
+    if (!(target instanceof HTMLElement)) return;
+    const related = event.relatedTarget;
+    if (related instanceof Node && target.contains(related)) return;
+    target.classList.remove('is-drop-target');
+}
+
+function onCalendarDayDrop(event, dayKey) {
+    if (!isFullCalendarView()) return;
+    event.preventDefault();
+    const draggedTaskId = getDraggedCalendarTaskId(event);
+    const dueDate = dayKeyToTimestamp(dayKey);
+    clearCalendarDragState();
+    if (!draggedTaskId || dueDate === null) return;
+
+    selectedDayKey = dayKey;
+    persistLocalState();
+    if (updateCalendarTaskDueDateLocal(draggedTaskId, dueDate)) {
+        vscode.postMessage({ type: 'updateDueDate', id: draggedTaskId, dueDate });
+    }
+    render();
+}
+
+function onCalendarNoDateDragOver(event) {
+    if (!isFullCalendarView()) return;
+    event.preventDefault();
+    if (event.dataTransfer) {
+        event.dataTransfer.dropEffect = 'move';
+    }
+    clearCalendarDropTargets();
+    const target = event.currentTarget;
+    if (target instanceof HTMLElement) {
+        target.classList.add('is-drop-target');
+    }
+}
+
+function onCalendarNoDateDragLeave(event) {
+    if (!isFullCalendarView()) return;
+    const target = event.currentTarget;
+    if (!(target instanceof HTMLElement)) return;
+    const related = event.relatedTarget;
+    if (related instanceof Node && target.contains(related)) return;
+    target.classList.remove('is-drop-target');
+}
+
+function onCalendarNoDateDrop(event) {
+    if (!isFullCalendarView()) return;
+    event.preventDefault();
+    const draggedTaskId = getDraggedCalendarTaskId(event);
+    clearCalendarDragState();
+    if (!draggedTaskId) return;
+
+    if (updateCalendarTaskDueDateLocal(draggedTaskId, null)) {
+        vscode.postMessage({ type: 'updateDueDate', id: draggedTaskId, dueDate: null });
+    }
+    render();
+}
+
+function toggleCalendarNoDateSection() {
+    if (!isFullCalendarView()) return;
+    calendarNoDateExpanded = !calendarNoDateExpanded;
     render();
 }
 
@@ -136,10 +289,74 @@ function formatTaskTime(task) {
     return CALENDAR_TEXT.allDay;
 }
 
+function formatNoDateTaskTime(task) {
+    const reminders = getTaskReminders(task);
+    if (reminders.length > 0) {
+        const reminderDate = new Date(reminders[0]);
+        if (!Number.isNaN(reminderDate.getTime())) {
+            return CALENDAR_TIME_FORMATTER.format(reminderDate);
+        }
+    }
+    return CALENDAR_TEXT.noDateLabel;
+}
+
 function getSelectedDayTasks(tasksByDay) {
     if (!selectedDayKey) return [];
     const selectedTasks = tasksByDay.get(selectedDayKey) || [];
     return sortTasks(selectedTasks);
+}
+
+function renderNoDateTasksSection(noDateTasks) {
+    if (!isFullCalendarView()) return '';
+    const safeTasks = sortTasks(noDateTasks);
+    const sectionStateClass = calendarNoDateExpanded ? 'is-expanded' : 'is-collapsed';
+    const count = safeTasks.length;
+    const caretIcon = calendarNoDateExpanded ? 'codicon-chevron-down' : 'codicon-chevron-right';
+
+    const contentHtml = count === 0
+        ? `<div class="calendar-no-date-empty">${CALENDAR_TEXT.noDateEmpty}</div>`
+        : safeTasks.map((task) => {
+            const taskId = asText(task?.id);
+            const taskTitle = escapeHtml(asText(task?.text) || 'Untitled task');
+            const metaText = escapeHtml(formatTaskMeta(task));
+            const timeText = escapeHtml(formatNoDateTaskTime(task));
+            const priorityKey = normalizeCalendarPriority(task?.priority).toLowerCase();
+            return `
+                <button class="calendar-no-date-row priority-${priorityKey}"
+                    draggable="true"
+                    ondragstart="onCalendarTaskDragStart(event, '${taskId}')"
+                    ondragend="onCalendarTaskDragEnd()"
+                    onclick="openTaskModal('${taskId}')">
+                    <span class="calendar-selected-row-accent"></span>
+                    <span class="calendar-selected-row-content">
+                        <span class="calendar-selected-row-title">${taskTitle}</span>
+                        <span class="calendar-selected-row-meta">${metaText}</span>
+                    </span>
+                    <span class="calendar-selected-row-time">${timeText}</span>
+                </button>
+            `;
+        }).join('');
+
+    return `
+        <section class="calendar-no-date-section ${sectionStateClass}"
+            ondragover="onCalendarNoDateDragOver(event)"
+            ondragleave="onCalendarNoDateDragLeave(event)"
+            ondrop="onCalendarNoDateDrop(event)">
+            <button class="calendar-no-date-header" onclick="toggleCalendarNoDateSection()">
+                <span class="calendar-no-date-heading">
+                    <i class="codicon ${caretIcon} calendar-no-date-caret"></i>
+                    <span>${CALENDAR_TEXT.noDateTitle}</span>
+                </span>
+                <span class="calendar-no-date-count">${count}</span>
+            </button>
+            ${calendarNoDateExpanded ? `
+                <div class="calendar-no-date-hint">${CALENDAR_TEXT.noDateHint}</div>
+                <div class="calendar-no-date-list">
+                    ${contentHtml}
+                </div>
+            ` : ''}
+        </section>
+    `;
 }
 
 function renderSelectedDayTaskList(tasksByDay) {
@@ -172,9 +389,13 @@ function renderSelectedDayTaskList(tasksByDay) {
             const metaText = escapeHtml(formatTaskMeta(task));
             const timeText = escapeHtml(formatTaskTime(task));
             const priorityKey = normalizeCalendarPriority(task?.priority).toLowerCase();
+            const dragAttrs = isFullCalendarView()
+                ? `draggable="true" ondragstart="onCalendarTaskDragStart(event, '${taskId}')" ondragend="onCalendarTaskDragEnd()"`
+                : '';
+            const dragClass = isFullCalendarView() ? 'is-draggable' : '';
 
             return `
-                <button class="calendar-selected-row priority-${priorityKey}" onclick="openTaskModal('${taskId}')">
+                <button class="calendar-selected-row priority-${priorityKey} ${dragClass}" ${dragAttrs} onclick="openTaskModal('${taskId}')">
                     <span class="calendar-selected-row-accent"></span>
                     <span class="calendar-selected-row-content">
                         <span class="calendar-selected-row-title">${taskTitle}</span>
@@ -192,7 +413,7 @@ function renderSelectedDayTaskList(tasksByDay) {
     `;
 }
 
-function renderCalendar(tasks, selectedDayTasksSource = tasks) {
+function renderCalendar(tasks) {
     const container = document.getElementById('calendarContent');
     if (!container) return;
 
@@ -202,26 +423,24 @@ function renderCalendar(tasks, selectedDayTasksSource = tasks) {
     gridStart.setDate(monthStart.getDate() - monthStart.getDay());
 
     const tasksByDay = new Map();
+    const noDateTasks = [];
     for (const task of asTaskArray(tasks)) {
         const dayKey = getTaskDueDayKey(task);
-        if (!dayKey) continue;
+        if (!dayKey) {
+            noDateTasks.push(task);
+            continue;
+        }
         const existing = tasksByDay.get(dayKey) || [];
         existing.push(task);
         tasksByDay.set(dayKey, existing);
     }
 
-    const selectedDayTasksByDay = new Map();
-    for (const task of asTaskArray(selectedDayTasksSource)) {
-        const dayKey = getTaskDueDayKey(task);
-        if (!dayKey) continue;
-        const existing = selectedDayTasksByDay.get(dayKey) || [];
-        existing.push(task);
-        selectedDayTasksByDay.set(dayKey, existing);
-    }
-
     const todayKey = toDayKey(new Date());
     const monthLabel = formatCalendarMonthTitle(monthDate);
     const weekdayHeaders = CALENDAR_WEEKDAY_LABELS.map((label) => `<span class="calendar-weekday-label">${label}</span>`).join('');
+    const dayDropAttrsTemplate = isFullCalendarView()
+        ? `ondragover="onCalendarDayDragOver(event, '__DAY_KEY__')" ondragleave="onCalendarDayDragLeave(event)" ondrop="onCalendarDayDrop(event, '__DAY_KEY__')"`
+        : '';
 
     let cellsHtml = '';
     for (let dayIndex = 0; dayIndex < 42; dayIndex += 1) {
@@ -238,9 +457,10 @@ function renderCalendar(tasks, selectedDayTasksSource = tasks) {
             isToday ? 'is-today' : '',
             isSelected ? 'is-selected' : ''
         ].join(' ');
+        const dayDropAttrs = dayDropAttrsTemplate.replaceAll('__DAY_KEY__', dayKey);
 
         cellsHtml += `
-            <button class="calendar-day-cell ${stateClass}" onclick="selectCalendarDay('${dayKey}')">
+            <button class="calendar-day-cell ${stateClass}" onclick="selectCalendarDay('${dayKey}')" ${dayDropAttrs}>
                 <span class="calendar-day-number">${dayDate.getDate()}</span>
                 ${renderCalendarDayIndicators(dayTasks)}
             </button>
@@ -266,8 +486,10 @@ function renderCalendar(tasks, selectedDayTasksSource = tasks) {
             <div class="calendar-day-grid">${cellsHtml}</div>
         </section>
 
+        ${renderNoDateTasksSection(noDateTasks)}
+
         <section class="calendar-selected-panel">
-            ${renderSelectedDayTaskList(selectedDayTasksByDay)}
+            ${renderSelectedDayTaskList(tasksByDay)}
         </section>
     `;
 }
