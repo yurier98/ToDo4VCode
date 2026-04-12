@@ -6,7 +6,7 @@
 
 .flatpickr-calendar {
     @include glass-panel; // Usamos el mixin definido en _variables.scss
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3) !important;
+    box-shadow: 0 14px 34px rgba(2, 6, 23, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.22) !important;
     color: var(--vscode-foreground) !important;
     z-index: 9999 !important;
     width: 280px !important;
@@ -23,6 +23,13 @@
     &.arrowTop:after, &.arrowTop:before {
         border-bottom-color: var(--vscode-panel-border) !important;
     }
+}
+
+body.vscode-light .flatpickr-calendar,
+body[data-vscode-theme-kind='vscode-light'] .flatpickr-calendar,
+body[data-vscode-theme-kind='vscode-high-contrast-light'] .flatpickr-calendar {
+    border-color: color-mix(in srgb, var(--vscode-panel-border), transparent 20%) !important;
+    box-shadow: 0 12px 24px rgba(15, 23, 42, 0.13), inset 0 1px 0 rgba(255, 255, 255, 0.7) !important;
 }
 
 .flatpickr-months {

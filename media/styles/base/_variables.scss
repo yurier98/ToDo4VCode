@@ -21,9 +21,9 @@ $color-success: #29b240;
 
 // 2. Configuración de Efectos (Glassmorphism & Shadows)
 // --------------------------------------------------------------------------
-$blur-value: blur(50px);
+$blur-value: var(--bg-blur, blur(48px));
 $glass-border: rgba(255, 255, 255, 0.1);
-$glass-bg-opacity: 30%; // 30% transparente = 70% opaco para que se vea sólido pero con blur
+$glass-bg-opacity: 70%; // Más claro: menor opacidad del panel manteniendo el blur
 
 $shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05);
 $shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
@@ -61,9 +61,11 @@ $priority-colors: (
 
 // Para aplicar el efecto Glassmorphism de tus popovers y flatpickr
 @mixin glass-panel {
-    background: color-mix(in srgb, #{$bg-menu}, transparent #{$glass-bg-opacity}) !important;
-    backdrop-filter: $blur-value saturate(190%) contrast(105%) brightness(1.1) !important;
-    -webkit-backdrop-filter: $blur-value saturate(190%) contrast(105%) brightness(1.1) !important;
+    // Fallback para motores sin soporte completo de color-mix
+    background: rgba(var(--glass-fallback-rgb, 40, 46, 56), var(--glass-fallback-alpha, 0.28)) !important;
+    background: color-mix(in srgb, #{$bg-menu}, transparent var(--glass-mix-transparency, #{$glass-bg-opacity})) !important;
+    backdrop-filter: #{$blur-value} saturate(var(--glass-saturation, 180%)) contrast(var(--glass-contrast, 102%)) brightness(var(--glass-brightness, 1.2)) !important;
+    -webkit-backdrop-filter: #{$blur-value} saturate(var(--glass-saturation, 180%)) contrast(var(--glass-contrast, 102%)) brightness(var(--glass-brightness, 1.2)) !important;
     border: 1px solid var(--vscode-menu-border);
 }
 

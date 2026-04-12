@@ -5,9 +5,27 @@
 @use 'variables' as *;
 
 :root {
-    --bg-blur: blur(20px);
+    --bg-blur: blur(62px);
     --glass-border: rgba(255, 255, 255, 0.1);
+    --glass-mix-transparency: 82%;
+    --glass-fallback-rgb: 40, 46, 56;
+    --glass-fallback-alpha: 0.18;
+    --glass-saturation: 175%;
+    --glass-contrast: 100%;
+    --glass-brightness: 1.16;
     --accent-color: #007AFF;
+}
+
+body.vscode-light,
+body[data-vscode-theme-kind='vscode-light'],
+body[data-vscode-theme-kind='vscode-high-contrast-light'] {
+    --bg-blur: blur(62px);
+    --glass-mix-transparency: 74%;
+    --glass-fallback-rgb: 255, 255, 255;
+    --glass-fallback-alpha: 0.34;
+    --glass-saturation: 115%;
+    --glass-contrast: 96%;
+    --glass-brightness: 1.06;
 }
 
 * {

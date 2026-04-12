@@ -15,7 +15,7 @@
     min-width: 180px;
     display: none;
     flex-direction: column;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 12px 30px rgba(2, 6, 23, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.22);
     animation: popInDown 0.15s ease-out;
 
     &.show {
@@ -51,12 +51,45 @@
     }
 }
 
+body.vscode-light,
+body[data-vscode-theme-kind='vscode-light'],
+body[data-vscode-theme-kind='vscode-high-contrast-light'] {
+    .popover,
+    .ctx-menu,
+    .premium-popover {
+        border-color: color-mix(in srgb, var(--vscode-panel-border), transparent 22%) !important;
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.72);
+    }
+
+    .view-mode-selector {
+        background: color-mix(in srgb, $bg-menu, transparent 72%);
+        border: 1px solid color-mix(in srgb, $border-color, transparent 46%);
+    }
+
+    .popover-search-box,
+    .popover-tags-editor {
+        background: color-mix(in srgb, $bg-menu, transparent 74%);
+        border-color: color-mix(in srgb, $border-color, transparent 34%);
+    }
+
+    .tag-filter-chip {
+        background: color-mix(in srgb, $bg-menu, transparent 78%);
+        border-color: color-mix(in srgb, $border-color, transparent 36%);
+    }
+
+    .view-mode-btn.active {
+        border-color: color-mix(in srgb, $focus-border, transparent 56%);
+        box-shadow: inset 0 0 0 1px color-mix(in srgb, $focus-border, transparent 64%);
+    }
+}
+
 // View Mode Selector in Popover
 .view-mode-selector {
     display: flex;
     gap: 4px;
     padding: 3px;
-    background: $bg-editor;
+    background: color-mix(in srgb, $bg-menu, transparent 82%);
+    border: 1px solid color-mix(in srgb, $border-color, transparent 62%);
     border-radius: $radius-lg;
     margin: 4px 8px 12px;
 }
@@ -91,10 +124,10 @@
     }
 
     &.active {
-        background: var(--vscode-welcomePage-tileBackground);
+        background: color-mix(in srgb, var(--vscode-welcomePage-tileBackground), transparent 12%);
         opacity: 1;
-        box-shadow: $shadow-md;
-        border: 0.5px solid $border-color;
+        border: 0.8px solid color-mix(in srgb, $focus-border, transparent 72%);
+        box-shadow: inset 0 0 0 1px color-mix(in srgb, $focus-border, transparent 78%);
     }
 
     &.disabled {
@@ -193,7 +226,7 @@
     margin: 4px 8px 8px;
     padding: 6px 8px;
     border-radius: $radius-md;
-    background: color-mix(in srgb, $bg-editor, transparent 20%);
+    background: color-mix(in srgb, $bg-menu, transparent 78%);
     border: 1px solid color-mix(in srgb, $border-color, transparent 30%);
 
     i {
@@ -242,7 +275,7 @@
     align-items: center;
     gap: 4px;
     border: 1px solid color-mix(in srgb, $border-color, transparent 20%);
-    background: color-mix(in srgb, $bg-editor, transparent 35%);
+    background: color-mix(in srgb, $bg-menu, transparent 84%);
     color: $fg-main;
     border-radius: $radius-pill;
     padding: 3px 8px;
@@ -280,7 +313,7 @@
     margin: 4px 8px 8px;
     padding: 6px 8px;
     border-radius: $radius-md;
-    background: color-mix(in srgb, $bg-editor, transparent 20%);
+    background: color-mix(in srgb, $bg-menu, transparent 78%);
     border: 1px solid color-mix(in srgb, $border-color, transparent 30%);
 
     i {
