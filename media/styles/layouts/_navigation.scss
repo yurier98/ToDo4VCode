@@ -108,6 +108,12 @@
     }
 }
 
+body.is-calendar-view {
+    .input-sticky-container {
+        margin-bottom: -26px;
+    }
+}
+
 /* --- Scroll Area --- */
 #scroll-container {
     flex: 1;
@@ -116,4 +122,8 @@
     min-height: 0; // Importante para flexbox y scroll
     overflow-y: auto; // El scroll debe estar aquí
     overflow-x: hidden;
+
+    &.calendar-scroll-locked {
+        overflow-y: hidden;
+    }
 }

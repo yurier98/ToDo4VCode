@@ -7,6 +7,28 @@ export class TaskWebview {
     public static getHtml(webview: vscode.Webview, extensionUri: vscode.Uri, tasks: TodoItem[], viewType: 'sidebar' | 'full'): string {
         const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, MEDIA_PATHS.STYLES_MAIN_CSS));
         const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, MEDIA_PATHS.SCRIPT_MAIN_JS));
+        const webviewStateScriptUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, MEDIA_PATHS.SCRIPT_WEBVIEW_STATE_JS));
+        const webviewModalScriptUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, MEDIA_PATHS.SCRIPT_WEBVIEW_MODAL_JS));
+        const webviewControlsPopoversScriptUri = webview.asWebviewUri(
+            vscode.Uri.joinPath(extensionUri, MEDIA_PATHS.SCRIPT_WEBVIEW_CONTROLS_POPOVERS_JS)
+        );
+        const webviewControlsDatetimeScriptUri = webview.asWebviewUri(
+            vscode.Uri.joinPath(extensionUri, MEDIA_PATHS.SCRIPT_WEBVIEW_CONTROLS_DATETIME_JS)
+        );
+        const webviewControlsInputScriptUri = webview.asWebviewUri(
+            vscode.Uri.joinPath(extensionUri, MEDIA_PATHS.SCRIPT_WEBVIEW_CONTROLS_INPUT_JS)
+        );
+        const webviewFiltersScriptUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, MEDIA_PATHS.SCRIPT_WEBVIEW_FILTERS_JS));
+        const webviewTasksDndScriptUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, MEDIA_PATHS.SCRIPT_WEBVIEW_TASKS_DND_JS));
+        const webviewTasksControlsScriptUri = webview.asWebviewUri(
+            vscode.Uri.joinPath(extensionUri, MEDIA_PATHS.SCRIPT_WEBVIEW_TASKS_CONTROLS_JS)
+        );
+        const webviewTasksRenderScriptUri = webview.asWebviewUri(
+            vscode.Uri.joinPath(extensionUri, MEDIA_PATHS.SCRIPT_WEBVIEW_TASKS_RENDER_JS)
+        );
+        const webviewCalendarScriptUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, MEDIA_PATHS.SCRIPT_WEBVIEW_CALENDAR_JS));
+        const webviewUiShellScriptUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, MEDIA_PATHS.SCRIPT_WEBVIEW_UI_SHELL_JS));
+        const webviewBridgeScriptUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, MEDIA_PATHS.SCRIPT_WEBVIEW_BRIDGE_JS));
         const flatpickrCssUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, MEDIA_PATHS.FLATPICKR_CSS));
         const flatpickrDarkCssUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, MEDIA_PATHS.FLATPICKR_DARK_CSS));
         const flatpickrJsUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, MEDIA_PATHS.FLATPICKR_JS));
@@ -49,7 +71,7 @@ export class TaskWebview {
                                                 <i class="codicon codicon-layout"></i>
                                                 <span>${UI.BOARD}</span>
                                             </div>
-                                            <div class="view-mode-btn disabled" title="${UI.COMING_SOON}">
+                                            <div class="view-mode-btn" id="popoverBtnCalendar" onclick="setViewMode('calendar')">
                                                 <i class="codicon codicon-calendar"></i>
                                                 <span>${UI.CALENDAR}</span>
                                             </div>
@@ -174,6 +196,9 @@ export class TaskWebview {
                             <div id="listTasks" class="task-list"></div>
                         </div>
                         <div id="kanbanView" class="board-container view-panel hidden"></div>
+                        <div id="calendarView" class="view-panel hidden">
+                            <div id="calendarContent" class="calendar-shell"></div>
+                        </div>
                     </div>
                 </div>
 
@@ -433,6 +458,18 @@ export class TaskWebview {
 
                 <script src="${flatpickrJsUri}"></script>
                 <script src="${scriptUri}"></script>
+                <script src="${webviewStateScriptUri}"></script>
+                <script src="${webviewModalScriptUri}"></script>
+                <script src="${webviewControlsPopoversScriptUri}"></script>
+                <script src="${webviewControlsDatetimeScriptUri}"></script>
+                <script src="${webviewControlsInputScriptUri}"></script>
+                <script src="${webviewFiltersScriptUri}"></script>
+                <script src="${webviewTasksDndScriptUri}"></script>
+                <script src="${webviewTasksControlsScriptUri}"></script>
+                <script src="${webviewTasksRenderScriptUri}"></script>
+                <script src="${webviewCalendarScriptUri}"></script>
+                <script src="${webviewUiShellScriptUri}"></script>
+                <script src="${webviewBridgeScriptUri}"></script>
             </body>
             </html>`;
     }

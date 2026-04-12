@@ -1,0 +1,36 @@
+@use 'sass:map';
+@use '../../base/variables' as *;
+
+.calendar-priority-dots {
+    min-height: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+
+    &.empty {
+        opacity: 0;
+    }
+}
+
+.calendar-priority-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: $radius-circle;
+}
+
+.calendar-priority-dot.priority-must {
+    background: map.get($priority-colors, 'Must');
+}
+
+.calendar-priority-dot.priority-should {
+    background: map.get($priority-colors, 'Should');
+}
+
+.calendar-priority-dot.priority-could {
+    background: map.get($priority-colors, 'Could');
+}
+
+.calendar-priority-dot.priority-wont {
+    background: map.get($priority-colors, 'Wont');
+}

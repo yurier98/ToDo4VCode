@@ -8,6 +8,7 @@
 @use 'layouts/navigation' as *;
 @use 'layouts/kanban' as *;
 @use 'layouts/list' as *;
+@use 'layouts/calendar' as *;
 
 // 3. Componentes
 @use 'components/buttons' as *;

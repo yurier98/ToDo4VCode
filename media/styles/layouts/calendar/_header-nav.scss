@@ -1,0 +1,86 @@
+@use '../../base/variables' as *;
+
+.calendar-shell {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+    gap: 8px;
+    flex: 1;
+    min-height: 0;
+}
+
+#calendarView {
+    min-height: 0;
+    height: 100%;
+    overflow: hidden;
+    box-sizing: border-box;
+    padding-top: 0px;
+    padding-bottom: 24px;
+}
+
+.calendar-compact {
+    border: 1px solid color-mix(in srgb, $border-color, transparent 18%);
+    border-radius: $radius-2xl;
+    background: color-mix(in srgb, $bg-editor, transparent 6%);
+    padding: 8px 8px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.calendar-compact-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.calendar-nav-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.calendar-nav-button,
+.calendar-today-button {
+    border: 1px solid color-mix(in srgb, $border-color, transparent 10%);
+    border-radius: $radius-pill;
+    background: color-mix(in srgb, $bg-sidebar, transparent 20%);
+    color: $fg-main;
+    font-size: 0.7rem;
+    font-weight: 600;
+    line-height: 1;
+    min-height: 26px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+
+    &:hover {
+        background: var(--vscode-list-hoverBackground);
+        border-color: color-mix(in srgb, $focus-border, transparent 38%);
+    }
+}
+
+.calendar-nav-button {
+    width: 28px;
+    padding: 0;
+
+    i {
+        font-size: 1rem;
+    }
+}
+
+.calendar-today-button {
+    padding: 0 10px;
+}
+
+.calendar-month-title {
+    margin: 0;
+    font-size: 0.86rem;
+    font-weight: 700;
+    letter-spacing: 0.15px;
+    opacity: 0.95;
+}

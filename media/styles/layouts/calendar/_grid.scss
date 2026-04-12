@@ -1,0 +1,76 @@
+@use '../../base/variables' as *;
+
+.calendar-weekday-row {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 4px;
+}
+
+.calendar-weekday-label {
+    text-align: center;
+    text-transform: uppercase;
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 0.45px;
+    color: $fg-desc;
+    opacity: 0.82;
+    padding: 2px 0;
+}
+
+.calendar-day-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 3px;
+}
+
+.calendar-day-cell {
+    border: none;
+    background: transparent;
+    border-radius: $radius-lg;
+    min-height: 36px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 3px;
+    padding: 4px 1px;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.12s ease;
+
+    &:hover {
+        background: color-mix(in srgb, $bg-sidebar, transparent 14%);
+    }
+
+    &:active {
+        transform: scale(0.98);
+    }
+
+    &.is-other-month {
+        opacity: 0.38;
+    }
+
+    &.is-current-month {
+        opacity: 0.95;
+    }
+}
+
+.calendar-day-number {
+    width: 24px;
+    height: 24px;
+    border-radius: $radius-circle;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: $fg-main;
+}
+
+.calendar-day-cell.is-today:not(.is-selected) .calendar-day-number {
+    border: 1px solid color-mix(in srgb, $focus-border, transparent 20%);
+}
+
+.calendar-day-cell.is-selected .calendar-day-number {
+    background: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+}

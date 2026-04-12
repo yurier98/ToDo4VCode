@@ -79,13 +79,14 @@
 
     i { font-size: 1.1rem; }
     span { 
-        font-size: 0.7rem; 
+        font-size: 0.62rem;
+        line-height: 1.05;
         font-weight: 500;
         white-space: nowrap;
     }
 
     &:hover {
-        background: var(--vscode-welcomePage-tileHoverBackground);
+        background: var(--vscode-list-hoverBackground);
         opacity: 0.8;
     }
 

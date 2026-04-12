@@ -1,7 +1,7 @@
 import { Priority } from './task';
 
 export interface ViewSettings {
-    viewMode: 'list' | 'kanban';
+    viewMode: 'list' | 'kanban' | 'calendar';
     groupBy: 'status' | 'priority' | 'none';
     hideCompleted: boolean;
     sortBy: 'custom' | 'priority' | 'dueDate' | 'title';
