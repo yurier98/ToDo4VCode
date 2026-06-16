@@ -84,3 +84,43 @@ test('TaskService.updateTags deduplicates tags case-insensitively', async () => 
     taskService.dispose();
     storageManager.dispose();
 });
+
+test('TaskService.reorderSubtasks reorders pending subtasks without moving completed subtasks', async () => {
+    const mockVscode = vscode as unknown as { resetMockConfiguration?: () => void };
+    mockVscode.resetMockConfiguration?.();
+
+    const { taskService, storageManager } = createTaskServiceFixture();
+
+    await taskService.saveTasks([
+        {
+            id: 'task-1',
+            text: 'Parent task',
+            priority: 'Should',
+            status: 'Todo',
+            completed: false,
+            createdAt: 1,
+            order: 1000,
+            subtasks: [
+                { id: 'pending-1', text: 'Pending 1', completed: false },
+                { id: 'completed-1', text: 'Completed 1', completed: true },
+                { id: 'pending-2', text: 'Pending 2', completed: false },
+                { id: 'completed-2', text: 'Completed 2', completed: true },
+                { id: 'pending-3', text: 'Pending 3', completed: false }
+            ]
+        }
+    ]);
+
+    await taskService.reorderSubtasks('task-1', ['pending-3', 'pending-1', 'pending-2']);
+
+    const tasks = await taskService.getTasks();
+    const updatedTask = tasks.find((task) => task.id === 'task-1');
+
+    assert.ok(updatedTask);
+    assert.deepEqual(
+        updatedTask?.subtasks?.map((subtask) => subtask.id),
+        ['pending-3', 'completed-1', 'pending-1', 'completed-2', 'pending-2']
+    );
+
+    taskService.dispose();
+    storageManager.dispose();
+});

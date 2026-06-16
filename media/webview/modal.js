@@ -1,3 +1,7 @@
+let draggedSubtaskId = null;
+let draggedSubtaskCompletedState = null;
+let subtaskDragCleanupTimer = null;
+
 function openTaskModal(taskId) {
     const task = currentTasks.find(t => t.id === taskId);
     if (!task) return;
@@ -72,6 +76,8 @@ function renderSubtasks(subtasks) {
     if (!list) return;
 
     list.innerHTML = '';
+    list.ondragover = handleSubtaskDragOver;
+    list.ondrop = handleSubtaskDrop;
     
     const completedCount = subtasks.length > 0 ? subtasks.filter(s => s.completed).length : 0;
     if (progress) progress.innerText = `${completedCount}/${subtasks.length}`;
@@ -119,7 +125,14 @@ function renderSubtasks(subtasks) {
 function createSubtaskElement(s) {
     const item = document.createElement('div');
     item.className = 'subtask-item';
+    item.draggable = false;
+    item.dataset.subtaskId = s.id;
+    item.dataset.completed = s.completed ? 'true' : 'false';
+    item.addEventListener('dragend', scheduleSubtaskDragCleanup);
     item.innerHTML = `
+        <div class="subtask-drag-handle" draggable="true" title="Drag to reorder" aria-label="Drag to reorder">
+            <i class="codicon codicon-gripper"></i>
+        </div>
         <div class="subtask-checkbox ${s.completed ? 'completed' : ''}" onclick="toggleSubtask('${s.id}')"></div>
         <textarea class="subtask-text-input ${s.completed ? 'completed' : ''}" rows="1"
             oninput="autoResizeSubtaskTextarea(this)"
@@ -128,7 +141,244 @@ function createSubtaskElement(s) {
             <i class="codicon codicon-trash"></i>
         </button>
     `;
+
+    const dragHandle = item.querySelector('.subtask-drag-handle');
+    if (dragHandle) {
+        dragHandle.addEventListener('dragstart', (event) => handleSubtaskDragStart(event, s.id, Boolean(s.completed)));
+        dragHandle.addEventListener('dragend', scheduleSubtaskDragCleanup);
+    }
+
     return item;
+}
+
+function cleanupSubtaskDragState() {
+    if (subtaskDragCleanupTimer) {
+        clearTimeout(subtaskDragCleanupTimer);
+        subtaskDragCleanupTimer = null;
+    }
+    document.querySelectorAll('.subtask-drag-preview').forEach((preview) => preview.remove());
+    document.querySelectorAll('.subtask-drag-indicator').forEach((indicator) => indicator.remove());
+    document.querySelectorAll('.subtask-item.is-dragging').forEach((item) => {
+        item.classList.remove('is-dragging');
+        item.removeAttribute('aria-grabbed');
+    });
+    document.getElementById('subtaskList')?.classList.remove('is-subtask-dragging');
+    draggedSubtaskId = null;
+    draggedSubtaskCompletedState = null;
+}
+
+function scheduleSubtaskDragCleanup() {
+    if (subtaskDragCleanupTimer) {
+        clearTimeout(subtaskDragCleanupTimer);
+    }
+
+    subtaskDragCleanupTimer = setTimeout(() => {
+        subtaskDragCleanupTimer = null;
+        cleanupSubtaskDragState();
+    }, 0);
+}
+
+function handleSubtaskDragStart(event, subtaskId, completed) {
+    const item = event.target.closest('.subtask-item');
+
+    if (!item) {
+        event.preventDefault();
+        return;
+    }
+
+    draggedSubtaskId = subtaskId;
+    draggedSubtaskCompletedState = completed ? 'true' : 'false';
+    if (subtaskDragCleanupTimer) {
+        clearTimeout(subtaskDragCleanupTimer);
+        subtaskDragCleanupTimer = null;
+    }
+    item.classList.add('is-dragging');
+    item.setAttribute('aria-grabbed', 'true');
+    document.getElementById('subtaskList')?.classList.add('is-subtask-dragging');
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', `subtask:${subtaskId}`);
+
+    const dragPreview = createSubtaskDragPreview(item);
+    event.dataTransfer.setDragImage(dragPreview, 18, 12);
+}
+
+function createSubtaskDragPreview(item) {
+    const dragPreview = document.createElement('div');
+    const itemBox = item.getBoundingClientRect();
+    const previewWidth = Math.min(Math.max(itemBox.width * 0.72, 260), 460);
+    dragPreview.classList.add('subtask-drag-preview');
+    dragPreview.style.width = `${previewWidth}px`;
+
+    const isCompleted = item.dataset.completed === 'true';
+    const subtaskText = item.querySelector('.subtask-text-input')?.value || '';
+    dragPreview.innerHTML = `
+        <div class="subtask-preview-handle">
+            <i class="codicon codicon-gripper"></i>
+        </div>
+        <div class="subtask-preview-checkbox ${isCompleted ? 'completed' : ''}"></div>
+        <div class="subtask-preview-text ${isCompleted ? 'completed' : ''}">
+            ${escapeHtml(asText(subtaskText))}
+        </div>
+    `;
+
+    document.body.appendChild(dragPreview);
+    return dragPreview;
+}
+
+function handleSubtaskDragOver(event) {
+    if (!draggedSubtaskId || draggedSubtaskCompletedState === null) return;
+
+    const list = document.getElementById('subtaskList');
+    if (!list) return;
+
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+
+    let indicator = document.querySelector('.subtask-drag-indicator');
+    if (!indicator) {
+        indicator = document.createElement('div');
+        indicator.className = 'subtask-drag-indicator';
+    }
+
+    const afterElement = getSubtaskDragAfterElement(list, event.clientY, draggedSubtaskCompletedState);
+    if (afterElement) {
+        if (afterElement.previousElementSibling !== indicator) {
+            afterElement.before(indicator);
+        }
+        return;
+    }
+
+    const addSubtaskContainer = document.querySelector('.add-subtask-minimal');
+    if (draggedSubtaskCompletedState === 'false' && addSubtaskContainer) {
+        if (addSubtaskContainer.previousElementSibling !== indicator) {
+            addSubtaskContainer.before(indicator);
+        }
+        return;
+    }
+
+    if (list.lastElementChild !== indicator) {
+        list.appendChild(indicator);
+    }
+}
+
+function getSubtaskDragAfterElement(container, pointerY, completedState) {
+    const items = Array.from(container.querySelectorAll(`.subtask-item[data-completed="${completedState}"]`))
+        .filter((item) => !item.classList.contains('is-dragging'));
+
+    let afterElement = null;
+    let minDistance = Number.POSITIVE_INFINITY;
+
+    for (const item of items) {
+        const box = item.getBoundingClientRect();
+        const offset = pointerY - (box.top + box.height / 2);
+        if (offset < 0 && -offset < minDistance) {
+            minDistance = -offset;
+            afterElement = item;
+        }
+    }
+
+    return afterElement;
+}
+
+function handleSubtaskDrop(event) {
+    if (!modalTaskId) {
+        cleanupSubtaskDragState();
+        return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    const list = document.getElementById('subtaskList');
+    const task = currentTasks.find(t => t.id === modalTaskId);
+    if (!list || !task || !Array.isArray(task.subtasks)) {
+        cleanupSubtaskDragState();
+        return;
+    }
+
+    const transferSubtaskId = getSubtaskIdFromDragEvent(event);
+    const activeDraggedSubtaskId = draggedSubtaskId || transferSubtaskId;
+    const activeCompletedState = draggedSubtaskCompletedState || getSubtaskCompletedState(task, activeDraggedSubtaskId);
+
+    if (!activeDraggedSubtaskId || activeCompletedState === null) {
+        cleanupSubtaskDragState();
+        return;
+    }
+
+    const nextSubtaskIds = getDroppedSubtaskIds(list, activeCompletedState, activeDraggedSubtaskId);
+    const currentSubtaskIds = task.subtasks
+        .filter((subtask) => String(Boolean(subtask.completed)) === activeCompletedState)
+        .map((subtask) => subtask.id);
+    const droppedCompletedState = activeCompletedState === 'true';
+
+    cleanupSubtaskDragState();
+
+    if (nextSubtaskIds.length < 2 || nextSubtaskIds.join('|') === currentSubtaskIds.join('|')) {
+        return;
+    }
+
+    applySubtaskGroupOrder(task, nextSubtaskIds, droppedCompletedState);
+    renderSubtasks(task.subtasks);
+    vscode.postMessage({ type: 'reorderSubtasks', taskId: modalTaskId, subtaskIds: nextSubtaskIds });
+}
+
+function getDroppedSubtaskIds(list, completedState, draggedId) {
+    const indicator = list.querySelector('.subtask-drag-indicator');
+    const groupItems = Array.from(list.querySelectorAll(`.subtask-item[data-completed="${completedState}"]`))
+        .filter((item) => item.dataset.subtaskId !== draggedId);
+    const orderedIds = groupItems.map((item) => item.dataset.subtaskId).filter(Boolean);
+
+    let insertIndex = orderedIds.length;
+    if (indicator) {
+        let nextSibling = indicator.nextElementSibling;
+        while (nextSibling) {
+            if (
+                nextSibling.classList.contains('subtask-item') &&
+                nextSibling.dataset.completed === completedState &&
+                nextSibling.dataset.subtaskId !== draggedId
+            ) {
+                insertIndex = groupItems.indexOf(nextSibling);
+                break;
+            }
+            nextSibling = nextSibling.nextElementSibling;
+        }
+    }
+
+    orderedIds.splice(insertIndex, 0, draggedId);
+    return orderedIds;
+}
+
+function getSubtaskIdFromDragEvent(event) {
+    const rawValue = event.dataTransfer?.getData('text/plain') || '';
+    return rawValue.startsWith('subtask:') ? rawValue.slice('subtask:'.length) : '';
+}
+
+function getSubtaskCompletedState(task, subtaskId) {
+    const subtask = task.subtasks.find((item) => item.id === subtaskId);
+    if (!subtask) return null;
+    return subtask.completed ? 'true' : 'false';
+}
+
+function applySubtaskGroupOrder(task, subtaskIds, completed) {
+    const reorderableSubtasks = task.subtasks.filter((subtask) => Boolean(subtask.completed) === completed);
+    const orderedSubtasks = subtaskIds
+        .map((subtaskId) => reorderableSubtasks.find((subtask) => subtask.id === subtaskId))
+        .filter(Boolean);
+    const orderedIds = new Set(orderedSubtasks.map((subtask) => subtask.id));
+    const nextReorderableSubtasks = [
+        ...orderedSubtasks,
+        ...reorderableSubtasks.filter((subtask) => !orderedIds.has(subtask.id))
+    ];
+    const reorderableIds = new Set(reorderableSubtasks.map((subtask) => subtask.id));
+    let replacementIndex = 0;
+
+    task.subtasks = task.subtasks.map((subtask) => {
+        if (!reorderableIds.has(subtask.id)) {
+            return subtask;
+        }
+
+        return nextReorderableSubtasks[replacementIndex++];
+    });
 }
 
 function autoResizeSubtaskTextarea(textarea) {

@@ -96,6 +96,12 @@ export interface UpdateSubtaskTextMessage extends BaseWebviewMessage {
     text: string;
 }
 
+export interface ReorderSubtasksMessage extends BaseWebviewMessage {
+    type: 'reorderSubtasks';
+    taskId: string;
+    subtaskIds: string[];
+}
+
 export interface UpdateSettingsMessage extends BaseWebviewMessage {
     type: 'updateSettings';
     settings: ViewSettings;
@@ -165,6 +171,7 @@ export type WebviewMessage =
     | ToggleSubtaskMessage
     | DeleteSubtaskMessage
     | UpdateSubtaskTextMessage
+    | ReorderSubtasksMessage
     | UpdateSettingsMessage
     | ReadyMessage
     | OpenFullMessage

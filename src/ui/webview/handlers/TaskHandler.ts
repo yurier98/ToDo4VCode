@@ -16,6 +16,7 @@ import {
     ToggleSubtaskMessage,
     DeleteSubtaskMessage,
     UpdateSubtaskTextMessage,
+    ReorderSubtasksMessage,
     OpenCodeLinkMessage,
     WebviewMessage
 } from '../../../core/models/webview-messages';
@@ -75,6 +76,12 @@ export class TaskHandler extends BaseHandler {
                     (message as UpdateSubtaskTextMessage).taskId,
                     (message as UpdateSubtaskTextMessage).subtaskId,
                     (message as UpdateSubtaskTextMessage).text
+                );
+                break;
+            case 'reorderSubtasks':
+                await this._taskService.reorderSubtasks(
+                    (message as ReorderSubtasksMessage).taskId,
+                    (message as ReorderSubtasksMessage).subtaskIds
                 );
                 break;
             case 'openCodeLink':

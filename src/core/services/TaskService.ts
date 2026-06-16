@@ -323,6 +323,51 @@ export class TaskService implements vscode.Disposable {
         });
     }
 
+    public async reorderSubtasks(taskId: string, subtaskIds: string[]): Promise<TodoItem[]> {
+        return this._updateTask(taskId, task => {
+            if (!task.subtasks || task.subtasks.length < 2 || subtaskIds.length < 2) {
+                return;
+            }
+
+            const uniqueIds = [...new Set(subtaskIds)];
+            const requestedSubtasks = uniqueIds
+                .map((subtaskId) => task.subtasks?.find((subtask) => subtask.id === subtaskId))
+                .filter((subtask): subtask is NonNullable<typeof subtask> => Boolean(subtask));
+
+            if (requestedSubtasks.length < 2) {
+                return;
+            }
+
+            const targetCompletedState = requestedSubtasks[0].completed;
+            const reorderableSubtasks = task.subtasks.filter(
+                (subtask) => subtask.completed === targetCompletedState
+            );
+            const reorderableIds = new Set(reorderableSubtasks.map((subtask) => subtask.id));
+            const orderedRequestedSubtasks = uniqueIds
+                .map((subtaskId) => reorderableSubtasks.find((subtask) => subtask.id === subtaskId))
+                .filter((subtask): subtask is NonNullable<typeof subtask> => Boolean(subtask));
+
+            if (orderedRequestedSubtasks.length < 2) {
+                return;
+            }
+
+            const orderedRequestedIds = new Set(orderedRequestedSubtasks.map((subtask) => subtask.id));
+            const nextReorderableSubtasks = [
+                ...orderedRequestedSubtasks,
+                ...reorderableSubtasks.filter((subtask) => !orderedRequestedIds.has(subtask.id))
+            ];
+            let replacementIndex = 0;
+
+            task.subtasks = task.subtasks.map((subtask) => {
+                if (!reorderableIds.has(subtask.id)) {
+                    return subtask;
+                }
+
+                return nextReorderableSubtasks[replacementIndex++];
+            });
+        });
+    }
+
     private async _updateTask(id: string, updater: (task: TodoItem) => void): Promise<TodoItem[]> {
         try {
             const tasks = await this.getTasks();

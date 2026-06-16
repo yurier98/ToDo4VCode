@@ -40,6 +40,8 @@ export class MessageValidator {
                 return this._validateDeleteSubtask(msg);
             case 'updateSubtaskText':
                 return this._validateUpdateSubtaskText(msg);
+            case 'reorderSubtasks':
+                return this._validateReorderSubtasks(msg);
             case 'updateSettings':
                 return this._validateUpdateSettings(msg);
             case 'ready':
@@ -135,6 +137,14 @@ export class MessageValidator {
             typeof msg.taskId === 'string' &&
             typeof msg.subtaskId === 'string' &&
             typeof msg.text === 'string'
+        );
+    }
+
+    private static _validateReorderSubtasks(msg: { type: string; [key: string]: unknown }): boolean {
+        return (
+            typeof msg.taskId === 'string' &&
+            Array.isArray(msg.subtaskIds) &&
+            msg.subtaskIds.every((subtaskId) => typeof subtaskId === 'string')
         );
     }
 

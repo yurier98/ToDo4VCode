@@ -69,6 +69,7 @@ export class WebviewMessageRouter {
                 case 'toggleSubtask':
                 case 'deleteSubtask':
                 case 'updateSubtaskText':
+                case 'reorderSubtasks':
                 case 'openCodeLink':
                     await this._taskHandler.process(webviewMessage, webview);
                     break;

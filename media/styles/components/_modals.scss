@@ -639,16 +639,68 @@
     flex-direction: column;
     border-top: none; 
 
+    .subtask-drag-indicator {
+        height: 2px;
+        background: color-mix(in srgb, var(--vscode-focusBorder), transparent 18%);
+        border-radius: 8px;
+        margin: 3px 0;
+        pointer-events: none;
+        box-shadow: 0 0 0 1px color-mix(in srgb, var(--vscode-focusBorder), transparent 70%);
+    }
+
+    &.is-subtask-dragging {
+        cursor: grabbing;
+
+        .subtask-drag-handle {
+            opacity: 0.75;
+        }
+    }
+
     .subtask-item {
         display: flex;
         align-items: flex-start;
-        gap: 12px;
+        gap: 8px;
         padding: 6px 0;
         border-bottom: 1px solid $border-color;
         background: transparent !important;
+        transition: opacity 0.15s ease, transform 0.15s ease;
+
+        &.is-dragging {
+            opacity: 0.22;
+            transform: scale(0.995);
+        }
 
         &:hover {
+            .subtask-drag-handle { opacity: 0.65; }
             .subtask-delete-btn { opacity: 0.8; }
+        }
+
+        .subtask-drag-handle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            min-height: 22px;
+            color: $fg-desc;
+            cursor: grab;
+            opacity: 0.35;
+            flex-shrink: 0;
+            border-radius: $radius-sm;
+            transition: opacity 0.2s ease, color 0.2s ease;
+
+            &:active {
+                cursor: grabbing;
+            }
+
+            &:hover {
+                background: var(--vscode-toolbar-hoverBackground);
+                color: $fg-main;
+                opacity: 0.9;
+            }
+
+            i {
+                font-size: 13px;
+            }
         }
 
         .subtask-checkbox {
@@ -728,6 +780,73 @@
             &:hover { 
                 background: rgba(var(--vscode-errorForeground), 0.1) !important; 
             }
+        }
+    }
+}
+
+.subtask-drag-preview {
+    position: fixed;
+    top: -1000px;
+    left: -1000px;
+    z-index: 10000;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 36px;
+    padding: 7px 10px;
+    opacity: 0.92;
+    transform: scale(0.995);
+    border: 1px solid color-mix(in srgb, var(--vscode-panel-border), transparent 20%);
+    border-radius: 8px;
+    color: $fg-main;
+    background: color-mix(in srgb, var(--vscode-editor-background), transparent 2%) !important;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.24), 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+
+    .subtask-preview-handle {
+        width: 16px;
+        min-height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: $fg-desc;
+        flex-shrink: 0;
+        opacity: 0.55;
+
+        i {
+            font-size: 12px;
+        }
+    }
+
+    .subtask-preview-checkbox {
+        width: 15px;
+        height: 15px;
+        border: 2px solid $fg-desc;
+        border-radius: $radius-circle;
+        flex-shrink: 0;
+        opacity: 0.9;
+
+        &.completed {
+            background: #8e8e93;
+            border-color: #8e8e93;
+            opacity: 0.65;
+        }
+    }
+
+    .subtask-preview-text {
+        flex: 1;
+        min-width: 0;
+        color: $fg-main;
+        font-size: 12px;
+        line-height: 1.25;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        opacity: 0.92;
+
+        &.completed {
+            text-decoration: line-through;
+            opacity: 0.5;
         }
     }
 }
