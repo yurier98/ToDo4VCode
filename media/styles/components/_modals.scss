@@ -670,6 +670,11 @@
             transform: scale(0.995);
         }
 
+        &.is-kb-grabbed {
+            outline: 1px dashed var(--vscode-focusBorder);
+            outline-offset: 2px;
+        }
+
         &:hover {
             .subtask-drag-handle { opacity: 0.65; }
             .subtask-delete-btn { opacity: 0.8; }
@@ -690,6 +695,12 @@
 
             &:active {
                 cursor: grabbing;
+            }
+
+            &:focus-visible {
+                outline: 1px solid var(--vscode-focusBorder);
+                outline-offset: -1px;
+                opacity: 0.9;
             }
 
             &:hover {
@@ -784,19 +795,19 @@
     }
 }
 
-.subtask-drag-preview {
+.subtask-drag-ghost {
     position: fixed;
-    top: -1000px;
-    left: -1000px;
+    left: 0;
+    top: 0;
     z-index: 10000;
     pointer-events: none;
+    will-change: transform;
     display: flex;
     align-items: center;
     gap: 8px;
     min-height: 36px;
     padding: 7px 10px;
     opacity: 0.92;
-    transform: scale(0.995);
     border: 1px solid color-mix(in srgb, var(--vscode-panel-border), transparent 20%);
     border-radius: 8px;
     color: $fg-main;
@@ -849,6 +860,18 @@
             opacity: 0.5;
         }
     }
+}
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
 }
 
 .add-subtask-minimal {

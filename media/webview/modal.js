@@ -1,6 +1,34 @@
-let draggedSubtaskId = null;
-let draggedSubtaskCompletedState = null;
-let subtaskDragCleanupTimer = null;
+// --- Subtask reordering engine (Pointer Events + keyboard) ---
+const DRAG_THRESHOLD = 4;
+const AUTO_SCROLL_ZONE = 36;
+const AUTO_SCROLL_SPEED = 8;
+
+const subtaskReorder = {
+    // Pointer session
+    active: false,
+    pointerId: null,
+    handleEl: null,
+    itemEl: null,
+    subtaskId: null,
+    completedState: null,
+    startX: 0,
+    startY: 0,
+    ghostEl: null,
+    ghostOffsetX: 0,
+    ghostOffsetY: 0,
+    lastPointerX: 0,
+    lastPointerY: 0,
+    rafId: null,
+    autoScrollRaf: null,
+    scrollDir: 0,
+    // Keyboard session
+    kbGrabbed: false,
+    kbSubtaskId: null,
+    kbCompletedState: null,
+    kbOriginalOrder: null
+};
+
+let subtaskReorderInitDone = false;
 
 function openTaskModal(taskId) {
     const task = currentTasks.find(t => t.id === taskId);
@@ -68,6 +96,22 @@ function openTaskModal(taskId) {
     renderSubtasks(task.subtasks || []);
 }
 
+function initSubtaskReorderOnce() {
+    if (subtaskReorderInitDone) return;
+    const container = document.getElementById('subtasksContainer');
+    if (!container) return;
+    if (!document.getElementById('subtaskReorderLive')) {
+        const live = document.createElement('div');
+        live.id = 'subtaskReorderLive';
+        live.className = 'visually-hidden';
+        live.setAttribute('role', 'status');
+        live.setAttribute('aria-live', 'polite');
+        live.setAttribute('aria-atomic', 'true');
+        container.appendChild(live);
+    }
+    subtaskReorderInitDone = true;
+}
+
 function renderSubtasks(subtasks) {
     const list = document.getElementById('subtaskList');
     const progress = document.getElementById('subtaskProgress');
@@ -75,10 +119,15 @@ function renderSubtasks(subtasks) {
     const addSubtaskContainer = document.querySelector('.add-subtask-minimal');
     if (!list) return;
 
+    // Abort any active pointer drag before wiping the list (abort-on-render).
+    if (subtaskReorder.active) {
+        endPointerDrag();
+    }
+
+    initSubtaskReorderOnce();
+
     list.innerHTML = '';
-    list.ondragover = handleSubtaskDragOver;
-    list.ondrop = handleSubtaskDrop;
-    
+
     const completedCount = subtasks.length > 0 ? subtasks.filter(s => s.completed).length : 0;
     if (progress) progress.innerText = `${completedCount}/${subtasks.length}`;
 
@@ -128,9 +177,8 @@ function createSubtaskElement(s) {
     item.draggable = false;
     item.dataset.subtaskId = s.id;
     item.dataset.completed = s.completed ? 'true' : 'false';
-    item.addEventListener('dragend', scheduleSubtaskDragCleanup);
     item.innerHTML = `
-        <div class="subtask-drag-handle" draggable="true" title="Drag to reorder" aria-label="Drag to reorder">
+        <div class="subtask-drag-handle" tabindex="0" role="button" aria-roledescription="draggable subtask handle" title="Drag to reorder" aria-label="Drag to reorder">
             <i class="codicon codicon-gripper"></i>
         </div>
         <div class="subtask-checkbox ${s.completed ? 'completed' : ''}" onclick="toggleSubtask('${s.id}')"></div>
@@ -144,103 +192,137 @@ function createSubtaskElement(s) {
 
     const dragHandle = item.querySelector('.subtask-drag-handle');
     if (dragHandle) {
-        dragHandle.addEventListener('dragstart', (event) => handleSubtaskDragStart(event, s.id, Boolean(s.completed)));
-        dragHandle.addEventListener('dragend', scheduleSubtaskDragCleanup);
+        const completedState = String(Boolean(s.completed));
+        dragHandle.addEventListener('pointerdown', (event) => onHandlePointerDown(event, s.id, completedState));
+        dragHandle.addEventListener('keydown', (event) => onHandleKeyDown(event, s.id, completedState));
     }
 
     return item;
 }
 
-function cleanupSubtaskDragState() {
-    if (subtaskDragCleanupTimer) {
-        clearTimeout(subtaskDragCleanupTimer);
-        subtaskDragCleanupTimer = null;
-    }
-    document.querySelectorAll('.subtask-drag-preview').forEach((preview) => preview.remove());
-    document.querySelectorAll('.subtask-drag-indicator').forEach((indicator) => indicator.remove());
-    document.querySelectorAll('.subtask-item.is-dragging').forEach((item) => {
-        item.classList.remove('is-dragging');
-        item.removeAttribute('aria-grabbed');
+// --- ARIA live announcements ---
+
+function announceReorder(message) {
+    const live = document.getElementById('subtaskReorderLive');
+    if (!live) return;
+    live.textContent = '';
+    requestAnimationFrame(() => {
+        const region = document.getElementById('subtaskReorderLive');
+        if (region) region.textContent = message;
     });
-    document.getElementById('subtaskList')?.classList.remove('is-subtask-dragging');
-    draggedSubtaskId = null;
-    draggedSubtaskCompletedState = null;
 }
 
-function scheduleSubtaskDragCleanup() {
-    if (subtaskDragCleanupTimer) {
-        clearTimeout(subtaskDragCleanupTimer);
+// --- Pointer flow ---
+
+function onHandlePointerDown(event, subtaskId, completedState) {
+    // Ignore non-primary mouse buttons (allow touch/pen where button is 0/-1).
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+
+    const handle = event.currentTarget;
+    const item = handle.closest('.subtask-item');
+    if (!item) return;
+
+    event.preventDefault();
+
+    subtaskReorder.active = false;
+    subtaskReorder.pointerId = event.pointerId;
+    subtaskReorder.handleEl = handle;
+    subtaskReorder.itemEl = item;
+    subtaskReorder.subtaskId = subtaskId;
+    subtaskReorder.completedState = completedState;
+    subtaskReorder.startX = event.clientX;
+    subtaskReorder.startY = event.clientY;
+    subtaskReorder.lastPointerX = event.clientX;
+    subtaskReorder.lastPointerY = event.clientY;
+
+    try {
+        handle.setPointerCapture(event.pointerId);
+    } catch {
+        // setPointerCapture can throw if the pointer is already gone; ignore.
     }
 
-    subtaskDragCleanupTimer = setTimeout(() => {
-        subtaskDragCleanupTimer = null;
-        cleanupSubtaskDragState();
-    }, 0);
+    handle.addEventListener('pointermove', onHandlePointerMove);
+    handle.addEventListener('pointerup', onHandlePointerUp);
+    handle.addEventListener('pointercancel', onHandlePointerCancel);
+    handle.addEventListener('lostpointercapture', onHandlePointerCancel);
 }
 
-function handleSubtaskDragStart(event, subtaskId, completed) {
-    const item = event.target.closest('.subtask-item');
+function onHandlePointerMove(event) {
+    if (event.pointerId !== subtaskReorder.pointerId) return;
 
-    if (!item) {
-        event.preventDefault();
+    subtaskReorder.lastPointerX = event.clientX;
+    subtaskReorder.lastPointerY = event.clientY;
+
+    if (!subtaskReorder.active) {
+        const dx = event.clientX - subtaskReorder.startX;
+        const dy = event.clientY - subtaskReorder.startY;
+        if (Math.hypot(dx, dy) > DRAG_THRESHOLD) {
+            beginPointerDrag(event);
+        }
         return;
     }
 
-    draggedSubtaskId = subtaskId;
-    draggedSubtaskCompletedState = completed ? 'true' : 'false';
-    if (subtaskDragCleanupTimer) {
-        clearTimeout(subtaskDragCleanupTimer);
-        subtaskDragCleanupTimer = null;
+    if (subtaskReorder.rafId === null) {
+        subtaskReorder.rafId = requestAnimationFrame(onReorderFrame);
     }
+}
+
+function beginPointerDrag(event) {
+    const item = subtaskReorder.itemEl;
+    const list = document.getElementById('subtaskList');
+    if (!item || !list) return;
+
+    subtaskReorder.active = true;
     item.classList.add('is-dragging');
-    item.setAttribute('aria-grabbed', 'true');
-    document.getElementById('subtaskList')?.classList.add('is-subtask-dragging');
-    event.dataTransfer.effectAllowed = 'move';
-    event.dataTransfer.setData('text/plain', `subtask:${subtaskId}`);
+    list.classList.add('is-subtask-dragging');
 
-    const dragPreview = createSubtaskDragPreview(item);
-    event.dataTransfer.setDragImage(dragPreview, 18, 12);
+    const ghost = createDragGhost(item);
+    subtaskReorder.ghostEl = ghost;
+    const box = item.getBoundingClientRect();
+    subtaskReorder.ghostOffsetX = event.clientX - box.left;
+    subtaskReorder.ghostOffsetY = event.clientY - box.top;
+
+    document.body.style.userSelect = 'none';
+
+    const task = currentTasks.find(t => t.id === modalTaskId);
+    const groupIds = task ? getGroupSubtaskIds(task, subtaskReorder.completedState) : [];
+    const total = groupIds.length;
+    const index = groupIds.indexOf(subtaskReorder.subtaskId) + 1;
+    const label = item.querySelector('.subtask-text-input')?.value || 'subtask';
+    announceReorder(`Grabbed ${label}, position ${index} of ${total}`);
+
+    subtaskReorder.rafId = requestAnimationFrame(onReorderFrame);
+    startAutoScrollLoop();
 }
 
-function createSubtaskDragPreview(item) {
-    const dragPreview = document.createElement('div');
-    const itemBox = item.getBoundingClientRect();
-    const previewWidth = Math.min(Math.max(itemBox.width * 0.72, 260), 460);
-    dragPreview.classList.add('subtask-drag-preview');
-    dragPreview.style.width = `${previewWidth}px`;
+function onReorderFrame() {
+    subtaskReorder.rafId = null;
+    if (!subtaskReorder.active) return;
 
-    const isCompleted = item.dataset.completed === 'true';
-    const subtaskText = item.querySelector('.subtask-text-input')?.value || '';
-    dragPreview.innerHTML = `
-        <div class="subtask-preview-handle">
-            <i class="codicon codicon-gripper"></i>
-        </div>
-        <div class="subtask-preview-checkbox ${isCompleted ? 'completed' : ''}"></div>
-        <div class="subtask-preview-text ${isCompleted ? 'completed' : ''}">
-            ${escapeHtml(asText(subtaskText))}
-        </div>
-    `;
+    const ghost = subtaskReorder.ghostEl;
+    if (ghost) {
+        const x = subtaskReorder.lastPointerX - subtaskReorder.ghostOffsetX;
+        const y = subtaskReorder.lastPointerY - subtaskReorder.ghostOffsetY;
+        ghost.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+    }
 
-    document.body.appendChild(dragPreview);
-    return dragPreview;
+    updateDropIndicator();
+    evaluateAutoScrollZone();
 }
 
-function handleSubtaskDragOver(event) {
-    if (!draggedSubtaskId || draggedSubtaskCompletedState === null) return;
-
+function updateDropIndicator() {
     const list = document.getElementById('subtaskList');
     if (!list) return;
 
-    event.preventDefault();
-    event.dataTransfer.dropEffect = 'move';
-
-    let indicator = document.querySelector('.subtask-drag-indicator');
+    let indicator = list.querySelector('.subtask-drag-indicator');
     if (!indicator) {
         indicator = document.createElement('div');
         indicator.className = 'subtask-drag-indicator';
     }
 
-    const afterElement = getSubtaskDragAfterElement(list, event.clientY, draggedSubtaskCompletedState);
+    const completedState = subtaskReorder.completedState;
+    const afterElement = getSubtaskDragAfterElement(list, subtaskReorder.lastPointerY, completedState);
+
     if (afterElement) {
         if (afterElement.previousElementSibling !== indicator) {
             afterElement.before(indicator);
@@ -248,8 +330,9 @@ function handleSubtaskDragOver(event) {
         return;
     }
 
-    const addSubtaskContainer = document.querySelector('.add-subtask-minimal');
-    if (draggedSubtaskCompletedState === 'false' && addSubtaskContainer) {
+    // Parking: pending group parks before the add-subtask row; completed group at list end.
+    const addSubtaskContainer = list.querySelector('.add-subtask-minimal');
+    if (completedState === 'false' && addSubtaskContainer) {
         if (addSubtaskContainer.previousElementSibling !== indicator) {
             addSubtaskContainer.before(indicator);
         }
@@ -261,68 +344,292 @@ function handleSubtaskDragOver(event) {
     }
 }
 
-function getSubtaskDragAfterElement(container, pointerY, completedState) {
-    const items = Array.from(container.querySelectorAll(`.subtask-item[data-completed="${completedState}"]`))
-        .filter((item) => !item.classList.contains('is-dragging'));
+function evaluateAutoScrollZone() {
+    const scroller = document.querySelector('.modal-scrollable-area');
+    if (!scroller) {
+        subtaskReorder.scrollDir = 0;
+        return;
+    }
 
-    let afterElement = null;
-    let minDistance = Number.POSITIVE_INFINITY;
+    const rect = scroller.getBoundingClientRect();
+    const y = subtaskReorder.lastPointerY;
+    if (y < rect.top + AUTO_SCROLL_ZONE) {
+        subtaskReorder.scrollDir = -1;
+    } else if (y > rect.bottom - AUTO_SCROLL_ZONE) {
+        subtaskReorder.scrollDir = 1;
+    } else {
+        subtaskReorder.scrollDir = 0;
+    }
+}
 
-    for (const item of items) {
-        const box = item.getBoundingClientRect();
-        const offset = pointerY - (box.top + box.height / 2);
-        if (offset < 0 && -offset < minDistance) {
-            minDistance = -offset;
-            afterElement = item;
+function startAutoScrollLoop() {
+    if (subtaskReorder.autoScrollRaf !== null) return;
+
+    const step = () => {
+        if (!subtaskReorder.active) {
+            subtaskReorder.autoScrollRaf = null;
+            return;
+        }
+        const scroller = document.querySelector('.modal-scrollable-area');
+        if (scroller && subtaskReorder.scrollDir !== 0) {
+            scroller.scrollTop += subtaskReorder.scrollDir * AUTO_SCROLL_SPEED;
+            updateDropIndicator();
+        }
+        subtaskReorder.autoScrollRaf = requestAnimationFrame(step);
+    };
+
+    subtaskReorder.autoScrollRaf = requestAnimationFrame(step);
+}
+
+function onHandlePointerUp(event) {
+    if (event.pointerId !== subtaskReorder.pointerId) return;
+
+    if (subtaskReorder.active) {
+        finalizeReorder();
+        endPointerDrag();
+    } else {
+        // Sub-threshold: treat as a click no-op.
+        endPointerDrag();
+    }
+}
+
+function onHandlePointerCancel(event) {
+    if (event.pointerId !== subtaskReorder.pointerId) return;
+    // Clean abort, no message emitted.
+    endPointerDrag();
+}
+
+function finalizeReorder() {
+    const list = document.getElementById('subtaskList');
+    if (!list) return;
+    const completedState = subtaskReorder.completedState;
+    const nextSubtaskIds = computeGroupIdsFromDom(list, completedState, subtaskReorder.subtaskId);
+    commitGroupReorder(nextSubtaskIds, completedState);
+}
+
+function endPointerDrag() {
+    const handle = subtaskReorder.handleEl;
+    const pointerId = subtaskReorder.pointerId;
+
+    if (handle) {
+        handle.removeEventListener('pointermove', onHandlePointerMove);
+        handle.removeEventListener('pointerup', onHandlePointerUp);
+        handle.removeEventListener('pointercancel', onHandlePointerCancel);
+        handle.removeEventListener('lostpointercapture', onHandlePointerCancel);
+        if (pointerId !== null) {
+            try {
+                handle.releasePointerCapture(pointerId);
+            } catch {
+                // Ignore if capture was already released.
+            }
         }
     }
 
-    return afterElement;
+    if (subtaskReorder.ghostEl) {
+        subtaskReorder.ghostEl.remove();
+    }
+    document.querySelectorAll('.subtask-drag-indicator').forEach((indicator) => indicator.remove());
+    document.querySelectorAll('.subtask-item.is-dragging').forEach((item) => item.classList.remove('is-dragging'));
+    document.getElementById('subtaskList')?.classList.remove('is-subtask-dragging');
+    document.body.style.userSelect = '';
+
+    if (subtaskReorder.rafId !== null) {
+        cancelAnimationFrame(subtaskReorder.rafId);
+        subtaskReorder.rafId = null;
+    }
+    if (subtaskReorder.autoScrollRaf !== null) {
+        cancelAnimationFrame(subtaskReorder.autoScrollRaf);
+        subtaskReorder.autoScrollRaf = null;
+    }
+
+    subtaskReorder.active = false;
+    subtaskReorder.pointerId = null;
+    subtaskReorder.handleEl = null;
+    subtaskReorder.itemEl = null;
+    subtaskReorder.subtaskId = null;
+    subtaskReorder.completedState = null;
+    subtaskReorder.ghostEl = null;
+    subtaskReorder.scrollDir = 0;
 }
 
-function handleSubtaskDrop(event) {
-    if (!modalTaskId) {
-        cleanupSubtaskDragState();
+function createDragGhost(itemEl) {
+    const ghost = document.createElement('div');
+    ghost.classList.add('subtask-drag-ghost');
+
+    const itemBox = itemEl.getBoundingClientRect();
+    const ghostWidth = Math.min(Math.max(itemBox.width * 0.72, 260), 460);
+    ghost.style.width = `${ghostWidth}px`;
+    ghost.style.position = 'fixed';
+    ghost.style.left = '0';
+    ghost.style.top = '0';
+    ghost.style.zIndex = '10000';
+    ghost.style.pointerEvents = 'none';
+    ghost.style.willChange = 'transform';
+
+    const isCompleted = itemEl.dataset.completed === 'true';
+    const subtaskText = itemEl.querySelector('.subtask-text-input')?.value || '';
+    ghost.innerHTML = `
+        <div class="subtask-preview-handle">
+            <i class="codicon codicon-gripper"></i>
+        </div>
+        <div class="subtask-preview-checkbox ${isCompleted ? 'completed' : ''}"></div>
+        <div class="subtask-preview-text ${isCompleted ? 'completed' : ''}">
+            ${escapeHtml(asText(subtaskText))}
+        </div>
+    `;
+
+    document.body.appendChild(ghost);
+    return ghost;
+}
+
+// --- Keyboard flow (grab-mode) ---
+
+function onHandleKeyDown(event, subtaskId, completedState) {
+    const key = event.key;
+
+    if (key === ' ' || key === 'Spacebar' || key === 'Enter') {
+        event.preventDefault();
+        if (subtaskReorder.kbGrabbed && subtaskReorder.kbSubtaskId === subtaskId) {
+            // Drop
+            const label = getSubtaskLabel(subtaskId);
+            clearKeyboardGrab();
+            announceReorder(`Dropped ${label}`);
+        } else {
+            pickUpKeyboardItem(subtaskId, completedState);
+        }
         return;
     }
 
-    event.preventDefault();
-    event.stopPropagation();
+    if (!subtaskReorder.kbGrabbed || subtaskReorder.kbSubtaskId !== subtaskId) {
+        return;
+    }
 
-    const list = document.getElementById('subtaskList');
+    if (key === 'ArrowUp') {
+        event.preventDefault();
+        moveKeyboardItem(-1);
+    } else if (key === 'ArrowDown') {
+        event.preventDefault();
+        moveKeyboardItem(1);
+    } else if (key === 'Home') {
+        event.preventDefault();
+        moveKeyboardItemToEdge('first');
+    } else if (key === 'End') {
+        event.preventDefault();
+        moveKeyboardItemToEdge('last');
+    } else if (key === 'Escape') {
+        event.preventDefault();
+        if (subtaskReorder.kbOriginalOrder) {
+            commitGroupReorder(subtaskReorder.kbOriginalOrder, subtaskReorder.kbCompletedState);
+        }
+        clearKeyboardGrab();
+        announceReorder('Reorder cancelled');
+    }
+}
+
+function pickUpKeyboardItem(subtaskId, completedState) {
     const task = currentTasks.find(t => t.id === modalTaskId);
-    if (!list || !task || !Array.isArray(task.subtasks)) {
-        cleanupSubtaskDragState();
-        return;
-    }
+    if (!task) return;
 
-    const transferSubtaskId = getSubtaskIdFromDragEvent(event);
-    const activeDraggedSubtaskId = draggedSubtaskId || transferSubtaskId;
-    const activeCompletedState = draggedSubtaskCompletedState || getSubtaskCompletedState(task, activeDraggedSubtaskId);
+    const groupIds = getGroupSubtaskIds(task, completedState);
+    subtaskReorder.kbGrabbed = true;
+    subtaskReorder.kbSubtaskId = subtaskId;
+    subtaskReorder.kbCompletedState = completedState;
+    subtaskReorder.kbOriginalOrder = groupIds.slice();
 
-    if (!activeDraggedSubtaskId || activeCompletedState === null) {
-        cleanupSubtaskDragState();
-        return;
-    }
+    const item = getSubtaskItemById(subtaskId);
+    if (item) item.classList.add('is-kb-grabbed');
 
-    const nextSubtaskIds = getDroppedSubtaskIds(list, activeCompletedState, activeDraggedSubtaskId);
-    const currentSubtaskIds = task.subtasks
-        .filter((subtask) => String(Boolean(subtask.completed)) === activeCompletedState)
-        .map((subtask) => subtask.id);
-    const droppedCompletedState = activeCompletedState === 'true';
-
-    cleanupSubtaskDragState();
-
-    if (nextSubtaskIds.length < 2 || nextSubtaskIds.join('|') === currentSubtaskIds.join('|')) {
-        return;
-    }
-
-    applySubtaskGroupOrder(task, nextSubtaskIds, droppedCompletedState);
-    renderSubtasks(task.subtasks);
-    vscode.postMessage({ type: 'reorderSubtasks', taskId: modalTaskId, subtaskIds: nextSubtaskIds });
+    const total = groupIds.length;
+    const index = groupIds.indexOf(subtaskId) + 1;
+    announceReorder(`Grabbed ${getSubtaskLabel(subtaskId)}, position ${index} of ${total}`);
 }
 
-function getDroppedSubtaskIds(list, completedState, draggedId) {
+function moveKeyboardItem(delta) {
+    const task = currentTasks.find(t => t.id === modalTaskId);
+    if (!task) return;
+
+    const completedState = subtaskReorder.kbCompletedState;
+    const groupIds = getGroupSubtaskIds(task, completedState);
+    const fromIndex = groupIds.indexOf(subtaskReorder.kbSubtaskId);
+    if (fromIndex === -1) return;
+
+    const toIndex = fromIndex + delta;
+    // Clamp so items never cross groups.
+    if (toIndex < 0 || toIndex > groupIds.length - 1) return;
+
+    const nextIds = computeReorderedIds(groupIds, fromIndex, toIndex);
+    commitGroupReorder(nextIds, completedState);
+    refocusGrabbedHandle(subtaskReorder.kbSubtaskId);
+    announceReorder(`Moved to position ${toIndex + 1} of ${nextIds.length}`);
+}
+
+function moveKeyboardItemToEdge(edge) {
+    const task = currentTasks.find(t => t.id === modalTaskId);
+    if (!task) return;
+
+    const completedState = subtaskReorder.kbCompletedState;
+    const groupIds = getGroupSubtaskIds(task, completedState);
+    const fromIndex = groupIds.indexOf(subtaskReorder.kbSubtaskId);
+    if (fromIndex === -1) return;
+
+    const toIndex = edge === 'first' ? 0 : groupIds.length - 1;
+    if (toIndex === fromIndex) return;
+
+    const nextIds = computeReorderedIds(groupIds, fromIndex, toIndex);
+    commitGroupReorder(nextIds, completedState);
+    refocusGrabbedHandle(subtaskReorder.kbSubtaskId);
+    announceReorder(`Moved to position ${toIndex + 1} of ${nextIds.length}`);
+}
+
+function refocusGrabbedHandle(subtaskId) {
+    // Re-render replaced the DOM; re-query and restore focus + grabbed state.
+    const item = getSubtaskItemById(subtaskId);
+    if (!item) return;
+    item.classList.add('is-kb-grabbed');
+    const handle = item.querySelector('.subtask-drag-handle');
+    if (handle) handle.focus();
+}
+
+function clearKeyboardGrab() {
+    document.querySelectorAll('.subtask-item.is-kb-grabbed').forEach((item) => item.classList.remove('is-kb-grabbed'));
+    subtaskReorder.kbGrabbed = false;
+    subtaskReorder.kbSubtaskId = null;
+    subtaskReorder.kbCompletedState = null;
+    subtaskReorder.kbOriginalOrder = null;
+}
+
+function getSubtaskItemById(subtaskId) {
+    const list = document.getElementById('subtaskList');
+    if (!list) return null;
+    return list.querySelector(`.subtask-item[data-subtask-id="${subtaskId}"]`);
+}
+
+function getSubtaskLabel(subtaskId) {
+    const item = getSubtaskItemById(subtaskId);
+    return item?.querySelector('.subtask-text-input')?.value || 'subtask';
+}
+
+// --- Shared helpers ---
+
+function getGroupSubtaskIds(task, completedState) {
+    if (!task || !Array.isArray(task.subtasks)) return [];
+    return task.subtasks
+        .filter((subtask) => String(Boolean(subtask.completed)) === completedState)
+        .map((subtask) => subtask.id);
+}
+
+// Pure helper: clamped splice moving an item from fromIndex to toIndex.
+function computeReorderedIds(groupIds, fromIndex, toIndex) {
+    const ids = groupIds.slice();
+    if (fromIndex < 0 || fromIndex >= ids.length) return ids;
+    const clampedTo = Math.max(0, Math.min(toIndex, ids.length - 1));
+    const [moved] = ids.splice(fromIndex, 1);
+    ids.splice(clampedTo, 0, moved);
+    return ids;
+}
+
+// Indicator-based DOM read (replaces old getDroppedSubtaskIds).
+function computeGroupIdsFromDom(list, completedState, draggedId) {
     const indicator = list.querySelector('.subtask-drag-indicator');
     const groupItems = Array.from(list.querySelectorAll(`.subtask-item[data-completed="${completedState}"]`))
         .filter((item) => item.dataset.subtaskId !== draggedId);
@@ -348,9 +655,42 @@ function getDroppedSubtaskIds(list, completedState, draggedId) {
     return orderedIds;
 }
 
-function getSubtaskIdFromDragEvent(event) {
-    const rawValue = event.dataTransfer?.getData('text/plain') || '';
-    return rawValue.startsWith('subtask:') ? rawValue.slice('subtask:'.length) : '';
+// Single reorder path: the ONLY site that mutates + emits.
+function commitGroupReorder(nextSubtaskIds, completedState) {
+    const task = currentTasks.find(t => t.id === modalTaskId);
+    if (!task || !Array.isArray(task.subtasks)) return false;
+
+    const currentSubtaskIds = task.subtasks
+        .filter((subtask) => String(Boolean(subtask.completed)) === completedState)
+        .map((subtask) => subtask.id);
+
+    if (nextSubtaskIds.length < 2 || nextSubtaskIds.join('|') === currentSubtaskIds.join('|')) {
+        return false;
+    }
+
+    applySubtaskGroupOrder(task, nextSubtaskIds, completedState === 'true');
+    renderSubtasks(task.subtasks);
+    vscode.postMessage({ type: 'reorderSubtasks', taskId: modalTaskId, subtaskIds: nextSubtaskIds });
+    return true;
+}
+
+function getSubtaskDragAfterElement(container, pointerY, completedState) {
+    const items = Array.from(container.querySelectorAll(`.subtask-item[data-completed="${completedState}"]`))
+        .filter((item) => !item.classList.contains('is-dragging'));
+
+    let afterElement = null;
+    let minDistance = Number.POSITIVE_INFINITY;
+
+    for (const item of items) {
+        const box = item.getBoundingClientRect();
+        const offset = pointerY - (box.top + box.height / 2);
+        if (offset < 0 && -offset < minDistance) {
+            minDistance = -offset;
+            afterElement = item;
+        }
+    }
+
+    return afterElement;
 }
 
 function getSubtaskCompletedState(task, subtaskId) {
