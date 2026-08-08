@@ -7,6 +7,7 @@ import { ConfigService } from './ConfigService';
 import { StatisticsService, TaskStatistics } from './StatisticsService';
 import { Logger } from '../../utils/logger';
 import { buildExcludeGlob, isPathExcluded } from '../../utils/exclude-patterns';
+import { findCommentMarkers } from '../../utils/comment-scan';
 
 interface CommentScanEntry {
     sourceKey: string;
@@ -30,7 +31,6 @@ export class TaskService implements vscode.Disposable {
     private static readonly COMMENT_SCAN_INCLUDE_GLOB = '**/*';
     private static readonly COMMENT_SCAN_MAX_FILES = 2000;
     private static readonly COMMENT_SCAN_MAX_FILE_SIZE_BYTES = 1024 * 1024;
-    private static readonly COMMENT_MARKER_REGEX = /\/\/\s*(TODO|FIXME|NOTE)\b(?:\s*[:\-]\s*|\s+)?(.*)$/i;
     private static readonly COMMENT_SCAN_BINARY_EXTENSIONS = new Set([
         '.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp', '.ico', '.svg',
         '.mp3', '.wav', '.ogg', '.flac', '.mp4', '.m4v', '.mov', '.avi', '.mkv',
@@ -469,6 +469,7 @@ export class TaskService implements vscode.Disposable {
         let removedCount = 0;
         let nextOrder = tasks.reduce((max, task) => Math.max(max, task.order || 0), 0);
         const seenSourceKeys = new Set<string>();
+        const scannedFiles = new Set<string>();
 
         for (const uri of uris) {
             try {
@@ -480,6 +481,8 @@ export class TaskService implements vscode.Disposable {
                 if (!relativeFile || relativeFile.startsWith('..')) {
                     continue;
                 }
+
+                scannedFiles.add(relativeFile);
 
                 const entries = await this._extractCommentScanEntries(uri, relativeFile);
                 for (const entry of entries) {
@@ -531,11 +534,19 @@ export class TaskService implements vscode.Disposable {
                     return;
                 }
 
+                const fileExcluded = isPathExcluded(source.file, excludePatterns);
+                const fileBinary = TaskService._shouldSkipFileByName(source.file);
+
                 // A comment task is stale when its file is now excluded by the
-                // user's patterns or by the binary extension filter.
+                // user's patterns or by the binary extension filter. Additionally,
+                // when the file was actually scanned in this pass and the source
+                // key was not seen, the comment no longer exists or now lives
+                // inside a string literal, so the task must be pruned too.
+                const fileScanned = scannedFiles.has(source.file);
                 if (
-                    isPathExcluded(source.file, excludePatterns) ||
-                    TaskService._shouldSkipFileByName(source.file)
+                    fileExcluded ||
+                    fileBinary ||
+                    (source.type === 'comment-scan' && fileScanned)
                 ) {
                     staleTaskKeys.push(sourceKey);
                 }
@@ -579,21 +590,15 @@ export class TaskService implements vscode.Disposable {
         }
 
         const entries: CommentScanEntry[] = [];
-        const lines = content.split(/\r?\n/);
 
-        lines.forEach((lineContent, index) => {
-            const match = lineContent.match(TaskService.COMMENT_MARKER_REGEX);
-            if (!match) {
-                return;
-            }
-
-            const marker = match[1].toUpperCase() as CommentMarker;
-            const extractedText = TaskService._normalizeCommentText(match[2]);
+        for (const hit of findCommentMarkers(content)) {
+            const marker = hit.marker;
+            const extractedText = TaskService._normalizeCommentText(hit.text);
             const text = extractedText || `${marker} in ${path.basename(relativeFile)}`;
             const source: CommentScanSource = {
                 type: 'comment-scan',
                 file: relativeFile,
-                line: index + 1,
+                line: hit.line,
                 marker
             };
             const sourceKey = TaskService._buildCommentSourceKey(source.file, source.line, source.marker);
@@ -607,7 +612,7 @@ export class TaskService implements vscode.Disposable {
                 description,
                 tags: scanTags
             });
-        });
+        }
 
         return entries;
     }
