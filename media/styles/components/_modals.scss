@@ -666,8 +666,10 @@
         transition: opacity 0.15s ease, transform 0.15s ease;
 
         &.is-dragging {
-            opacity: 0.22;
-            transform: scale(0.995);
+            opacity: 0.4;
+            transform: scale(0.98);
+            outline: 2px dashed var(--vscode-focusBorder);
+            outline-offset: 2px;
         }
 
         &.is-kb-grabbed {
@@ -802,63 +804,101 @@
     z-index: 10000;
     pointer-events: none;
     will-change: transform;
+}
+
+// The clone of the real subtask row. Rotate/scale live here (CSS), while the
+// JS translate3d applies to the .subtask-drag-ghost wrapper so neither
+// overwrites the other.
+.subtask-drag-ghost-inner {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 8px;
     min-height: 36px;
     padding: 7px 10px;
-    opacity: 0.92;
+    opacity: 0.96;
     border: 1px solid color-mix(in srgb, var(--vscode-panel-border), transparent 20%);
     border-radius: 8px;
     color: $fg-main;
-    background: color-mix(in srgb, var(--vscode-editor-background), transparent 2%) !important;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.24), 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+    background: var(--vscode-editor-background) !important;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35), 0 2px 0 rgba(255, 255, 255, 0.06) inset;
+    transform: rotate(2deg) scale(1.02);
+    transition: transform 0.1s ease;
 
-    .subtask-preview-handle {
-        width: 16px;
-        min-height: 20px;
+    .subtask-drag-handle {
         display: flex;
         align-items: center;
         justify-content: center;
+        width: 22px;
+        min-height: 22px;
         color: $fg-desc;
         flex-shrink: 0;
         opacity: 0.55;
 
         i {
-            font-size: 12px;
+            font-size: 13px;
         }
     }
 
-    .subtask-preview-checkbox {
-        width: 15px;
-        height: 15px;
+    .subtask-checkbox {
+        position: relative;
+        width: 16px;
+        height: 16px;
         border: 2px solid $fg-desc;
         border-radius: $radius-circle;
         flex-shrink: 0;
         opacity: 0.9;
 
         &.completed {
-            background: #8e8e93;
+            background: #8e8e93 !important;
             border-color: #8e8e93;
             opacity: 0.65;
+
+            &::after {
+                content: '\eab2';
+                font-family: 'codicon';
+                color: $bg-editor;
+                font-size: 10px;
+                font-weight: 900;
+                -webkit-text-stroke: 1px currentColor;
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+            }
         }
     }
 
-    .subtask-preview-text {
+    .subtask-text-input {
         flex: 1;
         min-width: 0;
+        min-height: 20px;
         color: $fg-main;
         font-size: 12px;
-        line-height: 1.25;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        opacity: 0.92;
+        line-height: 1.4;
+        white-space: pre-wrap;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+        padding: 2px 0;
+        margin: 0;
 
         &.completed {
             text-decoration: line-through;
             opacity: 0.5;
         }
+    }
+
+    .subtask-delete-btn {
+        background: transparent !important;
+        border: none !important;
+        color: $color-error;
+        padding: 4px;
+        margin-top: 2px;
+        opacity: 0.5;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: $radius-sm;
+        box-shadow: none !important;
     }
 }
 

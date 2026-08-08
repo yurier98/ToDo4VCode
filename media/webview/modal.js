@@ -453,11 +453,14 @@ function endPointerDrag() {
 }
 
 function createDragGhost(itemEl) {
+    // Ghost wrapper: positioned + followed by the inline translate3d from the
+    // RAF loop. Rotate/scale live on the inner element so the JS never
+    // overwrites them.
     const ghost = document.createElement('div');
     ghost.classList.add('subtask-drag-ghost');
 
     const itemBox = itemEl.getBoundingClientRect();
-    const ghostWidth = Math.min(Math.max(itemBox.width * 0.72, 260), 460);
+    const ghostWidth = Math.min(Math.max(itemBox.width, 320), 460);
     ghost.style.width = `${ghostWidth}px`;
     ghost.style.position = 'fixed';
     ghost.style.left = '0';
@@ -466,18 +469,33 @@ function createDragGhost(itemEl) {
     ghost.style.pointerEvents = 'none';
     ghost.style.willChange = 'transform';
 
-    const isCompleted = itemEl.dataset.completed === 'true';
-    const subtaskText = itemEl.querySelector('.subtask-text-input')?.value || '';
-    ghost.innerHTML = `
-        <div class="subtask-preview-handle">
-            <i class="codicon codicon-gripper"></i>
-        </div>
-        <div class="subtask-preview-checkbox ${isCompleted ? 'completed' : ''}"></div>
-        <div class="subtask-preview-text ${isCompleted ? 'completed' : ''}">
-            ${escapeHtml(asText(subtaskText))}
-        </div>
-    `;
+    // Clone the real subtask DOM (handle, checkbox, text, delete button) so the
+    // ghost looks exactly like the source row instead of a reduced preview.
+    const inner = itemEl.cloneNode(true);
+    inner.classList.remove('subtask-item');
+    inner.classList.add('subtask-drag-ghost-inner');
 
+    // Strip interaction so the clone is purely visual:
+    // - the live value is read from the source row, then the textarea becomes a
+    //   plain <div> with the same text (no caret, focus, or edit affordance),
+    // - inline onclick/oninput/onblur handlers are removed,
+    // - the handle is not tab-focusable while the ghost is detached.
+    const sourceText = itemEl.querySelector('.subtask-text-input')?.value || '';
+    const textInput = inner.querySelector('.subtask-text-input');
+    if (textInput) {
+        const textDiv = document.createElement('div');
+        textDiv.className = 'subtask-text-input' + (textInput.classList.contains('completed') ? ' completed' : '');
+        textDiv.textContent = sourceText;
+        textInput.replaceWith(textDiv);
+    }
+    inner.querySelectorAll('[onclick]').forEach((el) => el.removeAttribute('onclick'));
+    inner.querySelectorAll('[oninput], [onblur]').forEach((el) => {
+        el.removeAttribute('oninput');
+        el.removeAttribute('onblur');
+    });
+    inner.querySelectorAll('[tabindex]').forEach((el) => el.removeAttribute('tabindex'));
+
+    ghost.appendChild(inner);
     document.body.appendChild(ghost);
     return ghost;
 }
