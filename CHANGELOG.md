@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-08-08
+
+### Added
+- **Comment-scan exclude patterns with gitignore semantics**:
+  - `todo4vcode.commentScan.exclude` now accepts full globs (`**/vendor/**`, `src/legacy/**`) and negation (`!`) in addition to plain directory names
+  - Settings screen chip editor to view, add, remove, and restore excluded directories
+  - Expanded defaults for Python projects (`.venv`, `venv`, `env`, `site-packages`, `__pypackages__`, `.ruff_cache`, `.pyre`, `htmlcov`)
+- **Python comment support**: `# TODO`, `# FIXME`, and `# NOTE` comments are scanned, while markers inside strings and triple-quoted docstrings are ignored
+
+### Improved
+- Comment scanner now uses a state-machine lexer so markers inside string literals, template literals, and block comments are no longer imported as tasks
+- Workspace comment scan prunes stale tasks whose source no longer exists or is excluded
+- Subtask drag-and-drop ghost now clones the full subtask row with elevation, matching kanban card UX, and the source row stays visible as a dashed placeholder
+- Kanban cards and list items toggle completion directly from the circular status indicator without opening the detail modal
+
+### Fixed
+- Comment-scan source maps and minified assets (`.map`, `.min.css`, `.min.js`) are treated as binary and skipped
+- `findFiles` glob exclusion now enforced in code as the source of truth for both workspace and per-document scans
+
 ## [1.3.1] - 2026-04-12
 
 ### Fixed
