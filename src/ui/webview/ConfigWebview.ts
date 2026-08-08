@@ -73,6 +73,26 @@ export class ConfigWebview {
 
                                     <div class="config-item">
                                         <div class="config-item-info">
+                                            <div class="config-item-title">Comment Scan Exclude</div>
+                                            <div class="config-item-desc">Directories and glob patterns skipped by the automatic comment scan, like .gitignore</div>
+                                        </div>
+                                        <div class="config-item-action">
+                                            <div class="exclude-editor">
+                                                <div class="exclude-chips" id="commentScanExcludeList"></div>
+                                                <div class="exclude-add-row">
+                                                    <input type="text" id="commentScanExcludeInput" class="exclude-input" placeholder="e.g. **/vendor/**">
+                                                    <button class="action-btn" id="commentScanExcludeAdd">
+                                                        <i class="codicon codicon-add"></i>
+                                                        <span>Add</span>
+                                                    </button>
+                                                </div>
+                                                <button class="action-btn" id="commentScanExcludeReset">Restore defaults</button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="config-item">
+                                        <div class="config-item-info">
                                             <div class="config-item-title">Shared Tasks</div>
                                             <div class="config-item-desc">Store tasks in a project file so your team can share them via Git</div>
                                         </div>
@@ -243,6 +263,7 @@ export class ConfigWebview {
                     const vscode = acquireVsCodeApi();
                     
                     let currentConfig = {};
+                    let defaultCommentScanExclude = [];
                     
                     function updateConfig(key, value) {
                         vscode.postMessage({
@@ -325,6 +346,61 @@ export class ConfigWebview {
                         vscode.postMessage({ type: 'promptSharedTasksPath' });
                     }
                     
+                    function renderCommentScanExcludeChips(patterns) {
+                        const list = document.getElementById('commentScanExcludeList');
+                        if (!list) {
+                            return;
+                        }
+                        list.innerHTML = '';
+                        (patterns || []).forEach(function (pattern) {
+                            const chip = document.createElement('div');
+                            chip.className = 'exclude-chip';
+
+                            const label = document.createElement('span');
+                            label.className = 'exclude-chip-label';
+                            label.textContent = pattern;
+
+                            const removeButton = document.createElement('button');
+                            removeButton.className = 'exclude-chip-remove';
+                            removeButton.textContent = '\u00d7';
+                            removeButton.title = 'Remove pattern';
+                            removeButton.addEventListener('click', function () {
+                                const current = currentConfig.commentScan ? (currentConfig.commentScan.exclude || []) : [];
+                                const next = current.filter(function (item) {
+                                    return item !== pattern;
+                                });
+                                renderCommentScanExcludeChips(next);
+                                updateConfig('commentScan.exclude', next);
+                            });
+
+                            chip.appendChild(label);
+                            chip.appendChild(removeButton);
+                            list.appendChild(chip);
+                        });
+                    }
+                    
+                    function addCommentScanExcludePattern() {
+                        const input = document.getElementById('commentScanExcludeInput');
+                        const value = (input.value || '').trim();
+                        if (!value) {
+                            return;
+                        }
+                        const current = currentConfig.commentScan ? (currentConfig.commentScan.exclude || []) : [];
+                        if (current.indexOf(value) === -1) {
+                            current.push(value);
+                            renderCommentScanExcludeChips(current);
+                            updateConfig('commentScan.exclude', current);
+                        }
+                        input.value = '';
+                        input.focus();
+                    }
+                    
+                    function resetCommentScanExclude() {
+                        const defaults = Array.isArray(defaultCommentScanExclude) ? defaultCommentScanExclude.slice() : [];
+                        renderCommentScanExcludeChips(defaults);
+                        updateConfig('commentScan.exclude', defaults);
+                    }
+                    
                     function loadConfig(config) {
                         currentConfig = config;
                         
@@ -350,8 +426,10 @@ export class ConfigWebview {
 
                         if (config.commentScan) {
                             toggleSwitch('commentScan.enabled', config.commentScan.enabled !== false);
+                            renderCommentScanExcludeChips(config.commentScan.exclude || []);
                         } else {
                             toggleSwitch('commentScan.enabled', true);
+                            renderCommentScanExcludeChips([]);
                         }
 
                         const sharedTasks = config.sharedTasks || {};
@@ -427,6 +505,16 @@ export class ConfigWebview {
                             toggleSwitch('sharedTasks.enabled', newState);
                             updateConfig('sharedTasks.enabled', newState);
                         });
+
+                        document.getElementById('commentScanExcludeAdd').addEventListener('click', addCommentScanExcludePattern);
+
+                        document.getElementById('commentScanExcludeReset').addEventListener('click', resetCommentScanExclude);
+
+                        document.getElementById('commentScanExcludeInput').addEventListener('keydown', (event) => {
+                            if (event.key === 'Enter') {
+                                addCommentScanExcludePattern();
+                            }
+                        });
                     });
                     
                     function exportWorkspaceData() {
@@ -446,6 +534,9 @@ export class ConfigWebview {
                     window.addEventListener('message', event => {
                         const message = event.data;
                         if (message.type === 'configData') {
+                            defaultCommentScanExclude = Array.isArray(message.defaultCommentScanExclude)
+                                ? message.defaultCommentScanExclude
+                                : [];
                             loadConfig(message.config);
                         }
                     });

@@ -137,7 +137,7 @@ export interface ConfigReadyMessage extends BaseWebviewMessage {
 export interface UpdateConfigMessage extends BaseWebviewMessage {
     type: 'updateConfig';
     key: string;
-    value: boolean | string;
+    value: boolean | string | string[];
 }
 
 export interface ExportDataMessage extends BaseWebviewMessage {

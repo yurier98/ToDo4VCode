@@ -3,8 +3,10 @@ import * as path from 'path';
 import { StorageManager } from '../storage/StorageManager';
 import { TodoItem, Priority, Status, ViewSettings, CommentMarker, CommentScanSource } from '../models';
 import { ReminderService } from './ReminderService';
+import { ConfigService } from './ConfigService';
 import { StatisticsService, TaskStatistics } from './StatisticsService';
 import { Logger } from '../../utils/logger';
+import { buildExcludeGlob, isPathExcluded } from '../../utils/exclude-patterns';
 
 interface CommentScanEntry {
     sourceKey: string;
@@ -26,7 +28,6 @@ type TaskInput = {
 
 export class TaskService implements vscode.Disposable {
     private static readonly COMMENT_SCAN_INCLUDE_GLOB = '**/*';
-    private static readonly COMMENT_SCAN_EXCLUDE_GLOB = '**/{node_modules,.git,.next,.nuxt,dist,build,out,coverage,.vscode-test}/**';
     private static readonly COMMENT_SCAN_MAX_FILES = 2000;
     private static readonly COMMENT_SCAN_MAX_FILE_SIZE_BYTES = 1024 * 1024;
     private static readonly COMMENT_MARKER_REGEX = /\/\/\s*(TODO|FIXME|NOTE)\b(?:\s*[:\-]\s*|\s+)?(.*)$/i;
@@ -131,9 +132,11 @@ export class TaskService implements vscode.Disposable {
         }
 
         return this._queueCommentScan(async () => {
+            const excludeGlob = buildExcludeGlob(ConfigService.getCommentScanExclude());
+
             const files = await vscode.workspace.findFiles(
                 TaskService.COMMENT_SCAN_INCLUDE_GLOB,
-                TaskService.COMMENT_SCAN_EXCLUDE_GLOB,
+                excludeGlob || undefined,
                 TaskService.COMMENT_SCAN_MAX_FILES
             );
 
@@ -147,6 +150,15 @@ export class TaskService implements vscode.Disposable {
         }
 
         if (document.uri.scheme !== 'file') {
+            return;
+        }
+
+        const relativePath = vscode.workspace.asRelativePath(document.uri, false);
+        if (!relativePath || relativePath.startsWith('..')) {
+            return;
+        }
+
+        if (isPathExcluded(relativePath, ConfigService.getCommentScanExclude())) {
             return;
         }
 

@@ -187,3 +187,97 @@
     align-self: flex-end; 
 }
 }
+
+/* --- COMMENT SCAN EXCLUDE EDITOR --- */
+
+.exclude-editor {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+    max-width: 360px;
+    min-width: 240px;
+}
+
+.exclude-chips {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 6px;
+    max-height: 120px;
+    overflow-y: auto;
+    width: 100%;
+}
+
+.exclude-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--vscode-welcomePage-tileBackground, rgba(0, 0, 0, 0.05));
+    border: 1px solid $border-color;
+    border-radius: $radius-pill;
+    padding: 3px 8px 3px 10px;
+    font-size: 12px;
+    font-family: $font-vscode;
+    color: $fg-main;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.exclude-chip-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.exclude-chip-remove {
+    background: transparent;
+    border: none;
+    color: $fg-desc;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+    padding: 0 2px;
+    border-radius: $radius-sm;
+
+    &:hover {
+        color: $color-error;
+    }
+}
+
+.exclude-add-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+}
+
+.exclude-input {
+    flex: 1;
+    min-width: 0;
+    background: var(--vscode-input-background);
+    color: var(--vscode-input-foreground);
+    border: 1px solid var(--vscode-input-border, $border-color);
+    border-radius: $radius-md;
+    padding: 5px 8px;
+    font-size: 12px;
+    font-family: $font-vscode;
+
+    &:focus {
+        outline: 1px solid $focus-border;
+        outline-offset: -1px;
+    }
+}
+
+@media (max-width: 600px) {
+    .exclude-editor {
+        max-width: 100%;
+        min-width: 0;
+        width: 100%;
+        align-items: flex-start;
+    }
+
+    .exclude-chips {
+        justify-content: flex-start;
+    }
+}

@@ -70,13 +70,17 @@ export class ConfigHandler extends BaseHandler {
     private async _sendConfigData(webview: vscode.Webview): Promise<void> {
         try {
             const config = ConfigService.getExtensionConfig();
-            webview.postMessage({ type: 'configData', config });
+            webview.postMessage({
+                type: 'configData',
+                config,
+                defaultCommentScanExclude: ConfigService.DEFAULT_COMMENT_SCAN_EXCLUDE
+            });
         } catch (error) {
             Logger.error('Error sending config data', error);
         }
     }
 
-    private async _updateConfig(key: string, value: boolean | string): Promise<void> {
+    private async _updateConfig(key: string, value: boolean | string | string[]): Promise<void> {
         try {
             if (key === 'hideCompleted') {
                 await ConfigService.updateHideCompleted(value as boolean);
@@ -90,6 +94,8 @@ export class ConfigHandler extends BaseHandler {
                 await ConfigService.updateReminderSoundEnabled(value as boolean);
             } else if (key === 'commentScan.enabled') {
                 await ConfigService.updateCommentScanEnabled(value as boolean);
+            } else if (key === 'commentScan.exclude') {
+                await ConfigService.updateCommentScanExclude(value as string[]);
             } else if (key === 'sharedTasks.enabled') {
                 await ConfigService.updateSharedTasksEnabled(value as boolean);
             } else if (key === 'sharedTasks.path') {
@@ -125,7 +131,7 @@ export class ConfigHandler extends BaseHandler {
         }
     }
 
-    private _normalizeSharedTasksPath(value: boolean | string): string | undefined {
+    private _normalizeSharedTasksPath(value: boolean | string | string[]): string | undefined {
         if (typeof value !== 'string') {
             return undefined;
         }

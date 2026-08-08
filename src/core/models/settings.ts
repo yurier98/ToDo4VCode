@@ -26,6 +26,7 @@ export interface RemindersConfig {
 
 export interface CommentScanConfig {
     enabled: boolean;
+    exclude: string[];
 }
 
 export interface SharedTasksConfig {

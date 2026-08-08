@@ -172,6 +172,65 @@
                     "default": true,
                     "description": "Automatically scan workspace files for // TODO, // FIXME and // NOTE comments and import them as tasks."
                 },
+                "todo4vcode.commentScan.exclude": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "default": [
+                        "node_modules",
+                        ".git",
+                        ".hg",
+                        ".svn",
+                        ".next",
+                        ".nuxt",
+                        ".output",
+                        ".svelte-kit",
+                        ".angular",
+                        ".expo",
+                        ".astro",
+                        ".vitepress",
+                        ".docusaurus",
+                        ".parcel-cache",
+                        "storybook-static",
+                        "dist",
+                        "build",
+                        "out",
+                        "coverage",
+                        ".vscode-test",
+                        "vendor",
+                        "__pycache__",
+                        ".mypy_cache",
+                        ".pytest_cache",
+                        ".tox",
+                        ".eggs",
+                        ".nox",
+                        ".venv",
+                        "venv",
+                        "env",
+                        "site-packages",
+                        "__pypackages__",
+                        ".ruff_cache",
+                        ".pyre",
+                        "htmlcov",
+                        "target",
+                        "bin",
+                        "obj",
+                        "Pods",
+                        ".gradle",
+                        ".dart_tool",
+                        ".flutter",
+                        ".pub-cache",
+                        ".terraform",
+                        "bower_components",
+                        ".cache",
+                        "tmp",
+                        ".turbo",
+                        ".vercel"
+                    ],
+                    "scope": "resource",
+                    "markdownDescription": "Directories and glob patterns to exclude from the automatic comment scan, with [.gitignore](https://git-scm.com/docs/gitignore) semantics.\n\n- A plain directory name (e.g. `vendor`) matches any `vendor/` directory at any depth, like `**/vendor/**`.\n- Full globs are supported too, e.g. `**/vendor/**`, `src/legacy/**`, `**/*.test.ts`.\n- Prefix a pattern with `!` to re-include something a previous pattern excluded (the last matching pattern wins).\n\nThe defaults cover common framework output and dependency directories. Add your own project-specific exclusions here."
+                },
                 "todo4vcode.sharedTasks.enabled": {
                     "type": "boolean",
                     "default": false,
@@ -211,6 +270,7 @@
         "typescript": "^5.1.3"
     },
     "dependencies": {
-        "@vscode/codicons": "^0.0.44"
+        "@vscode/codicons": "^0.0.44",
+        "minimatch": "^3.1.2"
     }
 }
