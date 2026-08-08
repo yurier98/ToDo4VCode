@@ -4,6 +4,13 @@ function cleanupDragState() {
     document.querySelectorAll('.dragging').forEach(el => el.classList.remove('dragging'));
 }
 
+function toggleTaskDone(event, taskId, currentStatus) {
+    event.stopPropagation();
+    event.preventDefault();
+    const newStatus = currentStatus === 'Done' ? 'Todo' : 'Done';
+    vscode.postMessage({ type: 'updateStatus', id: taskId, status: newStatus });
+}
+
 function handleDragOver(e) {
     e.preventDefault();
     const container = e.target.closest('.list-section-content, .tasks-scroll');
