@@ -35,7 +35,8 @@ export class TaskService implements vscode.Disposable {
         '.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp', '.ico', '.svg',
         '.mp3', '.wav', '.ogg', '.flac', '.mp4', '.m4v', '.mov', '.avi', '.mkv',
         '.zip', '.rar', '.7z', '.tar', '.gz', '.pdf', '.woff', '.woff2', '.ttf', '.eot',
-        '.exe', '.dll', '.so', '.dylib', '.bin', '.class', '.jar', '.wasm', '.pyc'
+        '.exe', '.dll', '.so', '.dylib', '.bin', '.class', '.jar', '.wasm', '.pyc',
+        '.map', '.min.css', '.min.js'
     ]);
 
     private readonly _onTasksChanged = new vscode.EventEmitter<TodoItem[]>();
@@ -132,7 +133,8 @@ export class TaskService implements vscode.Disposable {
         }
 
         return this._queueCommentScan(async () => {
-            const excludeGlob = buildExcludeGlob(ConfigService.getCommentScanExclude());
+            const excludePatterns = ConfigService.getCommentScanExclude();
+            const excludeGlob = buildExcludeGlob(excludePatterns);
 
             const files = await vscode.workspace.findFiles(
                 TaskService.COMMENT_SCAN_INCLUDE_GLOB,
@@ -140,7 +142,18 @@ export class TaskService implements vscode.Disposable {
                 TaskService.COMMENT_SCAN_MAX_FILES
             );
 
-            await this._importCommentTasks(files);
+            // findFiles' own glob engine can silently fail on large brace
+            // patterns (e.g. dozens of `**/name/**` alternatives), so always
+            // apply the gitignore-style filter here as the source of truth.
+            const filteredFiles = files.filter((uri) => {
+                const relativePath = vscode.workspace.asRelativePath(uri, false);
+                if (!relativePath || relativePath.startsWith('..')) {
+                    return false;
+                }
+                return !isPathExcluded(relativePath, excludePatterns);
+            });
+
+            await this._importCommentTasks(filteredFiles, { pruneStale: true, excludePatterns });
         });
     }
 
@@ -436,11 +449,7 @@ export class TaskService implements vscode.Disposable {
         await nextScan;
     }
 
-    private async _importCommentTasks(uris: vscode.Uri[]): Promise<void> {
-        if (uris.length === 0) {
-            return;
-        }
-
+    private async _importCommentTasks(uris: vscode.Uri[], options?: { pruneStale?: boolean; excludePatterns?: string[] }): Promise<void> {
         const tasks = await this.getTasks();
         const commentTaskBySourceKey = new Map<string, TodoItem>();
 
@@ -457,7 +466,9 @@ export class TaskService implements vscode.Disposable {
         let hasChanges = false;
         let addedCount = 0;
         let updatedCount = 0;
+        let removedCount = 0;
         let nextOrder = tasks.reduce((max, task) => Math.max(max, task.order || 0), 0);
+        const seenSourceKeys = new Set<string>();
 
         for (const uri of uris) {
             try {
@@ -472,6 +483,7 @@ export class TaskService implements vscode.Disposable {
 
                 const entries = await this._extractCommentScanEntries(uri, relativeFile);
                 for (const entry of entries) {
+                    seenSourceKeys.add(entry.sourceKey);
                     const existingTask = commentTaskBySourceKey.get(entry.sourceKey);
                     if (existingTask) {
                         if (this._syncCommentTask(existingTask, entry)) {
@@ -505,12 +517,54 @@ export class TaskService implements vscode.Disposable {
             }
         }
 
+        if (options?.pruneStale) {
+            const excludePatterns = options.excludePatterns ?? [];
+            const staleTaskKeys: string[] = [];
+
+            commentTaskBySourceKey.forEach((task, sourceKey) => {
+                if (seenSourceKeys.has(sourceKey)) {
+                    return;
+                }
+
+                const source = TaskService._normalizeCommentSource(task.source);
+                if (!source) {
+                    return;
+                }
+
+                // A comment task is stale when its file is now excluded by the
+                // user's patterns or by the binary extension filter.
+                if (
+                    isPathExcluded(source.file, excludePatterns) ||
+                    TaskService._shouldSkipFileByName(source.file)
+                ) {
+                    staleTaskKeys.push(sourceKey);
+                }
+            });
+
+            for (const sourceKey of staleTaskKeys) {
+                const staleTask = commentTaskBySourceKey.get(sourceKey);
+                if (!staleTask) {
+                    continue;
+                }
+
+                const index = tasks.indexOf(staleTask);
+                if (index === -1) {
+                    continue;
+                }
+
+                tasks.splice(index, 1);
+                commentTaskBySourceKey.delete(sourceKey);
+                removedCount += 1;
+                hasChanges = true;
+            }
+        }
+
         if (!hasChanges) {
             return;
         }
 
         await this._saveAndNotify(tasks);
-        Logger.info('Comment scan import completed', { addedCount, updatedCount, scannedFiles: uris.length });
+        Logger.info('Comment scan import completed', { addedCount, updatedCount, removedCount, scannedFiles: uris.length });
     }
 
     private async _extractCommentScanEntries(uri: vscode.Uri, relativeFile: string): Promise<CommentScanEntry[]> {
@@ -649,8 +703,20 @@ export class TaskService implements vscode.Disposable {
     }
 
     private static _shouldSkipUriByExtension(uri: vscode.Uri): boolean {
-        const extension = path.extname(uri.fsPath || '').toLowerCase();
-        return TaskService.COMMENT_SCAN_BINARY_EXTENSIONS.has(extension);
+        return TaskService._shouldSkipFileByName(uri.fsPath || '');
+    }
+
+    private static _shouldSkipFileByName(fileName: string): boolean {
+        const normalized = fileName.toLowerCase();
+        const extension = path.extname(normalized);
+
+        if (TaskService.COMMENT_SCAN_BINARY_EXTENSIONS.has(extension)) {
+            return true;
+        }
+
+        // Minified assets (`*.min.css`, `*.min.js`) and source maps never
+        // contain meaningful TODO comments worth scanning.
+        return normalized.endsWith('.min.css') || normalized.endsWith('.min.js');
     }
 
     private static _normalizeCommentSource(source: unknown): CommentScanSource | undefined {

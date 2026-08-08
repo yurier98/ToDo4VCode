@@ -82,3 +82,12 @@ test('isPathExcluded matches default-style hidden directories like .git', () => 
     assert.equal(isPathExcluded('.git/config', ['.git']), true);
     assert.equal(isPathExcluded('src/.next/build.js', ['.next']), true);
 });
+
+test('isPathExcluded excludes Python venv site-packages paths with default patterns', () => {
+    // Regression: a real Python project path that must never be scanned.
+    const venvPath = 'services/platform-api/.venv/lib/python3.14/site-packages/drf_spectacular_sidecar/static/drf_spectacular_sidecar/swagger-ui-dist/swagger-ui.css.map';
+    const patterns = ['.venv', 'site-packages'];
+    assert.equal(isPathExcluded(venvPath, patterns), true);
+    assert.equal(isPathExcluded(venvPath, ['**/.venv/**', '**/site-packages/**']), true);
+    assert.equal(isPathExcluded('services/platform-api/app/main.py', patterns), false);
+});
