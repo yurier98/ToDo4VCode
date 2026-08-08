@@ -11,3 +11,7 @@ vsc-extension-quickstart.md
 **/*.map
 node_modules/**
 !node_modules/@vscode/codicons/**
+!node_modules/minimatch/**
+!node_modules/brace-expansion/**
+!node_modules/balanced-match/**
+!node_modules/concat-map/**
