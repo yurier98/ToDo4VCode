@@ -7,13 +7,16 @@ class InMemoryMemento implements vscode.Memento {
         return [...this._storage.keys()];
     }
 
+    // Real storage (globalState across restarts, or the shared tasks file)
+    // hands back a fresh deserialized copy on every read. Cloning here keeps
+    // the fixture honest so callers cannot share mutable references.
     public get<T>(key: string, defaultValue?: T): T {
         const value = this._storage.get(key);
         if (value === undefined) {
             return defaultValue as T;
         }
 
-        return value as T;
+        return JSON.parse(JSON.stringify(value)) as T;
     }
 
     public async update(key: string, value: unknown): Promise<void> {

@@ -30,6 +30,8 @@ export class MessageValidator {
                 return this._validateUpdateReminders(msg);
             case 'updateOrders':
                 return this._validateUpdateOrders(msg);
+            case 'moveTask':
+                return this._validateMoveTask(msg);
             case 'deleteTask':
                 return this._validateDeleteTask(msg);
             case 'addSubtask':
@@ -101,11 +103,24 @@ export class MessageValidator {
         return typeof msg.id === 'string' && Array.isArray(msg.reminders);
     }
 
+    private static _validateMoveTask(msg: { type: string; [key: string]: unknown }): boolean {
+        return (
+            typeof msg.id === 'string' &&
+            (msg.status === undefined || this._isValidStatus(msg.status)) &&
+            (msg.priority === undefined || this._isValidPriority(msg.priority)) &&
+            (msg.orders === undefined || this._isValidOrdersArray(msg.orders))
+        );
+    }
+
     private static _validateUpdateOrders(msg: { type: string; [key: string]: unknown }): boolean {
-        if (!Array.isArray(msg.orders)) {
+        return this._isValidOrdersArray(msg.orders);
+    }
+
+    private static _isValidOrdersArray(orders: unknown): boolean {
+        if (!Array.isArray(orders)) {
             return false;
         }
-        return msg.orders.every(
+        return orders.every(
             (o: unknown) =>
                 typeof o === 'object' &&
                 o !== null &&

@@ -157,8 +157,8 @@ function renderList(tasks) {
                         <div class="list-task-row ${t.status === 'Done' ? 'task-is-done' : ''}" 
                              data-id="${t.id}" 
                              draggable="true" 
-                             ondragstart="event.dataTransfer.setData('text/plain', '${t.id}'); this.classList.add('dragging')" 
-                             ondragend="cleanupDragState()"
+                             ondragstart="startTaskDrag(event, '${t.id}')" 
+                             ondragend="endTaskDrag()"
                              onclick="openTaskModal('${t.id}')">
                             <div class="card-header-row">
                                 ${getPriorityIndicatorHtml(t)}
@@ -217,8 +217,8 @@ function renderList(tasks) {
                     <div class="list-task-row ${t.status === 'Done' ? 'task-is-done' : ''}" 
                          data-id="${t.id}" 
                          draggable="true" 
-                         ondragstart="event.dataTransfer.setData('text/plain', '${t.id}'); this.classList.add('dragging')" 
-                         ondragend="cleanupDragState()"
+                         ondragstart="startTaskDrag(event, '${t.id}')" 
+                         ondragend="endTaskDrag()"
                          onclick="openTaskModal('${t.id}')">
                         <div class="card-header-row">
                             ${getPriorityIndicatorHtml(t)}
@@ -277,7 +277,19 @@ function renderKanban(tasks) {
         });
         const pVal = groupBy === 'status' ? 'null' : (col === 'Wont' ? "Won't" : (groupBy === 'none' ? 'null' : col));
         const sVal = groupBy === 'status' ? col : 'Todo';
-        div.ondragover = (e) => { e.preventDefault(); div.classList.add('drag-over'); };
+        div.ondragover = (e) => {
+            e.preventDefault();
+            div.classList.add('drag-over');
+            // Keep an indicator in the scroll area even when hovering the
+            // header/footer, so dropping anywhere on the column still lands
+            // at a valid position (end of column) instead of doing nothing.
+            const scroll = div.querySelector('.tasks-scroll');
+            if (scroll && !scroll.querySelector('.drag-indicator')) {
+                const indicator = document.createElement('div');
+                indicator.className = 'drag-indicator';
+                scroll.appendChild(indicator);
+            }
+        };
         div.ondragleave = (e) => {
             if (!e.currentTarget.contains(e.relatedTarget)) {
                 cleanupDragState();
@@ -303,8 +315,8 @@ function renderKanban(tasks) {
                     <div class="task-card ${t.status === 'Done' ? 'task-is-done' : ''}" 
                          data-id="${t.id}" 
                          draggable="true" 
-                         ondragstart="event.dataTransfer.setData('text/plain', '${t.id}'); this.classList.add('dragging')" 
-                         ondragend="cleanupDragState()"
+                         ondragstart="startTaskDrag(event, '${t.id}')" 
+                         ondragend="endTaskDrag()"
                          onclick="openTaskModal('${t.id}')">
                         <div class="card-header-row">
                             ${getPriorityIndicatorHtml(t)}

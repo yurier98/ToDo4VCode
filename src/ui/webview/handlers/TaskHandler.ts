@@ -11,6 +11,7 @@ import {
     UpdateDueDateMessage,
     UpdateRemindersMessage,
     UpdateOrdersMessage,
+    MoveTaskMessage,
     DeleteTaskMessage,
     AddSubtaskMessage,
     ToggleSubtaskMessage,
@@ -59,6 +60,15 @@ export class TaskHandler extends BaseHandler {
             case 'updateOrders':
                 await this._taskService.updateOrders((message as UpdateOrdersMessage).orders);
                 break;
+            case 'moveTask': {
+                const moveMessage = message as MoveTaskMessage;
+                await this._taskService.moveTask(moveMessage.id, {
+                    status: moveMessage.status,
+                    priority: moveMessage.priority,
+                    orders: moveMessage.orders
+                });
+                break;
+            }
             case 'deleteTask':
                 await this._taskService.deleteTask((message as DeleteTaskMessage).id);
                 break;

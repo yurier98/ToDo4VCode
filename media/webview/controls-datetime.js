@@ -151,7 +151,7 @@ function setPremiumPriority(p) {
     const normalizedPriority = normalizePriority(p);
 
     if (modalTaskId) {
-        vscode.postMessage({ type: 'updatePriority', id: modalTaskId, priority: normalizedPriority === 'Wont' ? "Won't" : normalizedPriority });
+        vscode.postMessage({ type: 'updatePriority', id: modalTaskId, priority: normalizedPriority });
         modalPriority = normalizedPriority;
         updateModalUI();
         closeAllPopovers();

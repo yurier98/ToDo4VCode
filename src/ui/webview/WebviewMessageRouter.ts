@@ -64,6 +64,7 @@ export class WebviewMessageRouter {
                 case 'updateDueDate':
                 case 'updateReminders':
                 case 'updateOrders':
+                case 'moveTask':
                 case 'deleteTask':
                 case 'addSubtask':
                 case 'toggleSubtask':

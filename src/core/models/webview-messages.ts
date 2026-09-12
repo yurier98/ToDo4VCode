@@ -66,6 +66,19 @@ export interface UpdateOrdersMessage extends BaseWebviewMessage {
     orders: { id: string; order: number }[];
 }
 
+/**
+ * Atomic drag-and-drop move: status/priority change plus reordering are
+ * applied in a single read-modify-write so concurrent handlers cannot
+ * overwrite each other.
+ */
+export interface MoveTaskMessage extends BaseWebviewMessage {
+    type: 'moveTask';
+    id: string;
+    status?: Status;
+    priority?: Priority;
+    orders?: { id: string; order: number }[];
+}
+
 export interface DeleteTaskMessage extends BaseWebviewMessage {
     type: 'deleteTask';
     id: string;
@@ -166,6 +179,7 @@ export type WebviewMessage =
     | UpdateDueDateMessage
     | UpdateRemindersMessage
     | UpdateOrdersMessage
+    | MoveTaskMessage
     | DeleteTaskMessage
     | AddSubtaskMessage
     | ToggleSubtaskMessage

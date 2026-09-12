@@ -257,6 +257,44 @@ export class TaskService implements vscode.Disposable {
         });
     }
 
+    /**
+     * Applies a drag-and-drop move atomically: one read, one write, one
+     * notification. Sending status/priority and orders as separate messages
+     * lets two concurrent read-modify-write handlers overwrite each other.
+     */
+    public async moveTask(
+        id: string,
+        move: { status?: Status; priority?: Priority; orders?: { id: string; order: number }[] }
+    ): Promise<TodoItem[]> {
+        return this._runExclusiveTaskOperation(async () => {
+            try {
+                const tasks = await this._loadTasks();
+                const task = tasks.find(t => t.id === id);
+                if (!task) {
+                    return tasks;
+                }
+                if (move.status !== undefined) {
+                    task.status = move.status;
+                    task.completed = move.status === 'Done';
+                }
+                if (move.priority !== undefined) {
+                    task.priority = move.priority;
+                }
+                (move.orders ?? []).forEach(o => {
+                    const target = tasks.find(t => t.id === o.id);
+                    if (target) {
+                        target.order = o.order;
+                    }
+                });
+                await this._saveAndNotify(tasks);
+                return tasks;
+            } catch (error) {
+                Logger.error('Error moving task', error);
+                throw error;
+            }
+        });
+    }
+
     public async updateStatus(id: string, status: Status): Promise<TodoItem[]> {
         return this._updateTask(id, task => {
             task.status = status;
