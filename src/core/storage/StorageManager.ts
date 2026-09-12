@@ -21,6 +21,8 @@ export class StorageManager implements vscode.Disposable {
     private static readonly STORAGE_KEY = 'todo4vcode-tasks';
     private static readonly SETTINGS_KEY = 'todo4vcode-settings';
     private static readonly WATCHER_IGNORE_WINDOW_MS = 1500;
+    private static readonly SHARED_TASKS_READ_MAX_ATTEMPTS = 5;
+    private static readonly SHARED_TASKS_READ_RETRY_BASE_MS = 25;
 
     private readonly _onSharedTasksChanged = new vscode.EventEmitter<SharedTasksChangedEvent>();
     public readonly onSharedTasksChanged = this._onSharedTasksChanged.event;
@@ -182,38 +184,57 @@ export class StorageManager implements vscode.Disposable {
     }
 
     private async _readSharedTasksFromUri(sharedUri: vscode.Uri, silent = false): Promise<TodoItem[]> {
-        try {
-            const fileData = await vscode.workspace.fs.readFile(sharedUri);
-            const parsedData = JSON.parse(Buffer.from(fileData).toString('utf8')) as unknown;
-            const tasks = this._extractTasksFromSharedFile(parsedData);
+        for (let attempt = 1; attempt <= StorageManager.SHARED_TASKS_READ_MAX_ATTEMPTS; attempt++) {
+            try {
+                const fileData = await vscode.workspace.fs.readFile(sharedUri);
+                if (!fileData || fileData.byteLength === 0) {
+                    throw new SyntaxError('Shared tasks file is empty');
+                }
 
-            this._lastValidSharedTasks = tasks;
-            this._hasLastValidSharedTasks = true;
-            this._invalidSharedFileWarningByUri.delete(sharedUri.toString());
-            return tasks;
-        } catch (error) {
-            if (this._isFileNotFoundError(error)) {
-                this._lastValidSharedTasks = [];
+                const parsedData = JSON.parse(Buffer.from(fileData).toString('utf8')) as unknown;
+                const tasks = this._extractTasksFromSharedFile(parsedData);
+
+                this._lastValidSharedTasks = tasks;
                 this._hasLastValidSharedTasks = true;
+                this._invalidSharedFileWarningByUri.delete(sharedUri.toString());
+                return tasks;
+            } catch (error) {
+                if (this._isFileNotFoundError(error)) {
+                    this._lastValidSharedTasks = [];
+                    this._hasLastValidSharedTasks = true;
+                    return [];
+                }
+
+                const isRetryableParseError =
+                    error instanceof SyntaxError ||
+                    (error instanceof Error && /JSON|Unexpected end/i.test(error.message));
+
+                if (isRetryableParseError && attempt < StorageManager.SHARED_TASKS_READ_MAX_ATTEMPTS) {
+                    await new Promise((resolve) =>
+                        setTimeout(resolve, StorageManager.SHARED_TASKS_READ_RETRY_BASE_MS * attempt)
+                    );
+                    continue;
+                }
+
+                Logger.error('Failed to read shared tasks file', error, sharedUri.fsPath);
+
+                const sharedUriKey = sharedUri.toString();
+                if (!silent && !this._invalidSharedFileWarningByUri.has(sharedUriKey)) {
+                    vscode.window.showErrorMessage(
+                        'Shared tasks file is invalid JSON. Keeping last valid tasks until it is fixed.'
+                    );
+                    this._invalidSharedFileWarningByUri.add(sharedUriKey);
+                }
+
+                if (this._hasLastValidSharedTasks) {
+                    return [...this._lastValidSharedTasks];
+                }
+
                 return [];
             }
-
-            Logger.error('Failed to read shared tasks file', error, sharedUri.fsPath);
-
-            const sharedUriKey = sharedUri.toString();
-            if (!silent && !this._invalidSharedFileWarningByUri.has(sharedUriKey)) {
-                vscode.window.showErrorMessage(
-                    'Shared tasks file is invalid JSON. Keeping last valid tasks until it is fixed.'
-                );
-                this._invalidSharedFileWarningByUri.add(sharedUriKey);
-            }
-
-            if (this._hasLastValidSharedTasks) {
-                return [...this._lastValidSharedTasks];
-            }
-
-            return [];
         }
+
+        return [];
     }
 
     private _extractTasksFromSharedFile(data: unknown): TodoItem[] {

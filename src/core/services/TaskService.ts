@@ -48,6 +48,7 @@ export class TaskService implements vscode.Disposable {
     private readonly _reminderService: ReminderService;
     private readonly _sharedTasksChangedSubscription: vscode.Disposable;
     private _commentScanQueue: Promise<void> = Promise.resolve();
+    private _taskMutationQueue: Promise<void> = Promise.resolve();
     private _isCommentScanSuspended = false;
 
     constructor(private readonly _storageManager: StorageManager) {
@@ -92,6 +93,16 @@ export class TaskService implements vscode.Disposable {
     }
 
     public async getTasks(): Promise<TodoItem[]> {
+        return this._runExclusiveTaskOperation(() => this._loadTasks());
+    }
+
+    private _runExclusiveTaskOperation<T>(operation: () => Promise<T>): Promise<T> {
+        const next = this._taskMutationQueue.then(operation, operation);
+        this._taskMutationQueue = next.then(() => undefined, () => undefined);
+        return next;
+    }
+
+    private async _loadTasks(): Promise<TodoItem[]> {
         try {
             const tasks = await this._storageManager.getTasks();
             let changed = false;
@@ -192,29 +203,33 @@ export class TaskService implements vscode.Disposable {
     }
 
     public async addTask(taskData: TaskInput): Promise<TodoItem[]> {
-        try {
-            const tasks = await this.getTasks();
-            const newTask = this._buildTask(taskData, tasks);
-            tasks.push(newTask);
-            await this._saveAndNotify(tasks);
-            return tasks;
-        } catch (error) {
-            Logger.error('Error adding task', error);
-            throw error;
-        }
+        return this._runExclusiveTaskOperation(async () => {
+            try {
+                const tasks = await this._loadTasks();
+                const newTask = this._buildTask(taskData, tasks);
+                tasks.push(newTask);
+                await this._saveAndNotify(tasks);
+                return tasks;
+            } catch (error) {
+                Logger.error('Error adding task', error);
+                throw error;
+            }
+        });
     }
 
     public async createTask(taskData: TaskInput): Promise<TodoItem> {
-        try {
-            const tasks = await this.getTasks();
-            const newTask = this._buildTask(taskData, tasks);
-            tasks.push(newTask);
-            await this._saveAndNotify(tasks);
-            return newTask;
-        } catch (error) {
-            Logger.error('Error creating task', error);
-            throw error;
-        }
+        return this._runExclusiveTaskOperation(async () => {
+            try {
+                const tasks = await this._loadTasks();
+                const newTask = this._buildTask(taskData, tasks);
+                tasks.push(newTask);
+                await this._saveAndNotify(tasks);
+                return newTask;
+            } catch (error) {
+                Logger.error('Error creating task', error);
+                throw error;
+            }
+        });
     }
 
     public async updateOrder(id: string, newOrder: number): Promise<TodoItem[]> {
@@ -224,20 +239,22 @@ export class TaskService implements vscode.Disposable {
     }
 
     public async updateOrders(orders: { id: string; order: number }[]): Promise<TodoItem[]> {
-        try {
-            const tasks = await this.getTasks();
-            orders.forEach(o => {
-                const task = tasks.find(t => t.id === o.id);
-                if (task) {
-                    task.order = o.order;
-                }
-            });
-            await this._saveAndNotify(tasks);
-            return tasks;
-        } catch (error) {
-            Logger.error('Error updating orders', error);
-            throw error;
-        }
+        return this._runExclusiveTaskOperation(async () => {
+            try {
+                const tasks = await this._loadTasks();
+                orders.forEach(o => {
+                    const task = tasks.find(t => t.id === o.id);
+                    if (task) {
+                        task.order = o.order;
+                    }
+                });
+                await this._saveAndNotify(tasks);
+                return tasks;
+            } catch (error) {
+                Logger.error('Error updating orders', error);
+                throw error;
+            }
+        });
     }
 
     public async updateStatus(id: string, status: Status): Promise<TodoItem[]> {
@@ -288,15 +305,17 @@ export class TaskService implements vscode.Disposable {
     }
 
     public async deleteTask(id: string): Promise<TodoItem[]> {
-        try {
-            let tasks = await this.getTasks();
-            tasks = tasks.filter(t => t.id !== id);
-            await this._saveAndNotify(tasks);
-            return tasks;
-        } catch (error) {
-            Logger.error('Error deleting task', error);
-            throw error;
-        }
+        return this._runExclusiveTaskOperation(async () => {
+            try {
+                let tasks = await this._loadTasks();
+                tasks = tasks.filter(t => t.id !== id);
+                await this._saveAndNotify(tasks);
+                return tasks;
+            } catch (error) {
+                Logger.error('Error deleting task', error);
+                throw error;
+            }
+        });
     }
 
     public async clearAllTasks(): Promise<void> {
@@ -394,18 +413,20 @@ export class TaskService implements vscode.Disposable {
     }
 
     private async _updateTask(id: string, updater: (task: TodoItem) => void): Promise<TodoItem[]> {
-        try {
-            const tasks = await this.getTasks();
-            const task = tasks.find(t => t.id === id);
-            if (task) {
-                updater(task);
-                await this._saveAndNotify(tasks);
+        return this._runExclusiveTaskOperation(async () => {
+            try {
+                const tasks = await this._loadTasks();
+                const task = tasks.find(t => t.id === id);
+                if (task) {
+                    updater(task);
+                    await this._saveAndNotify(tasks);
+                }
+                return tasks;
+            } catch (error) {
+                Logger.error('Error updating task', error);
+                throw error;
             }
-            return tasks;
-        } catch (error) {
-            Logger.error('Error updating task', error);
-            throw error;
-        }
+        });
     }
 
     private _buildTask(taskData: TaskInput, tasks: TodoItem[]): TodoItem {
@@ -425,9 +446,11 @@ export class TaskService implements vscode.Disposable {
     }
 
     public async saveTasks(tasks: TodoItem[]): Promise<void> {
-        await this._saveTasks(tasks);
-        this._onTasksChanged.fire(tasks);
-        this._reminderService.scheduleNextReminder();
+        return this._runExclusiveTaskOperation(async () => {
+            await this._saveTasks(tasks);
+            this._onTasksChanged.fire(tasks);
+            this._reminderService.scheduleNextReminder();
+        });
     }
 
     private async _saveTasks(tasks: TodoItem[]): Promise<void> {
