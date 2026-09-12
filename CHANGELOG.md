@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.2] - 2026-09-12
+
+### Fixed
+- **Shared tasks read/write race**: with `todo4vcode.sharedTasks.enabled`, editing tasks could show a misleading "Shared tasks file is invalid JSON" error because overlapping read-modify-write cycles interleaved on `shared-tasks.json`. Task mutations are now serialized through a single queue and transient JSON parse errors are retried briefly. Contributed by [Quendi Studio](https://github.com/quendistudio) in [#13](https://github.com/yurier98/ToDo4VCode/pull/13), fixes [#12](https://github.com/yurier98/ToDo4VCode/issues/12).
+- **Kanban board drag-and-drop**: dropping a card onto a status or priority column could leave it in the wrong position or not move it at all:
+  - The `Won't` column sent a priority value the extension rejected, so priority drops were silently ignored (same bug in the task modal priority picker)
+  - Status/priority and order changes were sent as separate messages that raced each other; a drop is now a single atomic `moveTask` update
+  - With a non-custom sort, switching to custom ordering on the first drop reshuffled every column; the visible board is now snapshotted so custom order starts from what the user sees
+  - Dropping on a column header without a resolvable position no longer discards the column change
+
+### Improved
+- Test fixture storage returns fresh copies per read, matching real storage, and new tests cover concurrent task mutations
+
 ## [1.4.1] - 2026-08-08
 
 ### Fixed
