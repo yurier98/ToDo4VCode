@@ -1,20 +1,59 @@
 # ToDo4VCode
 
-[![VS Marketplace Version](https://vsmarketplacebadges.dev/version-short/YurierHerrera.todo4vcode.svg)](https://marketplace.visualstudio.com/items?itemName=YurierHerrera.todo4vcode)
-[![VS Marketplace Downloads](https://vsmarketplacebadges.dev/installs-short/YurierHerrera.todo4vcode.svg)](https://marketplace.visualstudio.com/items?itemName=YurierHerrera.todo4vcode)
-[![Open VSX Version](https://img.shields.io/open-vsx/v/YurierHerrera/todo4vcode?style=flat-square)](https://open-vsx.org/extension/YurierHerrera/todo4vcode)
-[![Open VSX Downloads](https://img.shields.io/open-vsx/dt/YurierHerrera/todo4vcode?style=flat-square)](https://open-vsx.org/extension/YurierHerrera/todo4vcode)
+![ToDo4VCode - Main Interface](./media/preview/preview-1-hero-shot.png)
 
-Stop drowning in endless todo lists. **ToDo4VCode** is a professional task management extension for VS Code and VS Code-compatible editors (such as Cursor and other forks) that helps you organize project tasks by their true impact, ensuring you always focus on what matters most.
+<p align="center">
+  <strong style="font-size: 26px">Stop jumping between tools. Plan where your code lives.</strong>
+</p>
 
-## 🚀 Smart Prioritization
 
-This extension uses the proven MoSCoW technique to help you categorize tasks effectively:
+<p align="center">
+  ToDo4VCode brings planning and prioritization directly into VS Code and VS Code-compatible editors (such as Cursor and other forks), so you stop jumping between Jira, your phone, and the browser to see what's next. Organize tasks by their true impact with MoSCoW — List, Kanban, and Calendar — and keep your focus where it matters: your code.
+</p>
 
-- **Must (M)**: Critical tasks that are non-negotiable for the current milestone.
-- **Should (S)**: Important tasks that should be done, but aren't vital.
-- **Could (C)**: "Nice to have" tasks that add value if time permits.
-- **Won't (W)**: Tasks acknowledged as not being a priority for now.
+
+<p align="center">
+  <a href="https://marketplace.visualstudio.com/items?itemName=YurierHerrera.todo4vcode"><strong>VS Marketplace</strong></a>
+  ·
+  <a href="https://open-vsx.org/extension/YurierHerrera/todo4vcode"><strong>Open VSX</strong></a>
+  ·
+  <a href="https://github.com/yurier98/ToDo4VCode/releases"><strong>Releases</strong></a>
+  ·
+  <a href="https://github.com/yurier98/ToDo4VCode/issues"><strong>Issues</strong></a>
+</p>
+
+
+<p align="center">
+  <a href="https://marketplace.visualstudio.com/items?itemName=YurierHerrera.todo4vcode">
+    <img src="https://vsmarketplacebadges.dev/version-short/YurierHerrera.todo4vcode.svg" alt="VS Marketplace Version">
+  </a>
+  <a href="https://marketplace.visualstudio.com/items?itemName=YurierHerrera.todo4vcode">
+    <img src="https://vsmarketplacebadges.dev/installs-short/YurierHerrera.todo4vcode.svg" alt="VS Marketplace Downloads">
+  </a>
+  <a href="https://marketplace.visualstudio.com/items?itemName=YurierHerrera.todo4vcode">
+    <img src="https://vsmarketplacebadges.dev/rating-short/YurierHerrera.todo4vcode.svg" alt="VS Marketplace Rating">
+  </a>
+  <a href="https://open-vsx.org/extension/YurierHerrera/todo4vcode">
+    <img src="https://img.shields.io/open-vsx/v/YurierHerrera/todo4vcode?style=flat-square" alt="Open VSX Version">
+  </a>
+  <a href="https://open-vsx.org/extension/YurierHerrera/todo4vcode">
+    <img src="https://img.shields.io/open-vsx/dt/YurierHerrera/todo4vcode?style=flat-square" alt="Open VSX Downloads">
+  </a>
+</p>
+
+
+---
+
+
+## About ToDo4VCode
+
+ToDo4VCode is a task and project management extension for developers who want to keep their work organized without leaving the editor.
+
+It is designed for developers and small teams that need more structure than a simple todo list, but do not want the overhead of large project management systems.
+
+With ToDo4VCode, you can prioritize tasks with the MoSCoW technique, plan across List, Kanban, and Calendar views, link tasks to code, and collaborate through shared task files in Git.
+
+Your focus. Your code. Your workflow.
 
 ## ✨ Key Features
 
@@ -34,6 +73,15 @@ This extension uses the proven MoSCoW technique to help you categorize tasks eff
 - 💾 **Import/Export Data**: Backup or migrate all workspace task data in JSON format.
 - 🌓 **Native VS Code Integration**: Theme-aware UI, Codicons, and lightweight performance.
 
+## 🚀 Smart Prioritization
+
+This extension uses the proven MoSCoW technique to help you categorize tasks effectively:
+
+- **Must (M)**: Critical tasks that are non-negotiable for the current milestone.
+- **Should (S)**: Important tasks that should be done, but aren't vital.
+- **Could (C)**: "Nice to have" tasks that add value if time permits.
+- **Won't (W)**: Tasks acknowledged as not being a priority for now.
+
 ## 📊 StatusBar Statistics
 
 ToDo4VCode automatically displays task statistics in VS Code's status bar (bottom-right corner). The status bar item shows a quick summary of your most critical tasks:
@@ -50,31 +98,27 @@ The statistics update in real-time as you manage your tasks. You can customize w
 
 ## 📸 Features in Action
 
-### 1. Main Interface (Hero Shot)
-Clean sidebar-first workflow inside VS Code with quick task creation and view switching.
-![ToDo4VCode - Main Interface](./media/preview/preview-1-hero-shot.png)
-
-### 2. Focused List View
+### 1. Focused List View
 Prioritize and execute tasks with clear status, priority, and due-date signals.
 ![ToDo4VCode - List View](./media/preview/preview-2-list-view.png)
 
-### 3. Kanban Workflow
+### 2. Kanban Workflow
 Move tasks across states to track delivery progress visually.
 ![ToDo4VCode - Kanban View](./media/preview/preview-3-kanban-view.png)
 
-### 4. Compact Calendar in Sidebar
+### 3. Compact Calendar in Sidebar
 Monthly navigation, selected-day highlight, and MoSCoW priority dots in a compact layout.
 ![ToDo4VCode - Compact Calendar](./media/preview/preview-4-calendar-reminders.png)
 
-### 5. Full Calendar Planning (Drag & Drop)
+### 4. Full Calendar Planning (Drag & Drop)
 Plan visually by dragging tasks between **No date** and calendar days in full-screen mode.
 ![ToDo4VCode - Full Calendar Planning](./media/preview/preview-7-full-calendar-planning.png)
 
-### 6. Detailed Task Editor
+### 5. Detailed Task Editor
 Edit title, description, subtasks, reminders, and priority in one focused modal.
 ![ToDo4VCode - Task Details](./media/preview/preview-5-modal-details.png)
 
-### 7. Theme Compatibility
+### 6. Theme Compatibility
 Consistent UI in light and dark themes across all views.
 ![ToDo4VCode - Theme Support](./media/preview/preview-6-light-theme.png)
 
